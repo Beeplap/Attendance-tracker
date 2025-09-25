@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
+import { ensureProfileExists } from '@/lib/utils'
 import { supabaseBrowser } from '@/lib/supabaseClient'
 
 export default function Page() {
@@ -16,6 +17,7 @@ export default function Page() {
     supabase.auth.getUser().then(async ({ data }) => {
       const user = data?.user
       if (!user) return
+      await ensureProfileExists(supabase, user)
       const { data: profile } = await supabase
         .from('profiles')
         .select('role')
@@ -40,6 +42,7 @@ export default function Page() {
     }
     const user = data.user
     if (!user) return
+    await ensureProfileExists(supabase, user)
     const { data: profile } = await supabase
       .from('profiles')
       .select('role')

@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabaseBrowser } from '@/lib/supabaseClient'
+import { ensureProfileExists } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 
 export default function AdminPage() {
@@ -17,6 +18,7 @@ export default function AdminPage() {
         router.replace('/')
         return
       }
+      await ensureProfileExists(supabase, user)
       const { data: profile } = await supabase
         .from('profiles')
         .select('role, email')
