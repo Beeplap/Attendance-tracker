@@ -9,24 +9,22 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [email, setEmail] = useState('')
 
-  const adminEmails = (process.env.NEXT_PUBLIC_ADMIN_EMAILS || '')
-    .split(',')
-    .map((s) => s.trim().toLowerCase())
-    .filter(Boolean)
-
   useEffect(() => {
     const supabase = supabaseBrowser()
-    supabase.auth.getUser().then(({ data }) => {
-      const userEmail = data?.user?.email?.toLowerCase()
-      if (!userEmail) {
+    supabase.auth.getUser().then(async ({ data }) => {
+      const user = data?.user
+      if (!user) {
         router.replace('/')
         return
       }
-      if (adminEmails.includes(userEmail)) {
-        router.replace('/admin')
-        return
-      }
-      setEmail(userEmail)
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role, email')
+        .eq('id', user.id)
+        .single()
+      const role = profile?.role || 'user'
+      if (role === 'admin') return router.replace('/admin')
+      setEmail(profile?.email || user.email || '')
       setLoading(false)
     })
   }, [])

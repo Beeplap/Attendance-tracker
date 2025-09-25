@@ -11,19 +11,19 @@ export default function Page() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  const adminEmails = (process.env.NEXT_PUBLIC_ADMIN_EMAILS || '')
-    .split(',')
-    .map((s) => s.trim().toLowerCase())
-    .filter(Boolean)
-
   useEffect(() => {
     const supabase = supabaseBrowser()
-    supabase.auth.getUser().then(({ data }) => {
-      const userEmail = data?.user?.email?.toLowerCase()
-      if (userEmail) {
-        if (adminEmails.includes(userEmail)) router.replace('/admin')
-        else router.replace('/dashboard')
-      }
+    supabase.auth.getUser().then(async ({ data }) => {
+      const user = data?.user
+      if (!user) return
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+      const role = profile?.role || 'user'
+      if (role === 'admin') router.replace('/admin')
+      else router.replace('/dashboard')
     })
   }, [])
 
@@ -38,8 +38,15 @@ export default function Page() {
       setError(err.message)
       return
     }
-    const userEmail = data.user?.email?.toLowerCase()
-    if (userEmail && adminEmails.includes(userEmail)) router.replace('/admin')
+    const user = data.user
+    if (!user) return
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+    const role = profile?.role || 'user'
+    if (role === 'admin') router.replace('/admin')
     else router.replace('/dashboard')
   }
 
@@ -77,9 +84,7 @@ export default function Page() {
         <Button type="submit" disabled={loading} className="w-full">
           {loading ? 'Signing in…' : 'Sign in'}
         </Button>
-        <p className="text-xs text-center opacity-70">
-          Admins are identified by emails in NEXT_PUBLIC_ADMIN_EMAILS
-        </p>
+        <p className="text-xs text-center opacity-70">Admins are identified by their role in profiles</p>
       </form>
     </div>
   )
