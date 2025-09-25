@@ -1,9 +1,8 @@
 "use client"
 import React, { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { supabaseBrowser } from '@/lib/supabaseClient'
-import { ensureProfileExists } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
+import { supabase } from '@/lib/supabaseClient'
 
 export default function DashboardPage() {
   const router = useRouter()
@@ -11,28 +10,22 @@ export default function DashboardPage() {
   const [email, setEmail] = useState('')
 
   useEffect(() => {
-    const supabase = supabaseBrowser()
+    const supabase = supabase()
     supabase.auth.getUser().then(async ({ data }) => {
       const user = data?.user
       if (!user) {
         router.replace('/')
         return
       }
-      await ensureProfileExists(supabase, user)
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role, email')
-        .eq('id', user.id)
-        .single()
-      const role = profile?.role || 'user'
-      if (role === 'admin') return router.replace('/admin')
-      setEmail(profile?.email || user.email || '')
+      const isAdmin = user.email?.toLowerCase() === 'admin@gmail.com'
+      if (isAdmin) return router.replace('/admin')
+      setEmail(user.email || '')
       setLoading(false)
     })
   }, [])
 
   const signOut = async () => {
-    const supabase = supabaseBrowser()
+    const supabase = supabase()
     await supabase.auth.signOut()
     router.replace('/')
   }
