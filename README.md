@@ -37,7 +37,7 @@ Dev:
 
 ### 1) Clone & Install
 ```bash
-git clone <your-repo-url> attendance-tracking
+git clone https://github.com/Beeplap/Attendance-tracker attendance-tracking
 cd attendance-tracking
 npm install
 ```
