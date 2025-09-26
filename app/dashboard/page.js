@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { supabase } from '@/lib/supabaseClient'
 
 export default function DashboardPage() {
@@ -39,8 +40,28 @@ export default function DashboardPage() {
         <Button onClick={signOut}>Sign out</Button>
       </div>
       <p className="opacity-70">Signed in as {email}</p>
-      {/* Your teacher dashboard content goes here */}
-      <div className="rounded-xl border p-4">Welcome, teacher!</div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Quick actions</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-2">
+            <Button size="sm">Mark attendance</Button>
+            <Button size="sm" variant="outline">View today's list</Button>
+            <Button size="sm" variant="ghost">Export CSV</Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Announcements</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm opacity-80">No announcements yet.</p>
+        </CardContent>
+      </Card>
     </div>
   )
 }

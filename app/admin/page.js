@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 import { Button } from '@/components/ui/button'
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card'
 import { supabase } from '@/lib/supabaseClient'
 
 export default function AdminPage() {
@@ -73,33 +74,38 @@ export default function AdminPage() {
       </div>
       <p className="opacity-70">Signed in as {email}</p>
 
-      <div className="rounded-xl border p-4 space-y-4">
-        <h2 className="font-medium">Add User</h2>
-        {addError && <p className="text-sm text-red-600" role="alert">{addError}</p>}
-        {addSuccess && <p className="text-sm text-green-600" role="status">{addSuccess}</p>}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div className="space-y-1">
-            <label className="text-sm" htmlFor="newFullName">Full name</label>
-            <input id="newFullName" type="text" value={newFullName} onChange={(e) => setNewFullName(e.target.value)} className="w-full border rounded-md px-3 h-10 bg-white/80 dark:bg-black/20" placeholder="Jane Doe" />
+      <Card>
+        <CardHeader>
+          <CardTitle>Add User</CardTitle>
+          <div className="text-xs opacity-70">Quickly create teachers and admins</div>
+        </CardHeader>
+        <CardContent>
+          {addError && <p className="text-sm text-red-600" role="alert">{addError}</p>}
+          {addSuccess && <p className="text-sm text-green-600" role="status">{addSuccess}</p>}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <label className="text-sm" htmlFor="newFullName">Full name</label>
+              <input id="newFullName" type="text" value={newFullName} onChange={(e) => setNewFullName(e.target.value)} className="w-full border rounded-md px-3 h-10 bg-white/80 dark:bg-black/20" placeholder="Jane Doe" />
+            </div>
+            <div className="space-y-1">
+              <label className="text-sm" htmlFor="newEmail">Email</label>
+              <input id="newEmail" type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} className="w-full border rounded-md px-3 h-10 bg-white/80 dark:bg-black/20" placeholder="user@example.com" />
+            </div>
+            <div className="space-y-1">
+              <label className="text-sm" htmlFor="newPassword">Password</label>
+              <input id="newPassword" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="w-full border rounded-md px-3 h-10 bg-white/80 dark:bg-black/20" placeholder="••••••••" />
+            </div>
+            <div className="space-y-1">
+              <label className="text-sm" htmlFor="newRole">Role</label>
+              <select id="newRole" value={newRole} onChange={(e) => setNewRole(e.target.value)} className="w-full border rounded-md px-3 h-10 bg-white/80 dark:bg-black/20">
+                <option value="teacher">Teacher</option>
+                <option value="admin">Admin</option>
+                <option value="user">User</option>
+              </select>
+            </div>
           </div>
-          <div className="space-y-1">
-            <label className="text-sm" htmlFor="newEmail">Email</label>
-            <input id="newEmail" type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} className="w-full border rounded-md px-3 h-10 bg-white/80 dark:bg-black/20" placeholder="user@example.com" />
-          </div>
-          <div className="space-y-1">
-            <label className="text-sm" htmlFor="newPassword">Password</label>
-            <input id="newPassword" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="w-full border rounded-md px-3 h-10 bg-white/80 dark:bg-black/20" placeholder="••••••••" />
-          </div>
-          <div className="space-y-1">
-            <label className="text-sm" htmlFor="newRole">Role</label>
-            <select id="newRole" value={newRole} onChange={(e) => setNewRole(e.target.value)} className="w-full border rounded-md px-3 h-10 bg-white/80 dark:bg-black/20">
-              <option value="teacher">Teacher</option>
-              <option value="admin">Admin</option>
-              <option value="user">User</option>
-            </select>
-          </div>
-        </div>
-        <div>
+        </CardContent>
+        <CardFooter>
           <Button
             onClick={async () => {
               try {
@@ -129,45 +135,48 @@ export default function AdminPage() {
           >
             {addLoading ? 'Creating…' : 'Create user'}
           </Button>
-        </div>
-      </div>
-      <div className="rounded-xl border p-4 space-y-3">
-        <div className="flex items-center justify-between">
-          <h2 className="font-medium">Users</h2>
+        </CardFooter>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Users</CardTitle>
           <Button variant="outline" onClick={fetchProfiles} disabled={listLoading}>
             {listLoading ? 'Refreshing…' : 'Refresh'}
           </Button>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left border-b">
-                <th className="py-2 pr-4">User</th>
-                <th className="py-2 pr-4">Role</th>
-                <th className="py-2 pr-4">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {profiles.map((p) => (
-                <tr key={p.id} className="border-b last:border-0">
-                  <td className="py-2 pr-4">{p.full_name || p.id}</td>
-                  <td className="py-2 pr-4 capitalize">{p.role || 'user'}</td>
-                  <td className="py-2 pr-4">
-                    <Button size="sm" variant="outline" onClick={() => toggleRole(p.id, p.role || 'user')}>
-                      {p.role === 'admin' ? 'Make user' : 'Make admin'}
-                    </Button>
-                  </td>
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left border-b">
+                  <th className="py-2 pr-4">User</th>
+                  <th className="py-2 pr-4">Role</th>
+                  <th className="py-2 pr-4">Action</th>
                 </tr>
-              ))}
-              {profiles.length === 0 && (
-                <tr>
-                  <td className="py-4 text-center opacity-70" colSpan={3}>No users yet</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+              </thead>
+              <tbody>
+                {profiles.map((p) => (
+                  <tr key={p.id} className="border-b last:border-0">
+                    <td className="py-2 pr-4">{p.full_name || p.id}</td>
+                    <td className="py-2 pr-4 capitalize">{p.role || 'user'}</td>
+                    <td className="py-2 pr-4">
+                      <Button size="sm" variant="outline" onClick={() => toggleRole(p.id, p.role || 'user')}>
+                        {p.role === 'admin' ? 'Make user' : 'Make admin'}
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+                {profiles.length === 0 && (
+                  <tr>
+                    <td className="py-4 text-center opacity-70" colSpan={3}>No users yet</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }
