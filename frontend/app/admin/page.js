@@ -27,7 +27,7 @@ export default function AdminPage() {
         router.replace('/')
         return
       }
-      const isAdmin = user.email?.toLowerCase() === 'admin@gmail.com'
+      const isAdmin = user.email?.toLowerCase() === 'admin@gmail.com' || user.email?.toLowerCase() === 'admin@admin.com'
       if (!isAdmin) return router.replace('/dashboard')
       setEmail(user.email || '')
       setLoading(false)

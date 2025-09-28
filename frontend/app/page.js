@@ -27,22 +27,13 @@ export default function Page() {
     const user = data.user
     if (!user) return
   
-    // fetch profile from 'profiles' table
-    const { data: profile, error: profileErr } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single()
-    
-    if (profileErr) {
-      setError(profileErr.message)
-      return
+    const adminEmails = ['admin@admin.com', 'admin@gmail.com']
+    if (adminEmails.includes(user.email)) {
+      router.replace('/admin')
+    } else {
+      router.replace('/dashboard')
     }
-  
-    if (profile.role === 'admin') router.replace('/admin')
-    else router.replace('/dashboard')
   }
-  
 
   return (
     <div className="min-h-dvh flex items-center justify-center p-4">
@@ -78,7 +69,9 @@ export default function Page() {
         <Button type="submit" disabled={loading} className="w-full">
           {loading ? 'Signing in…' : 'Sign in'}
         </Button>
-        <p className="text-xs text-center opacity-70">Admins are identified by their role in profiles</p>
+        <p className="text-xs text-center opacity-70">
+          Only <code>admin@admin.com</code> and <code>admin@gmail.com</code> can access the Admin Panel
+        </p>
       </form>
     </div>
   )
