@@ -1,15 +1,16 @@
 import { createClient } from '@supabase/supabase-js'
+import { NextResponse } from 'next/server'
 
-// In the App Router, define method exports like POST/GET, not a default handler
 export async function POST(request) {
   try {
     const supabaseAdmin = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL,
-      process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY
+      process.env.SUPABASE_SERVICE_ROLE_KEY // use server-only key
     )
 
     const { email, password, full_name, role } = await request.json()
 
+    // Create auth user
     const { data, error } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
@@ -17,7 +18,7 @@ export async function POST(request) {
     })
 
     if (error) {
-      return Response.json({ error: error.message }, { status: 400 })
+      return NextResponse.json({ error: error.message }, { status: 400 })
     }
 
     const createdUserId = data?.user?.id
@@ -27,12 +28,12 @@ export async function POST(request) {
         .from('profiles')
         .insert([{ id: createdUserId, full_name: full_name || null, role: role || 'teacher' }])
       if (profileError) {
-        return Response.json({ error: profileError.message }, { status: 400 })
+        return NextResponse.json({ error: profileError.message }, { status: 400 })
       }
     }
 
-    return Response.json({ data }, { status: 200 })
+    return NextResponse.json({ data }, { status: 200 })
   } catch (err) {
-    return Response.json({ error: 'Invalid request body' }, { status: 400 })
+    return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
   }
 }
