@@ -59,29 +59,35 @@ export default function AdminPage() {
       .eq('id', id)
     if (error) {
       setProfiles((prev) => prev.map((p) => (p.id === id ? { ...p, role: currentRole } : p)))
-      // eslint-disable-next-line no-alert
       alert(error.message)
     }
   }
 
-  if (loading) return <div className="p-6">Loading…</div>
+  if (loading) return <div className="p-6 text-center text-gray-600">Loading…</div>
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="min-h-dvh bg-gradient-to-br from-gray-100 via-gray-200 to-gray-300 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 p-6 space-y-8">
+      {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Admin Panel</h1>
-        <Button onClick={signOut}>Sign out</Button>
+        <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100">Admin Panel</h1>
+        <Button 
+          onClick={signOut} 
+          className="bg-gray-700 hover:bg-gray-800 text-white px-4 py-2 rounded-lg shadow-md"
+        >
+          Sign out
+        </Button>
       </div>
-      <p className="opacity-70">Signed in as {email}</p>
+      <p className="opacity-70 text-gray-600 dark:text-gray-400">Signed in as {email}</p>
 
-      <Card>
+      {/* Add User */}
+      <Card className="shadow-md border border-gray-200 dark:border-gray-700">
         <CardHeader>
-          <CardTitle>Add User</CardTitle>
+          <CardTitle className="text-lg font-semibold text-gray-800 dark:text-gray-100">Add User</CardTitle>
           <div className="text-xs opacity-70">Quickly create teachers and admins</div>
         </CardHeader>
         <CardContent>
-          {addError && <p className="text-sm text-red-600" role="alert">{addError}</p>}
-          {addSuccess && <p className="text-sm text-green-600" role="status">{addSuccess}</p>}
+          {addError && <p className="text-sm text-red-600 mb-2" role="alert">{addError}</p>}
+          {addSuccess && <p className="text-sm text-green-600 mb-2" role="status">{addSuccess}</p>}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1">
               <label className="text-sm" htmlFor="newFullName">Full name</label>
@@ -132,16 +138,23 @@ export default function AdminPage() {
               }
             }}
             disabled={addLoading || !newEmail || !newPassword}
+            className="bg-gray-700 hover:bg-gray-800 text-white shadow-sm"
           >
             {addLoading ? 'Creating…' : 'Create user'}
           </Button>
         </CardFooter>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Users</CardTitle>
-          <Button variant="outline" onClick={fetchProfiles} disabled={listLoading}>
+      {/* Users Table */}
+      <Card className="shadow-md border border-gray-200 dark:border-gray-700">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="text-lg font-semibold text-gray-800 dark:text-gray-100">Users</CardTitle>
+          <Button 
+            variant="outline" 
+            onClick={fetchProfiles} 
+            disabled={listLoading}
+            className="border-gray-400 text-gray-700 dark:text-gray-200"
+          >
             {listLoading ? 'Refreshing…' : 'Refresh'}
           </Button>
         </CardHeader>
@@ -149,19 +162,27 @@ export default function AdminPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-left border-b">
-                  <th className="py-2 pr-4">User</th>
-                  <th className="py-2 pr-4">Role</th>
-                  <th className="py-2 pr-4">Action</th>
+                <tr className="text-left border-b bg-gray-100 dark:bg-gray-800">
+                  <th className="py-2 px-4">User</th>
+                  <th className="py-2 px-4">Role</th>
+                  <th className="py-2 px-4">Action</th>
                 </tr>
               </thead>
               <tbody>
-                {profiles.map((p) => (
-                  <tr key={p.id} className="border-b last:border-0">
-                    <td className="py-2 pr-4">{p.full_name || p.id}</td>
-                    <td className="py-2 pr-4 capitalize">{p.role || 'user'}</td>
-                    <td className="py-2 pr-4">
-                      <Button size="sm" variant="outline" onClick={() => toggleRole(p.id, p.role || 'user')}>
+                {profiles.map((p, idx) => (
+                  <tr 
+                    key={p.id} 
+                    className={`border-b last:border-0 ${idx % 2 === 0 ? 'bg-white/50 dark:bg-gray-900/40' : ''}`}
+                  >
+                    <td className="py-2 px-4">{p.full_name || p.id}</td>
+                    <td className="py-2 px-4 capitalize">{p.role || 'user'}</td>
+                    <td className="py-2 px-4">
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        onClick={() => toggleRole(p.id, p.role || 'user')}
+                        className="border-gray-400 text-gray-700 dark:text-gray-200"
+                      >
                         {p.role === 'admin' ? 'Make user' : 'Make admin'}
                       </Button>
                     </td>
@@ -180,5 +201,3 @@ export default function AdminPage() {
     </div>
   )
 }
-
-
