@@ -4,6 +4,9 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { supabase } from '@/lib/supabaseClient'
+import { Moon, Sun } from "lucide-react"
+
+
 
 export default function DashboardPage() {
   const router = useRouter()
@@ -32,6 +35,7 @@ export default function DashboardPage() {
     router.replace('/')
   }
 
+
   if (loading) return <div className="p-6 text-center text-gray-600">Loading…</div>
 
   return (
@@ -39,12 +43,23 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100">Teacher Dashboard</h1>
+        <div className="flex items-center gap-2">
+        <Button 
+  variant="ghost"
+  className="p-2 rounded-full"
+  onClick={() => document.documentElement.classList.toggle("dark")}
+>
+  <Moon className="hidden dark:block w-5 h-5" />
+  <Sun className="block dark:hidden w-5 h-5" />
+</Button>
         <Button 
           onClick={signOut} 
           className="bg-gray-700 hover:bg-gray-800 text-white px-4 py-2 rounded-lg shadow-md"
         >
+          
           Sign out
         </Button>
+        </div>
       </div>
       <p className="opacity-70 text-gray-600 dark:text-gray-400">
         Signed in as <span className="font-medium">{email}</span>

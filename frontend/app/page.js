@@ -3,6 +3,7 @@ import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { supabase } from '@/lib/supabaseClient'
+import { Moon, Sun } from "lucide-react"
 
 export default function Page() {
   const router = useRouter()
@@ -36,7 +37,21 @@ export default function Page() {
   }
 
   return (
-    <div className="min-h-dvh flex items-center justify-center p-4 bg-gradient-to-br from-gray-100 via-gray-200 to-gray-300 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+    <div className="min-h-dvh flex items-center justify-center p-4 relative bg-gradient-to-br from-gray-100 via-gray-200 to-gray-300 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+      
+      {/* 🔹 Dark Mode Toggle (top-right) */}
+      <div className="absolute top-4 right-4">
+        <Button
+          variant="ghost"
+          className="p-2 rounded-full"
+          onClick={() => document.documentElement.classList.toggle("dark")}
+        >
+          <Moon className="hidden dark:block w-5 h-5" />
+          <Sun className="block dark:hidden w-5 h-5" />
+        </Button>
+      </div>
+
+      {/* 🔹 Login Form */}
       <form 
         onSubmit={onSubmit} 
         className="w-full max-w-sm bg-white dark:bg-gray-800 rounded-xl p-6 space-y-5 shadow-lg border border-gray-200 dark:border-gray-700"
