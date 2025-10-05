@@ -4,16 +4,14 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { supabase } from '@/lib/supabaseClient'
-import { Moon, Sun, Bell } from "lucide-react"
+import { Moon, Sun, Bell, Users, Clock, BookOpen } from "lucide-react"
 
 export default function DashboardPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [email, setEmail] = useState('')
   const [theme, setTheme] = useState('light')
-  const [note, setNote] = useState('')
 
-  // Load user info
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       const user = data?.user
@@ -31,26 +29,17 @@ export default function DashboardPage() {
     })
   }, [])
 
-  // Load saved theme & note from localStorage
   useEffect(() => {
     const storedTheme = localStorage.getItem('theme') || 'light'
-    const storedNote = localStorage.getItem('teacherNote') || ''
     setTheme(storedTheme)
-    setNote(storedNote)
     document.documentElement.classList.toggle('dark', storedTheme === 'dark')
   }, [])
 
-  // Theme toggle
   const toggleTheme = () => {
     const newTheme = theme === 'light' ? 'dark' : 'light'
     setTheme(newTheme)
     document.documentElement.classList.toggle('dark', newTheme === 'dark')
     localStorage.setItem('theme', newTheme)
-  }
-
-  // Save note locally
-  const saveNote = () => {
-    localStorage.setItem('teacherNote', note)
   }
 
   const signOut = async () => {
@@ -132,10 +121,52 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        
-       
-        
-
+        {/* Assigned Classes */}
+        <Card className="shadow-md border border-gray-200 dark:border-gray-700 md:col-span-2">
+          <CardHeader>
+            <CardTitle className="text-lg font-semibold text-gray-800 dark:text-gray-100">
+              Assigned Classes
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-sm border-collapse">
+                <thead>
+                  <tr className="bg-gray-200 dark:bg-gray-800 text-gray-800 dark:text-gray-100">
+                    <th className="p-3 text-left">Subject</th>
+                    <th className="p-3 text-left">Class</th>
+                    <th className="p-3 text-left">Time</th>
+                    <th className="p-3 text-left">Students</th>
+                    <th className="p-3 text-left">Room</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                  <tr className="hover:bg-gray-100 dark:hover:bg-gray-800/50 transition">
+                    <td className="p-3 flex items-center gap-2"><BookOpen size={16}/> Mathematics</td>
+                    <td className="p-3">Grade 10 - A</td>
+                    <td className="p-3 flex items-center gap-2"><Clock size={14}/> 9:00–9:45 AM</td>
+                    <td className="p-3 flex items-center gap-2"><Users size={14}/> 32</td>
+                    <td className="p-3">Room 203</td>
+                  </tr>
+                  <tr className="hover:bg-gray-100 dark:hover:bg-gray-800/50 transition">
+                    <td className="p-3 flex items-center gap-2"><BookOpen size={16}/> Science</td>
+                    <td className="p-3">Grade 9 - B</td>
+                    <td className="p-3 flex items-center gap-2"><Clock size={14}/> 10:00–10:45 AM</td>
+                    <td className="p-3 flex items-center gap-2"><Users size={14}/> 28</td>
+                    <td className="p-3">Lab 1</td>
+                  </tr>
+                  <tr className="hover:bg-gray-100 dark:hover:bg-gray-800/50 transition">
+                    <td className="p-3 flex items-center gap-2"><BookOpen size={16}/> Computer</td>
+                    <td className="p-3">Grade 10 - B</td>
+                    <td className="p-3 flex items-center gap-2"><Clock size={14}/> 11:00–11:45 AM</td>
+                    <td className="p-3 flex items-center gap-2"><Users size={14}/> 30</td>
+                    <td className="p-3">Lab 2</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Announcements */}
