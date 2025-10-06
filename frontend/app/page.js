@@ -37,7 +37,7 @@ export default function Page() {
   }
 
   return (
-    <div className="min-h-dvh flex items-center justify-center p-4 relative bg-gradient-to-br from-gray-100 via-gray-200 to-gray-300 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+    <div className="min-h-dvh flex items-center justify-center p-4 relative bg-gradient-to-br from-gray-100 via-gray-200 to-gray-300 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 font-sans">
       
       {/* 🔹 Dark Mode Toggle (top-right) */}
       <div className="absolute top-4 right-4">
@@ -54,9 +54,9 @@ export default function Page() {
       {/* 🔹 Login Form */}
       <form 
         onSubmit={onSubmit} 
-        className="w-full max-w-sm bg-white dark:bg-gray-800 rounded-xl p-6 space-y-5 shadow-lg border border-gray-200 dark:border-gray-700"
+        className="w-full max-w-sm bg-white dark:bg-gray-800 rounded-xl p-8 space-y-5 shadow-lg border border-gray-200 dark:border-gray-700"
       >
-        <h1 className="text-2xl font-semibold text-center text-gray-800 dark:text-gray-100">
+        <h1 className="text-2xl font-semibold text-center text-gray-800 dark:text-gray-100 tracking-tight">
           Login
         </h1>
 
@@ -101,15 +101,8 @@ export default function Page() {
           disabled={loading} 
           className="w-full bg-gray-700 hover:bg-gray-800 text-white font-medium rounded-lg"
         >
-          {loading ? 'Signing in…' : 'Sign in'}
+          {loading ? 'Logging in…' : 'Login'}
         </Button>
-
-        <p className="text-xs text-center opacity-70 text-gray-600 dark:text-gray-400">
-          Only <code className="bg-gray-200 dark:bg-gray-700 px-1 rounded">admin@admin.com</code> 
-          &nbsp;and&nbsp; 
-          <code className="bg-gray-200 dark:bg-gray-700 px-1 rounded">admin@gmail.com</code> 
-          can access the Admin Panel
-        </p>
       </form>
     </div>
   )
