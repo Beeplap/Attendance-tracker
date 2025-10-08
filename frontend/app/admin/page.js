@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card"
 import { supabase } from "@/lib/supabaseClient"
 import { Moon, Sun } from "lucide-react"
+import { Dialog } from "@headlessui/react"
 
 export default function AdminPage() {
   const router = useRouter()
@@ -21,6 +22,7 @@ export default function AdminPage() {
   const [newRole, setNewRole] = useState("teacher")
   const [search, setSearch] = useState("")
   const [filterRole, setFilterRole] = useState("all")
+  const [showAddUser, setShowAddUser] = useState(false)
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data }) => {
@@ -99,26 +101,39 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-dvh bg-gradient-to-br from-gray-100 via-gray-200 to-gray-300 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 p-6 space-y-8">
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100">
           Admin Panel
         </h1>
+
         <div className="flex items-center gap-2">
-        <Button 
-  variant="ghost"
-  className="p-2 rounded-full"
-  onClick={() => document.documentElement.classList.toggle("dark")}
->
-  <Moon className="hidden dark:block w-5 h-5" />
-  <Sun className="block dark:hidden w-5 h-5" />
-</Button>
-        <Button
-          onClick={signOut}
-          className="bg-gray-700 hover:bg-gray-800 text-white px-4 py-2 rounded-lg shadow-md"
-        >
-          Sign out
-        </Button>
+          {/* Dark Mode Toggle */}
+          <Button 
+            variant="ghost"
+            className="p-2 rounded-full"
+            onClick={() => document.documentElement.classList.toggle("dark")}
+          >
+            <Moon className="hidden dark:block w-5 h-5" />
+            <Sun className="block dark:hidden w-5 h-5" />
+          </Button>
+
+          {/* Add User Button */}
+          <Button
+            onClick={() => setShowAddUser(true)}
+            className="bg-gray-700 hover:bg-gray-800 text-white px-4 py-2 rounded-lg shadow-md"
+          >
+            + Add User
+          </Button>
+
+          {/* Sign Out */}
+          <Button
+            onClick={signOut}
+            className="bg-gray-700 hover:bg-gray-800 text-white px-4 py-2 rounded-lg shadow-md"
+          >
+            Sign out
+          </Button>
         </div>
       </div>
       <p className="opacity-70 text-gray-600 dark:text-gray-400">
@@ -141,7 +156,7 @@ export default function AdminPage() {
         </Card>
         <Card>
           <CardContent className="p-4 text-center">
-            <h2 className="text-lg font-semibold">Users</h2>
+            <h2 className="text-lg font-semibold">Students</h2>
             <p className="text-2xl font-bold">{countUsers}</p>
           </CardContent>
         </Card>
@@ -164,38 +179,34 @@ export default function AdminPage() {
           <option value="all">All</option>
           <option value="admin">Admins</option>
           <option value="teacher">Teachers</option>
-          <option value="user">Users</option>
+          <option value="user">Students</option>
         </select>
       </div>
 
-      {/* Add User Form */}
-      <Card className="shadow-md border border-gray-200 dark:border-gray-700">
+      <Dialog
+  open={showAddUser}
+  onClose={() => setShowAddUser(false)}
+  className="relative z-50"
+>
+  <div className="fixed inset-0 bg-black/50" aria-hidden="true" />
+  <div className="fixed inset-0 flex items-center justify-center p-4">
+    <Dialog.Panel className="bg-white dark:bg-gray-900 rounded-lg shadow-xl w-full max-w-lg border border-gray-300 dark:border-gray-700">
+      <Card className="shadow-none border-none">
         <CardHeader>
           <CardTitle className="text-lg font-semibold text-gray-800 dark:text-gray-100">
-            Add User
+            Add New User
           </CardTitle>
-          <div className="text-xs opacity-70">
-            Quickly create teachers and admins
-          </div>
+          <div className="text-xs opacity-70">Quickly create teachers or admins</div>
         </CardHeader>
+
         <CardContent>
-          {addError && (
-            <p className="text-sm text-red-600 mb-2" role="alert">
-              {addError}
-            </p>
-          )}
-          {addSuccess && (
-            <p className="text-sm text-green-600 mb-2" role="status">
-              {addSuccess}
-            </p>
-          )}
+          {addError && <p className="text-sm text-red-600 mb-2">{addError}</p>}
+          {addSuccess && <p className="text-sm text-green-600 mb-2">{addSuccess}</p>}
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1">
-              <label className="text-sm" htmlFor="newFullName">
-                Full name
-              </label>
+              <label className="text-sm">Full Name</label>
               <input
-                id="newFullName"
                 type="text"
                 value={newFullName}
                 onChange={(e) => setNewFullName(e.target.value)}
@@ -203,12 +214,10 @@ export default function AdminPage() {
                 placeholder="Jane Doe"
               />
             </div>
+
             <div className="space-y-1">
-              <label className="text-sm" htmlFor="newEmail">
-                Email
-              </label>
+              <label className="text-sm">Email</label>
               <input
-                id="newEmail"
                 type="email"
                 value={newEmail}
                 onChange={(e) => setNewEmail(e.target.value)}
@@ -216,12 +225,10 @@ export default function AdminPage() {
                 placeholder="user@example.com"
               />
             </div>
+
             <div className="space-y-1">
-              <label className="text-sm" htmlFor="newPassword">
-                Password
-              </label>
+              <label className="text-sm">Password</label>
               <input
-                id="newPassword"
                 type="password"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
@@ -229,12 +236,10 @@ export default function AdminPage() {
                 placeholder="••••••••"
               />
             </div>
+
             <div className="space-y-1">
-              <label className="text-sm" htmlFor="newRole">
-                Role
-              </label>
+              <label className="text-sm">Role</label>
               <select
-                id="newRole"
                 value={newRole}
                 onChange={(e) => setNewRole(e.target.value)}
                 className="w-full border rounded-md px-3 h-10 bg-white/80 dark:bg-black/20"
@@ -246,7 +251,15 @@ export default function AdminPage() {
             </div>
           </div>
         </CardContent>
-        <CardFooter>
+
+        <CardFooter className="flex justify-end gap-2">
+          <Button
+            variant="outline"
+            onClick={() => setShowAddUser(false)}
+            className="border-gray-400 text-gray-700 dark:text-gray-200"
+          >
+            Cancel
+          </Button>
           <Button
             onClick={async () => {
               try {
@@ -271,6 +284,7 @@ export default function AdminPage() {
                 setNewFullName("")
                 setNewRole("teacher")
                 await fetchProfiles()
+                setTimeout(() => setShowAddUser(false), 500)
               } catch (err) {
                 setAddError(err.message)
               } finally {
@@ -278,12 +292,16 @@ export default function AdminPage() {
               }
             }}
             disabled={addLoading || !newEmail || !newPassword}
-            className="bg-gray-700 hover:bg-gray-800 text-white shadow-sm"
+            className="bg-gray-700 hover:bg-gray-800 text-white px-4 py-2 rounded-lg shadow-md"
           >
             {addLoading ? "Creating…" : "Create user"}
           </Button>
         </CardFooter>
       </Card>
+    </Dialog.Panel>
+  </div>
+</Dialog>
+
 
       {/* Users Table */}
       <Card className="shadow-md border border-gray-200 dark:border-gray-700">
