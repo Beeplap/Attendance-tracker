@@ -100,13 +100,23 @@ export default function AdminPage() {
     return <div className="p-6 text-center text-gray-600">Loading…</div>
 
   return (
-    <div className="min-h-dvh bg-gradient-to-br from-gray-100 via-gray-200 to-gray-300 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 p-6 space-y-8">
+    <div className="min-h-dvh bg-gradient-to-br from-purple-50 via-violet-50 to-purple-100 dark:from-gray-900 dark:via-purple-950 dark:to-gray-900 p-6 space-y-8">
 
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100">
-          Admin Panel
-        </h1>
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-violet-600 rounded-xl flex items-center justify-center shadow-lg">
+            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            </svg>
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-violet-600 dark:from-purple-400 dark:to-violet-400">
+              Admin Panel
+            </h1>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Manage users and system settings</p>
+          </div>
+        </div>
 
         <div className="flex items-center gap-2">
           {/* Dark Mode Toggle */}
@@ -122,7 +132,7 @@ export default function AdminPage() {
           {/* Add User Button */}
           <Button
             onClick={() => setShowAddUser(true)}
-            className="bg-gray-700 hover:bg-gray-800 text-white px-4 py-2 rounded-lg shadow-md"
+            className="bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-700 hover:to-violet-700 text-white px-4 py-2 rounded-lg shadow-md transition-all duration-200"
           >
             + Add User
           </Button>
@@ -142,22 +152,38 @@ export default function AdminPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Card>
+        <Card className="border-purple-200 dark:border-purple-800 hover:shadow-lg transition-shadow">
           <CardContent className="p-4 text-center">
-            <h2 className="text-lg font-semibold">Admins</h2>
-            <p className="text-2xl font-bold">{countAdmins}</p>
+            <div className="inline-flex items-center justify-center w-12 h-12 bg-purple-100 dark:bg-purple-900/50 rounded-full mb-2">
+              <svg className="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              </svg>
+            </div>
+            <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-300">Admins</h2>
+            <p className="text-3xl font-bold text-purple-600 dark:text-purple-400">{countAdmins}</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="border-purple-200 dark:border-purple-800 hover:shadow-lg transition-shadow">
           <CardContent className="p-4 text-center">
-            <h2 className="text-lg font-semibold">Teachers</h2>
-            <p className="text-2xl font-bold">{countTeachers}</p>
+            <div className="inline-flex items-center justify-center w-12 h-12 bg-violet-100 dark:bg-violet-900/50 rounded-full mb-2">
+              <svg className="w-6 h-6 text-violet-600 dark:text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+              </svg>
+            </div>
+            <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-300">Teachers</h2>
+            <p className="text-3xl font-bold text-violet-600 dark:text-violet-400">{countTeachers}</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="border-purple-200 dark:border-purple-800 hover:shadow-lg transition-shadow">
           <CardContent className="p-4 text-center">
-            <h2 className="text-lg font-semibold">Students</h2>
-            <p className="text-2xl font-bold">{countUsers}</p>
+            <div className="inline-flex items-center justify-center w-12 h-12 bg-purple-100 dark:bg-purple-900/50 rounded-full mb-2">
+              <svg className="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
+              </svg>
+            </div>
+            <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-300">Students</h2>
+            <p className="text-3xl font-bold text-purple-600 dark:text-purple-400">{countUsers}</p>
           </CardContent>
         </Card>
       </div>
@@ -292,7 +318,7 @@ export default function AdminPage() {
               }
             }}
             disabled={addLoading || !newEmail || !newPassword}
-            className="bg-gray-700 hover:bg-gray-800 text-white px-4 py-2 rounded-lg shadow-md"
+            className="bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-700 hover:to-violet-700 text-white px-4 py-2 rounded-lg shadow-md transition-all duration-200"
           >
             {addLoading ? "Creating…" : "Create user"}
           </Button>
