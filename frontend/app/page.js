@@ -69,9 +69,9 @@ export default function Page() {
             </svg>
           </div>
           <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-violet-600 dark:from-purple-400 dark:to-violet-400 tracking-tight">
-            Welcome Back
+            Welcome Back! 👋
           </h1>
-          <p className="text-sm text-gray-600 dark:text-gray-400">Sign in to your account</p>
+          <p className="text-sm text-gray-600 dark:text-gray-400">Sign in to your account to continue</p>
         </div>
 
         <div className="space-y-2">
@@ -106,7 +106,7 @@ export default function Page() {
 
         {error && (
           <p className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/40 border border-red-200 dark:border-red-700 rounded-md p-2 text-center" role="alert">
-            {error}
+            ⚠️ {error}
           </p>
         )}
 
@@ -115,7 +115,7 @@ export default function Page() {
           disabled={loading} 
           className="w-full bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-700 hover:to-violet-700 text-white font-medium rounded-lg shadow-md transition-all duration-200 hover:shadow-lg"
         >
-          {loading ? 'Logging in…' : 'Sign In'}
+          {loading ? 'Logging in…' : 'Sign In 🚀'}
         </Button>
       </form>
     </div>
