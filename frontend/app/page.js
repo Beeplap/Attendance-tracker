@@ -31,9 +31,12 @@ export default function Page() {
   
     // Check role from database instead of hardcoded emails
     const role = await resolveUserRole(supabase, user)
+    console.log('🔐 Login - Resolved role:', role, 'for user:', user.email)
     if (role === 'admin') {
+      console.log('✅ Admin user detected, redirecting to /admin')
       router.replace('/admin')
     } else {
+      console.log('⚠️ Non-admin user, redirecting to /dashboard')
       router.replace('/dashboard')
     }
   }
