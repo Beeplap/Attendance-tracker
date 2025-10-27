@@ -83,10 +83,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <p className="opacity-70 text-gray-600 dark:text-gray-400">
-        Signed in as <span className="font-medium">{email}</span>
-      </p>
-
+     
       {/* Main Dashboard Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 

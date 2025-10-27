@@ -146,9 +146,7 @@ export default function AdminPage() {
           </Button>
         </div>
       </div>
-      <p className="opacity-70 text-gray-600 dark:text-gray-400">
-        Signed in as {email}
-      </p>
+      
 
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -205,7 +203,6 @@ export default function AdminPage() {
           <option value="all">All</option>
           <option value="admin">Admins</option>
           <option value="teacher">Teachers</option>
-          <option value="user">Students</option>
         </select>
       </div>
 
@@ -248,7 +245,6 @@ export default function AdminPage() {
                 value={newEmail}
                 onChange={(e) => setNewEmail(e.target.value)}
                 className="w-full border rounded-md px-3 h-10 bg-white/80 dark:bg-black/20"
-                placeholder="user@example.com"
               />
             </div>
 
