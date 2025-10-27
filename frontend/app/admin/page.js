@@ -34,7 +34,13 @@ export default function AdminPage() {
       }
       // Check role from database instead of hardcoded emails
       const role = await resolveUserRole(supabase, user)
-      if (role !== "admin") return router.replace("/dashboard")
+      console.log('User ID:', user.id)
+      console.log('User email:', user.email)
+      console.log('Resolved role:', role)
+      if (role !== "admin") {
+        console.log('Access denied - not an admin')
+        return router.replace("/dashboard")
+      }
       setEmail(user.email || "")
       setLoading(false)
       fetchProfiles()

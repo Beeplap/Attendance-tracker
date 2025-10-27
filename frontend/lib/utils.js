@@ -24,36 +24,40 @@ export async function ensureProfileExists(supabase, user) {
 // If only the email row exists, syncs its role onto the id row.
 export async function resolveUserRole(supabase, user) {
   if (!user?.id) return 'student'
-  const { data: byId } = await supabase
-    .from('profiles')
-    .select('role, email')
-    .eq('id', user.id)
-    .single()
-
-  const roleById = byId?.role
-  if (roleById) return roleById
-
-  // Fallback: try by email
-  if (user.email) {
-    const { data: byEmail } = await supabase
+  
+  try {
+    // First, try to find by user ID
+    const { data: byId, error: errorById } = await supabase
       .from('profiles')
-      .select('role')
-      .eq('email', user.email)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle?.() ?? await supabase
+      .select('role, email')
+      .eq('id', user.id)
+      .maybeSingle()
+
+    if (byId?.role) return byId.role
+
+    // Fallback: try by email
+    if (user.email) {
+      const { data: byEmail, error: errorByEmail } = await supabase
         .from('profiles')
         .select('role')
         .eq('email', user.email)
+        .order('created_at', { ascending: false })
         .limit(1)
-        .single()
+        .maybeSingle()
 
-    const fallbackRole = byEmail?.role
-    if (fallbackRole) {
-      // Try to sync onto id row
-      await supabase.from('profiles').update({ role: fallbackRole, email: user.email }).eq('id', user.id)
-      return fallbackRole
+      const fallbackRole = byEmail?.role
+      if (fallbackRole) {
+        // Try to sync onto id row if it doesn't exist
+        await supabase
+          .from('profiles')
+          .update({ role: fallbackRole, email: user.email })
+          .eq('id', user.id)
+        return fallbackRole
+      }
     }
+  } catch (error) {
+    console.error('Error resolving user role:', error)
   }
+  
   return 'student'
 }
