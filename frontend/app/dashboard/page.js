@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { supabase } from '@/lib/supabaseClient'
+import { resolveUserRole } from '@/lib/utils'
 import { Moon, Sun, Bell, Users, Clock, BookOpen } from "lucide-react"
 
 export default function DashboardPage() {
@@ -13,14 +14,15 @@ export default function DashboardPage() {
   const [theme, setTheme] = useState('light')
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
+    supabase.auth.getUser().then(async ({ data }) => {
       const user = data?.user
       if (!user) {
         router.replace('/')
         return
       }
-      const isAdmin = user.email?.toLowerCase() === 'admin@gmail.com'
-      if (isAdmin) {
+      // Check role from database instead of hardcoded emails
+      const role = await resolveUserRole(supabase, user)
+      if (role === 'admin') {
         router.replace('/admin')
         return
       }

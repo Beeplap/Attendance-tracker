@@ -3,6 +3,7 @@ import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { supabase } from '@/lib/supabaseClient'
+import { resolveUserRole } from '@/lib/utils'
 import { Moon, Sun } from "lucide-react"
 
 export default function Page() {
@@ -28,8 +29,9 @@ export default function Page() {
     const user = data.user
     if (!user) return
   
-    const adminEmails = ['admin@admin.com', 'admin@gmail.com']
-    if (adminEmails.includes(user.email)) {
+    // Check role from database instead of hardcoded emails
+    const role = await resolveUserRole(supabase, user)
+    if (role === 'admin') {
       router.replace('/admin')
     } else {
       router.replace('/dashboard')

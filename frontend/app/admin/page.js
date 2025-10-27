@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card"
 import { supabase } from "@/lib/supabaseClient"
+import { resolveUserRole } from "@/lib/utils"
 import { Moon, Sun } from "lucide-react"
 import { Dialog } from "@headlessui/react"
 
@@ -31,10 +32,9 @@ export default function AdminPage() {
         router.replace("/")
         return
       }
-      const isAdmin =
-        user.email?.toLowerCase() === "admin@gmail.com" ||
-        user.email?.toLowerCase() === "admin@admin.com"
-      if (!isAdmin) return router.replace("/dashboard")
+      // Check role from database instead of hardcoded emails
+      const role = await resolveUserRole(supabase, user)
+      if (role !== "admin") return router.replace("/dashboard")
       setEmail(user.email || "")
       setLoading(false)
       fetchProfiles()
@@ -57,7 +57,7 @@ export default function AdminPage() {
   }
 
   const toggleRole = async (id, currentRole) => {
-    const nextRole = currentRole === "admin" ? "user" : "admin"
+    const nextRole = currentRole === "admin" ? "student" : "admin"
     setProfiles((prev) =>
       prev.map((p) => (p.id === id ? { ...p, role: nextRole } : p))
     )
@@ -94,7 +94,7 @@ export default function AdminPage() {
   // stats
   const countAdmins = profiles.filter((p) => p.role === "admin").length
   const countTeachers = profiles.filter((p) => p.role === "teacher").length
-  const countUsers = profiles.filter((p) => p.role === "user").length
+  const countStudents = profiles.filter((p) => p.role === "student").length
 
   if (loading)
     return <div className="p-6 text-center text-gray-600">Loading…</div>
@@ -134,7 +134,7 @@ export default function AdminPage() {
             onClick={() => setShowAddUser(true)}
             className="bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-700 hover:to-violet-700 text-white px-4 py-2 rounded-lg shadow-md transition-all duration-200"
           >
-            + Add User
+            + Add Student/Teacher
           </Button>
 
           {/* Sign Out */}
@@ -181,7 +181,7 @@ export default function AdminPage() {
               </svg>
             </div>
             <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-300">Students</h2>
-            <p className="text-3xl font-bold text-purple-600 dark:text-purple-400">{countUsers}</p>
+            <p className="text-3xl font-bold text-purple-600 dark:text-purple-400">{countStudents}</p>
           </CardContent>
         </Card>
       </div>
@@ -203,6 +203,7 @@ export default function AdminPage() {
           <option value="all">All</option>
           <option value="admin">Admins</option>
           <option value="teacher">Teachers</option>
+          <option value="student">Students</option>
         </select>
       </div>
 
@@ -219,7 +220,7 @@ export default function AdminPage() {
           <CardTitle className="text-lg font-semibold text-gray-800 dark:text-gray-100">
             Add New User
           </CardTitle>
-          <div className="text-xs opacity-70">Quickly create teachers or admins</div>
+          <div className="text-xs opacity-70">Quickly create teachers or students</div>
         </CardHeader>
 
         <CardContent>
@@ -267,8 +268,7 @@ export default function AdminPage() {
                 className="w-full border rounded-md px-3 h-10 bg-white/80 dark:bg-black/20"
               >
                 <option value="teacher">Teacher</option>
-                <option value="admin">Admin</option>
-                <option value="user">User</option>
+                <option value="student">Student</option>
               </select>
             </div>
           </div>
@@ -300,7 +300,7 @@ export default function AdminPage() {
                 })
                 const json = await res.json()
                 if (!res.ok) throw new Error(json?.error || "Failed to add user")
-                setAddSuccess("User created successfully")
+                setAddSuccess("User created successfully! Credentials will be provided to them.")
                 setNewEmail("")
                 setNewPassword("")
                 setNewFullName("")
@@ -345,7 +345,7 @@ export default function AdminPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-left border-b bg-gray-100 dark:bg-gray-800">
-                  <th className="py-2 px-4">User</th>
+                  <th className="py-2 px-4">Name</th>
                   <th className="py-2 px-4">Email</th>
                   <th className="py-2 px-4">Role</th>
                   <th className="py-2 px-4">Joined</th>
@@ -364,7 +364,7 @@ export default function AdminPage() {
                   >
                     <td className="py-2 px-4">{p.full_name || p.id}</td>
                     <td className="py-2 px-4">{p.email}</td>
-                    <td className="py-2 px-4 capitalize">{p.role || "user"}</td>
+                    <td className="py-2 px-4 capitalize">{p.role || "student"}</td>
                     <td className="py-2 px-4 text-xs opacity-70">
                       {new Date(p.created_at).toLocaleDateString()}
                     </td>
