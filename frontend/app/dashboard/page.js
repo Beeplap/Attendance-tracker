@@ -11,7 +11,6 @@ export default function DashboardPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [email, setEmail] = useState('')
-  const [theme, setTheme] = useState('light')
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data }) => {
@@ -31,17 +30,8 @@ export default function DashboardPage() {
     })
   }, [])
 
-  useEffect(() => {
-    const storedTheme = localStorage.getItem('theme') || 'light'
-    setTheme(storedTheme)
-    document.documentElement.classList.toggle('dark', storedTheme === 'dark')
-  }, [])
-
   const toggleTheme = () => {
-    const newTheme = theme === 'light' ? 'dark' : 'light'
-    setTheme(newTheme)
-    document.documentElement.classList.toggle('dark', newTheme === 'dark')
-    localStorage.setItem('theme', newTheme)
+    document.documentElement.classList.toggle('dark')
   }
 
   const signOut = async () => {

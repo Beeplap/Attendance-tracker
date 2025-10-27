@@ -5,21 +5,6 @@ export function cn(...inputs) {
   return twMerge(clsx(inputs));
 }
 
-// Ensures a profiles row exists for the given user id.
-// Inserts a default role of 'student' on first insert and leaves existing rows untouched.
-export async function ensureProfileExists(supabase, user) {
-  try {
-    if (!user?.id) return
-    await supabase
-      .from('profiles')
-      .insert({ id: user.id, email: user.email || null, role: 'student' })
-      .onConflict('id')
-      .ignore()
-  } catch (_) {
-    // best-effort; ignore errors to avoid blocking auth flow
-  }
-}
-
 // Resolves the user's role by id first, then falls back to email.
 // If only the email row exists, syncs its role onto the id row.
 export async function resolveUserRole(supabase, user) {
