@@ -69,7 +69,7 @@ export default function Page() {
             </svg>
           </div>
           <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-violet-600 dark:from-purple-400 dark:to-violet-400 tracking-tight">
-            Welcome Back! 👋
+            Welcome Back!
           </h1>
           <p className="text-sm text-gray-600 dark:text-gray-400">Sign in to your account to continue</p>
         </div>
@@ -85,7 +85,6 @@ export default function Page() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="w-full border border-purple-200 dark:border-purple-700 rounded-lg px-3 h-10 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 focus:outline-none bg-white dark:bg-gray-900/50 text-gray-800 dark:text-gray-100 transition"
-            placeholder="you@example.com"
           />
         </div>
 
@@ -100,7 +99,6 @@ export default function Page() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="w-full border border-purple-200 dark:border-purple-700 rounded-lg px-3 h-10 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 focus:outline-none bg-white dark:bg-gray-900/50 text-gray-800 dark:text-gray-100 transition"
-            placeholder="••••••••"
           />
         </div>
 
@@ -115,7 +113,7 @@ export default function Page() {
           disabled={loading} 
           className="w-full bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-700 hover:to-violet-700 text-white font-medium rounded-lg shadow-md transition-all duration-200 hover:shadow-lg"
         >
-          {loading ? 'Logging in…' : 'Sign In 🚀'}
+          {loading ? 'Logging in…' : 'Log In'}
         </Button>
       </form>
     </div>

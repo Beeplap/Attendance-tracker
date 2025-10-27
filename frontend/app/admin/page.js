@@ -140,7 +140,7 @@ export default function AdminPage() {
           {/* Sign Out */}
           <Button
             onClick={signOut}
-            className="bg-gray-700 hover:bg-gray-800 text-white px-4 py-2 rounded-lg shadow-md"
+            className="bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-700 hover:to-violet-700 text-white px-4 py-2 rounded-lg shadow-md transition-all duration-200"
           >
             Sign out
           </Button>
