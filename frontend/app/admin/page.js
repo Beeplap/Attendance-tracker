@@ -372,10 +372,10 @@ export default function AdminPage() {
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => toggleRole(p.id, p.role || "user")}
+                        onClick={() => toggleRole(p.id, p.role || "student")}
                         className="border-gray-400 text-gray-700 dark:text-gray-200"
                       >
-                        {p.role === "admin" ? "Make user" : "Make admin"}
+                        {p.role === "admin" ? "Make student" : "Make admin"}
                       </Button>
                       <Button
                         size="sm"

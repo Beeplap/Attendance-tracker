@@ -1,39 +1,55 @@
-import { createClient } from '@supabase/supabase-js'
-import { NextResponse } from 'next/server'
+import { NextResponse } from "next/server"
+import { supabase } from "@/lib/supabaseClient"
 
-export async function POST(request) {
+export async function POST(req) {
   try {
-    const supabaseAdmin = createClient(
+    const { email, password, full_name, role } = await req.json()
+
+    if (!email || !password || !full_name || !role) {
+      return NextResponse.json(
+        { error: "All fields are required" },
+        { status: 400 }
+      )
+    }
+
+    // ✅ Use Supabase Admin API (service role key required)
+    const adminClient = require("@supabase/supabase-js").createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL,
-      process.env.SUPABASE_SERVICE_ROLE_KEY // use server-only key
+      process.env.SUPABASE_SERVICE_ROLE_KEY
     )
 
-    const { email, password, full_name, role } = await request.json()
-
-    // Create auth user
-    const { data, error } = await supabaseAdmin.auth.admin.createUser({
+    // Create a new user in Supabase Auth
+    const { data: userData, error: userError } = await adminClient.auth.admin.createUser({
       email,
       password,
       email_confirm: true,
     })
 
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 400 })
-    }
+    if (userError) throw userError
+    const user = userData?.user
+    if (!user) throw new Error("User creation failed")
 
-    const createdUserId = data?.user?.id
+    // Add the new user's profile record
+    const { error: profileError } = await adminClient
+      .from("profiles")
+      .insert({
+        id: user.id,
+        full_name,
+        email,
+        role,
+      })
 
-    if (createdUserId) {
-      const { error: profileError } = await supabaseAdmin
-        .from('profiles')
-        .insert([{ id: createdUserId, full_name: full_name || null, role: role || 'teacher' }])
-      if (profileError) {
-        return NextResponse.json({ error: profileError.message }, { status: 400 })
-      }
-    }
+    if (profileError) throw profileError
 
-    return NextResponse.json({ data }, { status: 200 })
-  } catch (err) {
-    return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
+    return NextResponse.json(
+      { message: "User created successfully" },
+      { status: 200 }
+    )
+  } catch (error) {
+    console.error("Error creating user:", error)
+    return NextResponse.json(
+      { error: error.message || "Unexpected error" },
+      { status: 500 }
+    )
   }
 }
