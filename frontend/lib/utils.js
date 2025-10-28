@@ -12,7 +12,7 @@ export async function resolveUserRole(supabase, user) {
   
   try {
     // First, try to find by user ID
-    const { data: byId, error: errorById } = await supabase
+    const { data: byId, error: errorById } = await supabase 
       .from('profiles')
       .select('role, email')
       .eq('id', user.id)
