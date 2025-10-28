@@ -11,6 +11,7 @@ export default function DashboardPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [email, setEmail] = useState('')
+  const [fullName, setFullName] = useState('')
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data }) => {
@@ -26,6 +27,17 @@ export default function DashboardPage() {
         return
       }
       setEmail(user.email || '')
+      // Load teacher display name from profiles
+      try {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('full_name')
+          .eq('id', user.id)
+          .maybeSingle()
+        if (profile?.full_name) setFullName(profile.full_name)
+      } catch (_) {
+        // ignore display name load failure
+      }
       setLoading(false)
     })
   }, [])
@@ -53,7 +65,7 @@ export default function DashboardPage() {
             </svg>
           </div>
           <div>
-            <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-violet-600 dark:from-purple-400 dark:to-violet-400">Teacher Dashboard</h1>
+            <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-violet-400 dark:from-purple-200 dark:to-violet-200">Teacher Dashboard</h1>
             <p className="text-sm text-gray-600 dark:text-gray-400">Manage your classes and track attendance</p>
           </div>
         </div>
@@ -75,7 +87,23 @@ export default function DashboardPage() {
         </div>
       </div>
 
-     
+      {/* Welcome Banner */}
+      <Card className="shadow-md border border-gray-200 dark:border-gray-700 bg-white/60 dark:bg-black/20 backdrop-blur supports-[backdrop-filter]:backdrop-blur-md">
+        <div className="p-5 sm:p-6 grid gap-2 sm:gap-3">
+          <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-gray-100">
+            Welcome back, <span className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-violet-600 dark:from-purple-400 dark:to-violet-400">{fullName || 'Teacher'}</span>
+          </h2>
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            Here’s a quick snapshot of your day. Have a great session!
+          </p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            <span className="text-xs px-2.5 py-1 rounded-full bg-white/70 text-gray-800 border border-gray-200 dark:bg-white/10 dark:text-gray-200 dark:border-white/10">Today: {new Date().toLocaleDateString()}</span>
+            <span className="text-xs px-2.5 py-1 rounded-full bg-white/70 text-gray-800 border border-gray-200 dark:bg-white/10 dark:text-gray-200 dark:border-white/10">Classes: 3</span>
+            <span className="text-xs px-2.5 py-1 rounded-full bg-white/70 text-gray-800 border border-gray-200 dark:bg-white/10 dark:text-gray-200 dark:border-white/10">Pending Tasks: 2</span>
+          </div>
+        </div>
+      </Card>
+
       {/* Main Dashboard Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
