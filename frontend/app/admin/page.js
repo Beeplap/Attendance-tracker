@@ -5,8 +5,8 @@ import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card"
 import { supabase } from "@/lib/supabaseClient"
 import { resolveUserRole } from "@/lib/utils"
-import { Moon, Sun } from "lucide-react"
-import { Dialog } from "@headlessui/react"
+import { Moon, Sun, MoreHorizontal } from "lucide-react"
+import { Dialog, Menu, Transition } from "@headlessui/react"
 
 export default function AdminPage() {
   const router = useRouter()
@@ -58,22 +58,7 @@ export default function AdminPage() {
     setListLoading(false)
   }
 
-  const toggleRole = async (id, currentRole) => {
-    const nextRole = currentRole === "admin" ? "student" : "admin"
-    setProfiles((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, role: nextRole } : p))
-    )
-    const { error } = await supabase
-      .from("profiles")
-      .update({ role: nextRole })
-      .eq("id", id)
-    if (error) {
-      setProfiles((prev) =>
-        prev.map((p) => (p.id === id ? { ...p, role: currentRole } : p))
-      )
-      alert(error.message)
-    }
-  }
+  // Role changes are disabled: admins cannot promote/demote users.
 
   const deleteUser = async (id) => {
     if (!confirm("Are you sure you want to delete this user?")) return
@@ -327,7 +312,7 @@ export default function AdminPage() {
 </Dialog>
 
 
-      {/* Users Table */}
+  {/* Users Table */}
       <Card className="shadow-md border border-gray-200 dark:border-gray-700">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-lg font-semibold text-gray-800 dark:text-gray-100">
@@ -351,7 +336,7 @@ export default function AdminPage() {
                   <th className="py-2 px-4">Email</th>
                   <th className="py-2 px-4">Role</th>
                   <th className="py-2 px-4">Joined</th>
-                  <th className="py-2 px-4">Action</th>
+                  <th className="py-2 px-4 w-12 text-right"></th>
                 </tr>
               </thead>
               <tbody>
@@ -370,22 +355,39 @@ export default function AdminPage() {
                     <td className="py-2 px-4 text-xs opacity-70">
                       {new Date(p.created_at).toLocaleDateString()}
                     </td>
-                    <td className="py-2 px-4 flex gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => toggleRole(p.id, p.role || "student")}
-                        className="border-gray-400 text-gray-700 dark:text-gray-200"
-                      >
-                        {p.role === "admin" ? "Make student" : "Make admin"}
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        onClick={() => deleteUser(p.id)}
-                      >
-                        Delete
-                      </Button>
+                    <td className="py-2 px-4">
+                      <div className="flex justify-end">
+                        <Menu as="div" className="relative inline-block text-left">
+                          <div>
+                            <Menu.Button as={Button} variant="ghost" size="sm" className="p-2">
+                              <MoreHorizontal className="w-4 h-4" />
+                            </Menu.Button>
+                          </div>
+                          <Transition
+                            enter="transition ease-out duration-100"
+                            enterFrom="transform opacity-0 scale-95"
+                            enterTo="transform opacity-100 scale-100"
+                            leave="transition ease-in duration-75"
+                            leaveFrom="transform opacity-100 scale-100"
+                            leaveTo="transform opacity-0 scale-95"
+                          >
+                            <Menu.Items className="absolute right-0 mt-2 w-40 origin-top-right rounded-md border bg-white dark:bg-gray-900 shadow-lg focus:outline-none">
+                              <div className="py-1">
+                                <Menu.Item>
+                                  {({ active }) => (
+                                    <button
+                                      onClick={() => deleteUser(p.id)}
+                                      className={`${active ? "bg-gray-100 dark:bg-gray-800" : ""} flex w-full px-3 py-2 text-left text-sm text-red-600`}
+                                    >
+                                      Delete
+                                    </button>
+                                  )}
+                                </Menu.Item>
+                              </div>
+                            </Menu.Items>
+                          </Transition>
+                        </Menu>
+                      </div>
                     </td>
                   </tr>
                 ))}
