@@ -95,11 +95,6 @@ export default function AdminPage() {
     return matchesSearch && matchesRole;
   });
 
-  // stats
-  const countAdmins = profiles.filter((p) => p.role === "admin").length;
-  const countTeachers = profiles.filter((p) => p.role === "teacher").length;
-  const countStudents = profiles.filter((p) => p.role === "student").length;
-
   if (loading)
     return <div className="p-6 text-center text-gray-600">Loading…</div>;
 
@@ -174,91 +169,6 @@ export default function AdminPage() {
             Sign out
           </Button>
         </div>
-      </div>
-
-      {/* Stats - Made more compact for mobile */}
-      <div className="grid grid-cols-3 gap-2 sm:gap-4">
-        <Card className="border-purple-200 dark:border-purple-800 hover:shadow-lg transition-shadow">
-          <CardContent className="p-2 sm:p-4 text-center">
-            <div className="inline-flex items-center justify-center w-8 h-8 sm:w-12 sm:h-12 bg-purple-100 dark:bg-purple-900/50 rounded-full mb-1 sm:mb-2">
-              <svg
-                className="w-4 h-4 sm:w-6 sm:h-6 text-purple-600 dark:text-purple-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-                />
-              </svg>
-            </div>
-            <h2 className="text-sm sm:text-lg font-semibold text-gray-700 dark:text-gray-300">
-              Admins
-            </h2>
-            <p className="text-xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400">
-              {countAdmins}
-            </p>
-          </CardContent>
-        </Card>
-        <Card className="border-purple-200 dark:border-purple-800 hover:shadow-lg transition-shadow">
-          <CardContent className="p-2 sm:p-4 text-center">
-            <div className="inline-flex items-center justify-center w-8 h-8 sm:w-12 sm:h-12 bg-violet-100 dark:bg-violet-900/50 rounded-full mb-1 sm:mb-2">
-              <svg
-                className="w-4 h-4 sm:w-6 sm:h-6 text-violet-600 dark:text-violet-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
-                />
-              </svg>
-            </div>
-            <h2 className="text-sm sm:text-lg font-semibold text-gray-700 dark:text-gray-300">
-              Teachers
-            </h2>
-            <p className="text-xl sm:text-3xl font-bold text-violet-600 dark:text-violet-400">
-              {countTeachers}
-            </p>
-          </CardContent>
-        </Card>
-        <Card className="border-purple-200 dark:border-purple-800 hover:shadow-lg transition-shadow">
-          <CardContent className="p-2 sm:p-4 text-center">
-            <div className="inline-flex items-center justify-center w-8 h-8 sm:w-12 sm:h-12 bg-purple-100 dark:bg-purple-900/50 rounded-full mb-1 sm:mb-2">
-              <svg
-                className="w-4 h-4 sm:w-6 sm:h-6 text-purple-600 dark:text-purple-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 14l9-5-9-5-9 5 9 5z"
-                />
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"
-                />
-              </svg>
-            </div>
-            <h2 className="text-sm sm:text-lg font-semibold text-gray-700 dark:text-gray-300">
-              Students
-            </h2>
-            <p className="text-xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400">
-              {countStudents}
-            </p>
-          </CardContent>
-        </Card>
       </div>
 
       {/* Search + Filter - Made responsive */}
@@ -579,12 +489,20 @@ export default function AdminPage() {
         </div>
       </Dialog>
 
-      {/* Users Table */}
+      {/* Users Table - Mobile Friendly */}
       <Card className="shadow-md border border-gray-200 dark:border-gray-700">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-lg font-semibold text-gray-800 dark:text-gray-100">
-            Users
-          </CardTitle>
+        <CardHeader className="flex flex-col sm:flex-row gap-2 sm:items-center justify-between">
+          <div>
+            <CardTitle className="text-lg font-semibold text-gray-800 dark:text-gray-100">
+              Users
+            </CardTitle>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Total: {profiles.length} ·
+              {profiles.filter((p) => p.role === "admin").length} admins,{" "}
+              {profiles.filter((p) => p.role === "teacher").length} teachers,{" "}
+              {profiles.filter((p) => p.role === "student").length} students
+            </p>
+          </div>
           <Button
             variant="outline"
             onClick={fetchProfiles}
@@ -597,13 +515,17 @@ export default function AdminPage() {
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead>
+              <thead className="sr-only sm:not-sr-only">
                 <tr className="text-left border-b bg-gray-100 dark:bg-gray-800">
-                  <th className="py-2 px-4">Name</th>
-                  <th className="py-2 px-4">Email</th>
-                  <th className="py-2 px-4">Role</th>
-                  <th className="py-2 px-4">Joined</th>
-                  <th className="py-2 px-4 w-12 text-right"></th>
+                  <th className="py-2 px-2 sm:px-4">User</th>
+                  <th className="py-2 px-2 sm:px-4 hidden sm:table-cell">
+                    Email
+                  </th>
+                  <th className="py-2 px-2 sm:px-4">Role</th>
+                  <th className="py-2 px-2 sm:px-4 hidden sm:table-cell">
+                    Joined
+                  </th>
+                  <th className="py-2 px-2 sm:px-4 w-12 text-right"></th>
                 </tr>
               </thead>
               <tbody>
@@ -614,30 +536,46 @@ export default function AdminPage() {
                       idx % 2 === 0 ? "bg-white/50 dark:bg-gray-900/40" : ""
                     }`}
                   >
-                    <td className="py-2 px-4">{p.full_name || p.id}</td>
-                    <td className="py-2 px-4">{p.email}</td>
-                    <td className="py-2 px-4 capitalize">
-                      {p.role || "student"}
+                    <td className="py-2 px-2 sm:px-4">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-2">
+                        <span className="font-medium">
+                          {p.full_name || p.id}
+                        </span>
+                        <span className="text-xs text-gray-500 sm:hidden">
+                          {p.email}
+                        </span>
+                      </div>
                     </td>
-                    <td className="py-2 px-4 text-xs opacity-70">
+                    <td className="py-2 px-2 sm:px-4 hidden sm:table-cell">
+                      {p.email}
+                    </td>
+                    <td className="py-2 px-2 sm:px-4">
+                      <span
+                        className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
+                        ${p.role === 'admin' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-300' :
+                        p.role === 'teacher' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300' :
+                        'bg-gray-100 text-gray-800 dark:bg-gray-900/50 dark:text-gray-300'}"
+                      >
+                        {p.role || "student"}
+                      </span>
+                    </td>
+                    <td className="py-2 px-2 sm:px-4 text-xs opacity-70 hidden sm:table-cell">
                       {new Date(p.created_at).toLocaleDateString()}
                     </td>
-                    <td className="py-2 px-4">
+                    <td className="py-2 px-2 sm:px-4">
                       <div className="flex justify-end">
                         <Menu
                           as="div"
                           className="relative inline-block text-left"
                         >
-                          <div>
-                            <Menu.Button
-                              as={Button}
-                              variant="ghost"
-                              size="sm"
-                              className="p-2"
-                            >
-                              <MoreHorizontal className="w-4 h-4" />
-                            </Menu.Button>
-                          </div>
+                          <Menu.Button
+                            as={Button}
+                            variant="ghost"
+                            size="sm"
+                            className="p-1.5 sm:p-2"
+                          >
+                            <MoreHorizontal className="w-4 h-4" />
+                          </Menu.Button>
                           <Transition
                             enter="transition ease-out duration-100"
                             enterFrom="transform opacity-0 scale-95"
