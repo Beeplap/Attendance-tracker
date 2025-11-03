@@ -497,7 +497,6 @@ export default function AdminPage() {
               Users
             </CardTitle>
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              Total: {profiles.length} ·
               {profiles.filter((p) => p.role === "admin").length} admins,{" "}
               {profiles.filter((p) => p.role === "teacher").length} teachers,{" "}
               {profiles.filter((p) => p.role === "student").length} students
@@ -551,10 +550,9 @@ export default function AdminPage() {
                     </td>
                     <td className="py-2 px-2 sm:px-4">
                       <span
-                        className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
-                        ${p.role === 'admin' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-300' :
-                        p.role === 'teacher' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300' :
-                        'bg-gray-100 text-gray-800 dark:bg-gray-900/50 dark:text-gray-300'}"
+                        className={`inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium text-white
+ `}
+
                       >
                         {p.role || "student"}
                       </span>
