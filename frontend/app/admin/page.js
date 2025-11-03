@@ -106,7 +106,8 @@ export default function AdminPage() {
   return (
     <div className="min-h-dvh bg-gradient-to-br from-purple-50 via-violet-50 to-purple-100 dark:from-gray-900 dark:via-purple-950 dark:to-gray-900 p-6 space-y-8">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      {/* Header with responsive layout */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-violet-600 rounded-xl flex items-center justify-center shadow-lg">
             <svg
@@ -124,7 +125,7 @@ export default function AdminPage() {
             </svg>
           </div>
           <div>
-            <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-violet-600 dark:from-purple-400 dark:to-violet-400">
+            <h1 className="text-2xl sm:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-violet-600 dark:from-purple-400 dark:to-violet-400">
               Admin Panel
             </h1>
             <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -133,10 +134,12 @@ export default function AdminPage() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        {/* Responsive button group */}
+        <div className="flex flex-wrap items-center gap-2">
           {/* Dark Mode Toggle */}
           <Button
             variant="ghost"
+            size="sm"
             className="p-2 rounded-full"
             onClick={() => document.documentElement.classList.toggle("dark")}
           >
@@ -147,36 +150,39 @@ export default function AdminPage() {
           {/* Add User Button */}
           <Button
             onClick={() => setShowAddUser(true)}
-            className="bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-700 hover:to-violet-700 text-white px-4 py-2 rounded-lg shadow-md transition-all duration-200"
+            size="sm"
+            className="flex-1 sm:flex-none bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-700 hover:to-violet-700 text-white px-3 py-2 rounded-lg shadow-md transition-all duration-200 text-sm"
           >
-            + Add Student/Teacher
+            + Add User
           </Button>
 
           {/* Assign Class Button */}
           <Button
             onClick={() => setShowAssignClass(true)}
-            className="bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-700 hover:to-violet-700 text-white px-4 py-2 rounded-lg shadow-md transition-all duration-200"
+            size="sm"
+            className="flex-1 sm:flex-none bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-700 hover:to-violet-700 text-white px-3 py-2 rounded-lg shadow-md transition-all duration-200 text-sm"
           >
-            + Assign Class
+            + Class
           </Button>
 
           {/* Sign Out */}
           <Button
             onClick={signOut}
-            className="bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-700 hover:to-violet-700 text-white px-4 py-2 rounded-lg shadow-md transition-all duration-200"
+            size="sm"
+            className="flex-1 sm:flex-none bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-700 hover:to-violet-700 text-white px-3 py-2 rounded-lg shadow-md transition-all duration-200 text-sm"
           >
             Sign out
           </Button>
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      {/* Stats - Made more compact for mobile */}
+      <div className="grid grid-cols-3 gap-2 sm:gap-4">
         <Card className="border-purple-200 dark:border-purple-800 hover:shadow-lg transition-shadow">
-          <CardContent className="p-4 text-center">
-            <div className="inline-flex items-center justify-center w-12 h-12 bg-purple-100 dark:bg-purple-900/50 rounded-full mb-2">
+          <CardContent className="p-2 sm:p-4 text-center">
+            <div className="inline-flex items-center justify-center w-8 h-8 sm:w-12 sm:h-12 bg-purple-100 dark:bg-purple-900/50 rounded-full mb-1 sm:mb-2">
               <svg
-                className="w-6 h-6 text-purple-600 dark:text-purple-400"
+                className="w-4 h-4 sm:w-6 sm:h-6 text-purple-600 dark:text-purple-400"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -189,19 +195,19 @@ export default function AdminPage() {
                 />
               </svg>
             </div>
-            <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-300">
+            <h2 className="text-sm sm:text-lg font-semibold text-gray-700 dark:text-gray-300">
               Admins
             </h2>
-            <p className="text-3xl font-bold text-purple-600 dark:text-purple-400">
+            <p className="text-xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400">
               {countAdmins}
             </p>
           </CardContent>
         </Card>
         <Card className="border-purple-200 dark:border-purple-800 hover:shadow-lg transition-shadow">
-          <CardContent className="p-4 text-center">
-            <div className="inline-flex items-center justify-center w-12 h-12 bg-violet-100 dark:bg-violet-900/50 rounded-full mb-2">
+          <CardContent className="p-2 sm:p-4 text-center">
+            <div className="inline-flex items-center justify-center w-8 h-8 sm:w-12 sm:h-12 bg-violet-100 dark:bg-violet-900/50 rounded-full mb-1 sm:mb-2">
               <svg
-                className="w-6 h-6 text-violet-600 dark:text-violet-400"
+                className="w-4 h-4 sm:w-6 sm:h-6 text-violet-600 dark:text-violet-400"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -214,19 +220,19 @@ export default function AdminPage() {
                 />
               </svg>
             </div>
-            <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-300">
+            <h2 className="text-sm sm:text-lg font-semibold text-gray-700 dark:text-gray-300">
               Teachers
             </h2>
-            <p className="text-3xl font-bold text-violet-600 dark:text-violet-400">
+            <p className="text-xl sm:text-3xl font-bold text-violet-600 dark:text-violet-400">
               {countTeachers}
             </p>
           </CardContent>
         </Card>
         <Card className="border-purple-200 dark:border-purple-800 hover:shadow-lg transition-shadow">
-          <CardContent className="p-4 text-center">
-            <div className="inline-flex items-center justify-center w-12 h-12 bg-purple-100 dark:bg-purple-900/50 rounded-full mb-2">
+          <CardContent className="p-2 sm:p-4 text-center">
+            <div className="inline-flex items-center justify-center w-8 h-8 sm:w-12 sm:h-12 bg-purple-100 dark:bg-purple-900/50 rounded-full mb-1 sm:mb-2">
               <svg
-                className="w-6 h-6 text-purple-600 dark:text-purple-400"
+                className="w-4 h-4 sm:w-6 sm:h-6 text-purple-600 dark:text-purple-400"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -245,35 +251,39 @@ export default function AdminPage() {
                 />
               </svg>
             </div>
-            <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-300">
+            <h2 className="text-sm sm:text-lg font-semibold text-gray-700 dark:text-gray-300">
               Students
             </h2>
-            <p className="text-3xl font-bold text-purple-600 dark:text-purple-400">
+            <p className="text-xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400">
               {countStudents}
             </p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Search + Filter */}
+      {/* Search + Filter - Made responsive */}
       <div className="flex flex-col sm:flex-row gap-3">
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search by name/email…"
-          className="flex-1 border rounded-md px-3 h-10 bg-white/80 dark:bg-black/20"
-        />
-        <select
-          value={filterRole}
-          onChange={(e) => setFilterRole(e.target.value)}
-          className="border rounded-md px-3 h-10 bg-white/80 dark:bg-black/20"
-        >
-          <option value="all">All</option>
-          <option value="admin">Admins</option>
-          <option value="teacher">Teachers</option>
-          <option value="student">Students</option>
-        </select>
+        <div className="flex-1">
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search by name/email…"
+            className="w-full border rounded-md px-3 h-10 bg-white/80 dark:bg-black/20"
+          />
+        </div>
+        <div className="w-full sm:w-48">
+          <select
+            value={filterRole}
+            onChange={(e) => setFilterRole(e.target.value)}
+            className="w-full border rounded-md px-3 h-10 bg-white/80 dark:bg-black/20"
+          >
+            <option value="all">All Roles</option>
+            <option value="admin">Admins</option>
+            <option value="teacher">Teachers</option>
+            <option value="student">Students</option>
+          </select>
+        </div>
       </div>
 
       <Dialog
