@@ -13,6 +13,9 @@ export default function DashboardPage() {
   const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState("");
 
+  const [classes, setClasses] = useState([]);
+  const [classesLoading, setClassesLoading] = useState(true);
+
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data }) => {
       const user = data?.user;
@@ -35,12 +38,21 @@ export default function DashboardPage() {
           .eq("id", user.id)
           .maybeSingle();
         if (profile?.full_name) setFullName(profile.full_name);
+
+        // Fetch assigned classes
+        const response = await fetch(`/api/classes?teacherId=${user.id}`);
+        const data = await response.json();
+        if (response.ok) {
+          setClasses(data.classes || []);
+        }
       } catch (_) {
-        // ignore display name load failure
+        // ignore load failure
+      } finally {
+        setLoading(false);
+        setClassesLoading(false);
       }
-      setLoading(false);
     });
-  }, []);
+  }, [router]);
 
   const toggleTheme = () => {
     document.documentElement.classList.toggle("dark");
