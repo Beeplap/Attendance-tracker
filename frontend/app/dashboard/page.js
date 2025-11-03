@@ -8,14 +8,11 @@ import { resolveUserRole } from "@/lib/utils";
 import { Moon, Sun, Bell, Users, Clock, BookOpen } from "lucide-react";
 
 export default function DashboardPage() {
-  const router = useRouter()
-  const [loading, setLoading] = useState(true)
-  const [email, setEmail] = useState("")
-  const [fullName, setFullName] = useState("")
-  const [classes, setClasses] = useState([])
-  const [classesLoading, setClassesLoading] = useState(true)
-
-  const [classes, setClasses] = useState([]);
+  const router = useRouter();
+  const [loading, setLoading] = useState(true);
+  const [email, setEmail] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [assignedClasses, setAssignedClasses] = useState([]);
   const [classesLoading, setClassesLoading] = useState(true);
 
   useEffect(() => {
@@ -41,12 +38,14 @@ export default function DashboardPage() {
           .maybeSingle();
         if (profile?.full_name) setFullName(profile.full_name);
 
-        // Fetch assigned classes
-        const response = await fetch(`/api/classes?teacherId=${user.id}`);
-        const data = await response.json();
-        if (response.ok) {
-          setClasses(data.classes || []);
-        }
+        // Fetch assigned classes directly from Supabase
+        const { data: classes } = await supabase
+          .from("classes")
+          .select("*")
+          .eq("teacher_id", user.id)
+          .order("created_at", { ascending: true });
+
+        setAssignedClasses(classes || []);
       } catch (_) {
         // ignore load failure
       } finally {
@@ -143,7 +142,7 @@ export default function DashboardPage() {
               Today: {new Date().toLocaleDateString()}
             </span>
             <span className="text-xs px-2.5 py-1 rounded-full bg-white/70 text-gray-800 border border-gray-200 dark:bg-white/10 dark:text-gray-200 dark:border-white/10">
-              Classes: 3
+              Classes: {assignedClasses.length}
             </span>
             <span className="text-xs px-2.5 py-1 rounded-full bg-white/70 text-gray-800 border border-gray-200 dark:bg-white/10 dark:text-gray-200 dark:border-white/10">
               Pending Tasks: 2
@@ -213,72 +212,63 @@ export default function DashboardPage() {
                         </th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-purple-100 dark:divide-purple-800 bg-white dark:bg-gray-800">
-                      <tr className="hover:bg-purple-50 dark:hover:bg-purple-900/30 transition">
-                        <td className="whitespace-nowrap py-4 pl-4 pr-3 text-purple-700 dark:text-purple-300 sm:pl-6">
-                          <div className="flex items-center gap-2">
-                            <BookOpen size={16} /> Mathematics
-                          </div>
-                        </td>
-                        <td className="whitespace-nowrap px-3 py-4">
-                          Grade 10 - A
-                        </td>
-                        <td className="whitespace-nowrap px-3 py-4">
-                          <div className="flex items-center gap-2">
-                            <Clock size={14} /> 9:00–9:45 AM
-                          </div>
-                        </td>
-                        <td className="whitespace-nowrap px-3 py-4">
-                          <div className="flex items-center gap-2">
-                            <Users size={14} /> 32
-                          </div>
-                        </td>
-                        <td className="whitespace-nowrap px-3 py-4">
-                          Room 203
-                        </td>
-                      </tr>
-                      <tr className="hover:bg-purple-50 dark:hover:bg-purple-900/30 transition">
-                        <td className="whitespace-nowrap py-4 pl-4 pr-3 text-violet-700 dark:text-violet-300 sm:pl-6">
-                          <div className="flex items-center gap-2">
-                            <BookOpen size={16} /> Science
-                          </div>
-                        </td>
-                        <td className="whitespace-nowrap px-3 py-4">
-                          Grade 9 - B
-                        </td>
-                        <td className="whitespace-nowrap px-3 py-4">
-                          <div className="flex items-center gap-2">
-                            <Clock size={14} /> 10:00–10:45 AM
-                          </div>
-                        </td>
-                        <td className="whitespace-nowrap px-3 py-4">
-                          <div className="flex items-center gap-2">
-                            <Users size={14} /> 28
-                          </div>
-                        </td>
-                        <td className="whitespace-nowrap px-3 py-4">Lab 1</td>
-                      </tr>
-                      <tr className="hover:bg-purple-50 dark:hover:bg-purple-900/30 transition">
-                        <td className="whitespace-nowrap py-4 pl-4 pr-3 text-purple-700 dark:text-purple-300 sm:pl-6">
-                          <div className="flex items-center gap-2">
-                            <BookOpen size={16} /> Computer
-                          </div>
-                        </td>
-                        <td className="whitespace-nowrap px-3 py-4">
-                          Grade 10 - B
-                        </td>
-                        <td className="whitespace-nowrap px-3 py-4">
-                          <div className="flex items-center gap-2">
-                            <Clock size={14} /> 11:00–11:45 AM
-                          </div>
-                        </td>
-                        <td className="whitespace-nowrap px-3 py-4">
-                          <div className="flex items-center gap-2">
-                            <Users size={14} /> 30
-                          </div>
-                        </td>
-                        <td className="whitespace-nowrap px-3 py-4">Lab 2</td>
-                      </tr>
+                    <tbody className="divide-y divide-purple-100 dark:divide-purple-800 bg-white/50 dark:bg-gray-800/50">
+                      {classesLoading ? (
+                        <tr>
+                          <td
+                            colSpan="5"
+                            className="text-center py-4 text-gray-500"
+                          >
+                            Loading classes...
+                          </td>
+                        </tr>
+                      ) : assignedClasses.length === 0 ? (
+                        <tr>
+                          <td
+                            colSpan="5"
+                            className="text-center py-4 text-gray-500"
+                          >
+                            No classes assigned yet
+                          </td>
+                        </tr>
+                      ) : (
+                        assignedClasses.map((cls) => (
+                          <tr
+                            key={cls.id}
+                            className="hover:bg-purple-50 dark:hover:bg-purple-900/30 transition"
+                          >
+                            <td className="whitespace-nowrap py-4 pl-4 pr-3 text-purple-700 dark:text-purple-300 sm:pl-6">
+                              <div className="flex items-center gap-2">
+                                <BookOpen size={16} /> {cls.subject}
+                              </div>
+                            </td>
+                            <td className="whitespace-nowrap px-3 py-4">
+                              Grade {cls.grade} - {cls.section}
+                            </td>
+                            <td className="whitespace-nowrap px-3 py-4">
+                              <div className="flex items-center gap-2">
+                                <Clock size={14} /> {cls.time || "Schedule TBD"}
+                              </div>
+                            </td>
+                            <td className="whitespace-nowrap px-3 py-4">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-purple-600 dark:text-purple-400"
+                                onClick={() => {
+                                  // Add student management functionality
+                                }}
+                              >
+                                <Users size={14} className="mr-1" /> Manage
+                                Students
+                              </Button>
+                            </td>
+                            <td className="whitespace-nowrap px-3 py-4">
+                              {cls.room || "Room TBD"}
+                            </td>
+                          </tr>
+                        ))
+                      )}
                     </tbody>
                   </table>
                 </div>
