@@ -171,11 +171,11 @@ export default function DashboardPage() {
               <div className="flex items-start gap-4">
                 <img
                   alt="avatar"
-                  className="w-16 h-16 rounded-2xl object-cover shadow-lg"
-                  src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=200&auto=format&fit=crop"
+                  className="w-18 h-18 mt-11 rounded-2xl object-cover shadow-lg"
+                  src="https://img.freepik.com/premium-photo/profile-icon-white-background_941097-159423.jpg?w=2000"
                 />
                 <div className="flex-1 min-w-0">
-                  <div className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-gray-100 truncate">
+                  <div className="text-lg sm:text-3xl -ml-22 font-semibold text-gray-900 dark:text-gray-100 truncate">
                     {displayName ? `Mr. ${displayName}` : "Teacher"}
                   </div>
                   <div className="mt-1 text-sm text-gray-700 dark:text-gray-300">
@@ -188,11 +188,11 @@ export default function DashboardPage() {
                   <div className="text-sm text-gray-600 dark:text-gray-400 truncate">
                     <span className="font-medium">Email:</span> {email}
                   </div>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {['Algebra','Calculus','Statistics'].map((tag) => (
+                  <div className="mt-2 flex flex-wrap  gap-2">
+                    {['Algebra','Java','Statistics'].map((tag) => (
                       <span
                         key={tag}
-                        className="text-xs px-3 py-1 rounded-full bg-gradient-to-r from-purple-50 to-violet-50 text-purple-700 border border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800"
+                        className="text-xs -ml-1 px-3 py-1 rounded-full bg-gradient-to-r from-purple-50 to-violet-50 text-purple-700 border border-purple-200 dark:text-purple-700 dark:text-purple-300 dark:border-purple-800"
                       >
                         {tag}
                       </span>

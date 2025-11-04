@@ -31,7 +31,7 @@ export default function Sidebar({ open, onOpenChange, collapsed = false, onToggl
   const router = useRouter();
 
   const Content = (
-      <div className={`rounded-2xl border border-purple-200 dark:border-purple-800 bg-white/70 dark:bg-gray-900/40 ${collapsed ? "p-2" : "p-3 sm:p-4"} shadow-sm h-full flex flex-col`}> 
+      <div className={`rounded-2xl border border-purple-200 dark:border-purple-800 bg-white/70 dark:bg-gray-900/80 ${collapsed ? "p-2" : "p-3 sm:p-4"} shadow-sm h-full flex flex-col`}> 
         {/* Top bar with hamburger/collapse */}
         <div className={`flex items-center ${collapsed ? "justify-center" : "justify-between"}`}>
           {onToggleCollapsed && (
