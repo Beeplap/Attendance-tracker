@@ -35,7 +35,13 @@ export default function AddClass({ open, onClose, profiles = [], onCreated }) {
       const json = await res.json();
       if (!res.ok) throw new Error(json?.error || "Failed to add class");
       setSuccess("Class assigned successfully");
-      setNewClass({ name: "", grade: "", section: "", subject: "", teacher_id: "" });
+      setNewClass({
+        name: "",
+        grade: "",
+        section: "",
+        subject: "",
+        teacher_id: "",
+      });
       if (typeof onCreated === "function") onCreated(json.class || null);
       // close after short delay
       setTimeout(() => onClose && onClose(), 500);
@@ -57,12 +63,16 @@ export default function AddClass({ open, onClose, profiles = [], onCreated }) {
                 <CardTitle className="text-lg font-semibold text-gray-800 dark:text-gray-100">
                   Assign Class
                 </CardTitle>
-                <div className="text-xs opacity-70">Assign a class to a teacher</div>
+                <div className="text-xs opacity-70">
+                  Assign a class to a teacher
+                </div>
               </CardHeader>
 
               <CardContent>
                 {error && <p className="text-sm text-red-600 mb-2">{error}</p>}
-                {success && <p className="text-sm text-green-600 mb-2">{success}</p>}
+                {success && (
+                  <p className="text-sm text-green-600 mb-2">{success}</p>
+                )}
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="space-y-1">
@@ -70,7 +80,9 @@ export default function AddClass({ open, onClose, profiles = [], onCreated }) {
                     <input
                       type="text"
                       value={newClass.name}
-                      onChange={(e) => setNewClass({ ...newClass, name: e.target.value })}
+                      onChange={(e) =>
+                        setNewClass({ ...newClass, name: e.target.value })
+                      }
                       className="w-full border rounded-md px-3 h-10 bg-white/80 dark:bg-black/20"
                       placeholder="Mathematics"
                     />
@@ -81,7 +93,9 @@ export default function AddClass({ open, onClose, profiles = [], onCreated }) {
                     <input
                       type="text"
                       value={newClass.grade}
-                      onChange={(e) => setNewClass({ ...newClass, grade: e.target.value })}
+                      onChange={(e) =>
+                        setNewClass({ ...newClass, grade: e.target.value })
+                      }
                       className="w-full border rounded-md px-3 h-10 bg-white/80 dark:bg-black/20"
                       placeholder="Grade 10"
                     />
@@ -92,7 +106,9 @@ export default function AddClass({ open, onClose, profiles = [], onCreated }) {
                     <input
                       type="text"
                       value={newClass.section}
-                      onChange={(e) => setNewClass({ ...newClass, section: e.target.value })}
+                      onChange={(e) =>
+                        setNewClass({ ...newClass, section: e.target.value })
+                      }
                       className="w-full border rounded-md px-3 h-10 bg-white/80 dark:bg-black/20"
                       placeholder="A"
                     />
@@ -103,7 +119,9 @@ export default function AddClass({ open, onClose, profiles = [], onCreated }) {
                     <input
                       type="text"
                       value={newClass.subject}
-                      onChange={(e) => setNewClass({ ...newClass, subject: e.target.value })}
+                      onChange={(e) =>
+                        setNewClass({ ...newClass, subject: e.target.value })
+                      }
                       className="w-full border rounded-md px-3 h-10 bg-white/80 dark:bg-black/20"
                       placeholder="Mathematics"
                     />
@@ -113,7 +131,9 @@ export default function AddClass({ open, onClose, profiles = [], onCreated }) {
                     <label className="text-sm">Assign to Teacher</label>
                     <select
                       value={newClass.teacher_id}
-                      onChange={(e) => setNewClass({ ...newClass, teacher_id: e.target.value })}
+                      onChange={(e) =>
+                        setNewClass({ ...newClass, teacher_id: e.target.value })
+                      }
                       className="w-full border rounded-md px-3 h-10 bg-white/80 dark:bg-black/20"
                     >
                       <option value="">Select a teacher</option>
@@ -130,12 +150,23 @@ export default function AddClass({ open, onClose, profiles = [], onCreated }) {
               </CardContent>
 
               <CardFooter className="flex justify-end gap-2">
-                <Button variant="outline" onClick={onClose} className="border-gray-400 text-gray-700 dark:text-gray-200">
+                <Button
+                  variant="outline"
+                  onClick={onClose}
+                  className="border-gray-400 text-gray-700 dark:text-gray-200"
+                >
                   Cancel
                 </Button>
                 <Button
                   onClick={handleSubmit}
-                  disabled={loading || !newClass.name || !newClass.grade || !newClass.section || !newClass.subject || !newClass.teacher_id}
+                  disabled={
+                    loading ||
+                    !newClass.name ||
+                    !newClass.grade ||
+                    !newClass.section ||
+                    !newClass.subject ||
+                    !newClass.teacher_id
+                  }
                   className="bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-700 hover:to-violet-700 text-white px-4 py-2 rounded-lg shadow-md transition-all duration-200"
                 >
                   {loading ? "Assigning…" : "Assign Class"}
