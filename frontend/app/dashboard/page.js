@@ -142,66 +142,76 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Welcome Banner */}
-      <Card className="shadow-md border border-gray-200 dark:border-gray-700 bg-white/60 dark:bg-black/20 backdrop-blur supports-[backdrop-filter]:backdrop-blur-md">
-        <div className="p-5 sm:p-6 grid gap-2 sm:gap-3">
-          <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-gray-100">
-            Welcome back,{" "}
-            <span className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-violet-600 dark:from-purple-400 dark:to-violet-400">
-              {displayName}
-            </span>
-          </h2>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            Here’s a quick snapshot of your day. Have a great session!
-          </p>
-          <div className="mt-2 flex flex-wrap gap-2">
-            <span className="text-xs px-2.5 py-1 rounded-full bg-white/70 text-gray-800 border border-gray-200 dark:bg-white/10 dark:text-gray-200 dark:border-white/10">
-              Today: {new Date().toLocaleDateString()}
-            </span>
-            <span className="text-xs px-2.5 py-1 rounded-full bg-white/70 text-gray-800 border border-gray-200 dark:bg-white/10 dark:text-gray-200 dark:border-white/10">
-              Classes: {assignedClasses.length}
-            </span>
-            <span className="text-xs px-2.5 py-1 rounded-full bg-white/70 text-gray-800 border border-gray-200 dark:bg-white/10 dark:text-gray-200 dark:border-white/10">
-              Pending Tasks: 2
-            </span>
-          </div>
-        </div>
-      </Card>
-
-      {/* Teacher Info */}
+      {/* Profile + Stats */}
       <Card className="shadow-md border border-purple-200 dark:border-purple-800 bg-white/70 dark:bg-gray-900/30">
         <CardContent>
-          <div className="p-5 flex flex-col sm:flex-row items-start sm:items-center gap-5">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-violet-600 flex items-center justify-center text-white text-xl font-semibold shadow-lg">
-              {displayName?.[0] || "T"}
+          <div className="p-5 grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
+            {/* Left: Teacher Profile */}
+            <div className="md:col-span-5 lg:col-span-4">
+              <div className="flex items-start gap-4">
+                <img
+                  alt="avatar"
+                  className="w-16 h-16 rounded-2xl object-cover shadow-lg"
+                  src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=200&auto=format&fit=crop"
+                />
+                <div className="flex-1 min-w-0">
+                  <div className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-gray-100 truncate">
+                    {displayName ? `Mr. ${displayName}` : "Teacher"}
+                  </div>
+                  <div className="mt-1 text-sm text-gray-700 dark:text-gray-300">
+                    <span className="font-medium">Teacher ID: </span>
+                    {teacherCode || "—"}
+                  </div>
+                  <div className="text-sm text-gray-700 dark:text-gray-300">
+                    <span className="font-medium">Department:</span> {department}
+                  </div>
+                  <div className="text-sm text-gray-600 dark:text-gray-400 truncate">
+                    <span className="font-medium">Email:</span> {email}
+                  </div>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {['Algebra','Calculus','Statistics'].map((tag) => (
+                      <span
+                        key={tag}
+                        className="text-xs px-3 py-1 rounded-full bg-gradient-to-r from-purple-50 to-violet-50 text-purple-700 border border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
             </div>
-            <div className="flex-1 grid gap-1">
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                <span className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-gray-100">
-                  {displayName ? `Mr. ${displayName}` : "Teacher"}
-                </span>
-                {teacherCode && (
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 border border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800">
-                    Teacher ID: {teacherCode}
-                  </span>
-                )}
-              </div>
-              <div className="text-sm text-gray-700 dark:text-gray-300">
-                <span className="font-medium">Department:</span> {department}
-              </div>
-              <div className="text-sm text-gray-600 dark:text-gray-400">
-                <span className="font-medium">Email:</span> {email}
-              </div>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {['Algebra','Calculus','Statistics'].map((tag) => (
-                  <span
-                    key={tag}
-                    className="text-xs px-3 py-1 rounded-full bg-gradient-to-r from-purple-50 to-violet-50 text-purple-700 border border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800"
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </div>
+
+            {/* Right: Summary Stats */}
+            <div className="md:col-span-7 lg:col-span-8">
+              {(() => {
+                const total = assignedClasses.length;
+                const marked = total > 0 ? 1 : 0;
+                const pending = Math.max(0, total - marked);
+                const pct = total > 0 ? Math.round((marked / total) * 100) : 0;
+                const now = new Date();
+                const time = now.toLocaleTimeString();
+                const card = (label, value, icon) => (
+                  <div className="flex-1 min-w-[140px] rounded-xl bg-white/70 dark:bg-gray-800/60 border border-purple-200 dark:border-purple-800 p-4 flex items-center justify-between">
+                    <div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400">{label}</div>
+                      <div className="mt-1 text-xl font-semibold text-gray-900 dark:text-gray-100">{value}</div>
+                    </div>
+                    <div className="text-xl">{icon}</div>
+                  </div>
+                );
+                return (
+                  <div className="flex flex-wrap gap-3">
+                    {card('Total Classes', total, '📅')}
+                    {card('Marked', marked, '✅')}
+                    {card('Pending', pending, '⏳')}
+                    {card('Attendance %', `${pct}%`, '📈')}
+                    <div className="basis-full text-right text-xs text-gray-600 dark:text-gray-400 mt-1">
+                      Last Updated: {time}
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           </div>
         </CardContent>
