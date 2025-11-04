@@ -331,12 +331,12 @@ export default function AdminPage() {
         onCreated={() => fetchProfiles()}
       />
 
-      {/* Users Table */}
+      {/* Users Table test  */}
       <Card className="shadow-md border border-gray-200 dark:border-gray-700">
         <CardHeader className="flex flex-col sm:flex-row gap-2 sm:items-center justify-between">
           <div>
             <CardTitle className="text-lg font-semibold text-gray-800 dark:text-gray-100">
-              Users
+              Users 
             </CardTitle>
             <p className="text-sm text-gray-600 dark:text-gray-400">
               {profiles.filter((p) => p.role === "admin").length} admins,{" "}
