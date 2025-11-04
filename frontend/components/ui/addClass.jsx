@@ -12,10 +12,10 @@ import {
 
 export default function AddClass({ open, onClose, profiles = [], onCreated }) {
   const [newClass, setNewClass] = useState({
-    name: "",
-    grade: "",
-    section: "",
+    course: "",
+    semester: "",
     subject: "",
+    room_number: "",
     teacher_id: "",
   });
   const [loading, setLoading] = useState(false);
@@ -36,10 +36,10 @@ export default function AddClass({ open, onClose, profiles = [], onCreated }) {
       if (!res.ok) throw new Error(json?.error || "Failed to add class");
       setSuccess("Class assigned successfully");
       setNewClass({
-        name: "",
-        grade: "",
-        section: "",
+        course: "",
+        semester: "",
         subject: "",
+        room_number: "",
         teacher_id: "",
       });
       if (typeof onCreated === "function") onCreated(json.class || null);
@@ -76,41 +76,28 @@ export default function AddClass({ open, onClose, profiles = [], onCreated }) {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="space-y-1">
-                    <label className="text-sm">Class Name</label>
+                    <label className="text-sm">Course</label>
                     <input
                       type="text"
-                      value={newClass.name}
+                      value={newClass.course}
                       onChange={(e) =>
-                        setNewClass({ ...newClass, name: e.target.value })
+                        setNewClass({ ...newClass, course: e.target.value })
                       }
                       className="w-full border rounded-md px-3 h-10 bg-white/80 dark:bg-black/20"
-                      placeholder="Mathematics"
+                      placeholder="BSc Computer Science"
                     />
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-sm">Grade</label>
+                    <label className="text-sm">Semester</label>
                     <input
                       type="text"
-                      value={newClass.grade}
+                      value={newClass.semester}
                       onChange={(e) =>
-                        setNewClass({ ...newClass, grade: e.target.value })
+                        setNewClass({ ...newClass, semester: e.target.value })
                       }
                       className="w-full border rounded-md px-3 h-10 bg-white/80 dark:bg-black/20"
-                      placeholder="Grade 10"
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-sm">Section</label>
-                    <input
-                      type="text"
-                      value={newClass.section}
-                      onChange={(e) =>
-                        setNewClass({ ...newClass, section: e.target.value })
-                      }
-                      className="w-full border rounded-md px-3 h-10 bg-white/80 dark:bg-black/20"
-                      placeholder="A"
+                      placeholder="Semester 2"
                     />
                   </div>
 
@@ -123,7 +110,23 @@ export default function AddClass({ open, onClose, profiles = [], onCreated }) {
                         setNewClass({ ...newClass, subject: e.target.value })
                       }
                       className="w-full border rounded-md px-3 h-10 bg-white/80 dark:bg-black/20"
-                      placeholder="Mathematics"
+                      placeholder="Data Structures"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-sm">Room number</label>
+                    <input
+                      type="text"
+                      value={newClass.room_number}
+                      onChange={(e) =>
+                        setNewClass({
+                          ...newClass,
+                          room_number: e.target.value,
+                        })
+                      }
+                      className="w-full border rounded-md px-3 h-10 bg-white/80 dark:bg-black/20"
+                      placeholder="Room 101"
                     />
                   </div>
 
@@ -161,9 +164,7 @@ export default function AddClass({ open, onClose, profiles = [], onCreated }) {
                   onClick={handleSubmit}
                   disabled={
                     loading ||
-                    !newClass.name ||
-                    !newClass.grade ||
-                    !newClass.section ||
+                    !newClass.course ||
                     !newClass.subject ||
                     !newClass.teacher_id
                   }

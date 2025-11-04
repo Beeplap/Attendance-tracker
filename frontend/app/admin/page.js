@@ -331,7 +331,7 @@ export default function AdminPage() {
         onCreated={() => fetchProfiles()}
       />
 
-      {/* Users Table - Mobile Friendly */}
+      {/* Users Table */}
       <Card className="shadow-md border border-gray-200 dark:border-gray-700">
         <CardHeader className="flex flex-col sm:flex-row gap-2 sm:items-center justify-between">
           <div>
