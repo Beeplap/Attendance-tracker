@@ -1,0 +1,150 @@
+"use client";
+import React, { useState, Fragment } from "react";
+import { Dialog, Transition } from "@headlessui/react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  CardFooter,
+} from "@/components/ui/card";
+
+export default function AddClass({ open, onClose, profiles = [], onCreated }) {
+  const [newClass, setNewClass] = useState({
+    name: "",
+    grade: "",
+    section: "",
+    subject: "",
+    teacher_id: "",
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+
+  const handleSubmit = async () => {
+    setError("");
+    setSuccess("");
+    setLoading(true);
+    try {
+      const res = await fetch("/api/classes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newClass),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json?.error || "Failed to add class");
+      setSuccess("Class assigned successfully");
+      setNewClass({ name: "", grade: "", section: "", subject: "", teacher_id: "" });
+      if (typeof onCreated === "function") onCreated(json.class || null);
+      // close after short delay
+      setTimeout(() => onClose && onClose(), 500);
+    } catch (err) {
+      setError(err.message || String(err));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Transition appear show={open} as={Fragment}>
+      <Dialog as="div" className="relative z-50" onClose={onClose}>
+        <div className="fixed inset-0 bg-black/50" aria-hidden="true" />
+        <div className="fixed inset-0 flex items-center justify-center p-4">
+          <Dialog.Panel className="bg-white dark:bg-gray-900 rounded-lg shadow-xl w-full max-w-lg border border-gray-300 dark:border-gray-700">
+            <Card className="shadow-none border-none">
+              <CardHeader>
+                <CardTitle className="text-lg font-semibold text-gray-800 dark:text-gray-100">
+                  Assign Class
+                </CardTitle>
+                <div className="text-xs opacity-70">Assign a class to a teacher</div>
+              </CardHeader>
+
+              <CardContent>
+                {error && <p className="text-sm text-red-600 mb-2">{error}</p>}
+                {success && <p className="text-sm text-green-600 mb-2">{success}</p>}
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-sm">Class Name</label>
+                    <input
+                      type="text"
+                      value={newClass.name}
+                      onChange={(e) => setNewClass({ ...newClass, name: e.target.value })}
+                      className="w-full border rounded-md px-3 h-10 bg-white/80 dark:bg-black/20"
+                      placeholder="Mathematics"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-sm">Grade</label>
+                    <input
+                      type="text"
+                      value={newClass.grade}
+                      onChange={(e) => setNewClass({ ...newClass, grade: e.target.value })}
+                      className="w-full border rounded-md px-3 h-10 bg-white/80 dark:bg-black/20"
+                      placeholder="Grade 10"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-sm">Section</label>
+                    <input
+                      type="text"
+                      value={newClass.section}
+                      onChange={(e) => setNewClass({ ...newClass, section: e.target.value })}
+                      className="w-full border rounded-md px-3 h-10 bg-white/80 dark:bg-black/20"
+                      placeholder="A"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-sm">Subject</label>
+                    <input
+                      type="text"
+                      value={newClass.subject}
+                      onChange={(e) => setNewClass({ ...newClass, subject: e.target.value })}
+                      className="w-full border rounded-md px-3 h-10 bg-white/80 dark:bg-black/20"
+                      placeholder="Mathematics"
+                    />
+                  </div>
+
+                  <div className="space-y-1 sm:col-span-2">
+                    <label className="text-sm">Assign to Teacher</label>
+                    <select
+                      value={newClass.teacher_id}
+                      onChange={(e) => setNewClass({ ...newClass, teacher_id: e.target.value })}
+                      className="w-full border rounded-md px-3 h-10 bg-white/80 dark:bg-black/20"
+                    >
+                      <option value="">Select a teacher</option>
+                      {profiles
+                        .filter((p) => p.role === "teacher")
+                        .map((teacher) => (
+                          <option key={teacher.id} value={teacher.id}>
+                            {teacher.full_name} ({teacher.email})
+                          </option>
+                        ))}
+                    </select>
+                  </div>
+                </div>
+              </CardContent>
+
+              <CardFooter className="flex justify-end gap-2">
+                <Button variant="outline" onClick={onClose} className="border-gray-400 text-gray-700 dark:text-gray-200">
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleSubmit}
+                  disabled={loading || !newClass.name || !newClass.grade || !newClass.section || !newClass.subject || !newClass.teacher_id}
+                  className="bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-700 hover:to-violet-700 text-white px-4 py-2 rounded-lg shadow-md transition-all duration-200"
+                >
+                  {loading ? "Assigning…" : "Assign Class"}
+                </Button>
+              </CardFooter>
+            </Card>
+          </Dialog.Panel>
+        </div>
+      </Dialog>
+    </Transition>
+  );
+}

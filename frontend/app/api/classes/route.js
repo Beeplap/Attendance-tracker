@@ -4,29 +4,13 @@ import { NextResponse } from "next/server";
 
 export async function POST(request) {
   const cookieStore = cookies();
+  // Pass Next.js cookies() object directly to the Supabase SSR client.
+  // This avoids issues where cookie helpers are not functions in some runtimes.
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     {
-      cookies: {
-        get(name) {
-          return cookieStore.get(name)?.value;
-        },
-        set(name, value, options) {
-          try {
-            cookieStore.set({ name, value, ...options });
-          } catch (error) {
-            // Handle cookie error
-          }
-        },
-        remove(name, options) {
-          try {
-            cookieStore.delete({ name, ...options });
-          } catch (error) {
-            // Handle cookie error
-          }
-        },
-      },
+      cookies: cookieStore || undefined,
     }
   );
 
@@ -87,25 +71,7 @@ export async function GET(request) {
     process.env.NEXT_PUBLIC_SUPABASE_URL,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     {
-      cookies: {
-        get(name) {
-          return cookieStore.get(name)?.value;
-        },
-        set(name, value, options) {
-          try {
-            cookieStore.set({ name, value, ...options });
-          } catch (error) {
-            // Handle cookie error
-          }
-        },
-        remove(name, options) {
-          try {
-            cookieStore.delete({ name, ...options });
-          } catch (error) {
-            // Handle cookie error
-          }
-        },
-      },
+      cookies: cookieStore || undefined,
     }
   );
 
@@ -147,25 +113,7 @@ export async function DELETE(request) {
     process.env.NEXT_PUBLIC_SUPABASE_URL,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     {
-      cookies: {
-        get(name) {
-          return cookieStore.get(name)?.value;
-        },
-        set(name, value, options) {
-          try {
-            cookieStore.set({ name, value, ...options });
-          } catch (error) {
-            // Handle cookie error
-          }
-        },
-        remove(name, options) {
-          try {
-            cookieStore.delete({ name, ...options });
-          } catch (error) {
-            // Handle cookie error
-          }
-        },
-      },
+      cookies: cookieStore || undefined,
     }
   );
 

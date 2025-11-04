@@ -1,8 +1,0 @@
-{
-  "name": "20251103_create_classes_table",
-  "version": "1.0.0",
-  "description": "Creates the classes table and sets up RLS policies",
-  "dependencies": {
-    "profiles": "^1.0.0"
-  }
-}
