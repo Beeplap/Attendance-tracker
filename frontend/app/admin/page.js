@@ -14,6 +14,7 @@ import { resolveUserRole } from "@/lib/utils";
 import { Moon, Sun, MoreHorizontal } from "lucide-react";
 import { Dialog, Menu, Transition } from "@headlessui/react";
 import AddClass from "@/components/ui/addClass";
+import Sidebar from "@/components/ui/sidebar";
 
 export default function AdminPage() {
   const router = useRouter();
@@ -42,6 +43,8 @@ export default function AdminPage() {
     subject: "",
     teacher_id: "",
   });
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data }) => {
@@ -100,7 +103,15 @@ export default function AdminPage() {
     return <div className="p-6 text-center text-gray-600">Loading…</div>;
 
   return (
-    <div className="min-h-dvh bg-gradient-to-br from-purple-50 via-violet-50 to-purple-100 dark:from-gray-900 dark:via-purple-950 dark:to-gray-900 p-6 space-y-8">
+    <div className="min-h-dvh bg-gradient-to-br from-purple-50 via-violet-50 to-purple-100 dark:from-gray-900 dark:via-purple-950 dark:to-gray-900 p-6">
+      <div className="w-full mx-auto flex flex-col lg:flex-row gap-6">
+        <Sidebar
+          open={sidebarOpen}
+          onOpenChange={setSidebarOpen}
+          collapsed={sidebarCollapsed}
+          onToggleCollapsed={() => setSidebarCollapsed((v) => !v)}
+        />
+        <main className="flex-1 space-y-8">
       {/* Header */}
       {/* Header with responsive layout */}
       
@@ -133,6 +144,15 @@ export default function AdminPage() {
 
         {/* Responsive button group */}
         <div className="flex flex-wrap items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="p-2 rounded-full sm:hidden"
+            onClick={() => setSidebarOpen(true)}
+            aria-label="Open sidebar"
+          >
+            <svg className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path d="M3 6h14M3 10h14M3 14h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
+          </Button>
           {/* Dark Mode Toggle */}
           <Button
             variant="ghost"
@@ -460,6 +480,8 @@ export default function AdminPage() {
           </div>
         </CardContent>
       </Card>
+        </main>
+      </div>
     </div>
   );
 }

@@ -6,6 +6,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { supabase } from "@/lib/supabaseClient";
 import { resolveUserRole } from "@/lib/utils";
 import { Moon, Sun, Bell, Users, Clock, BookOpen } from "lucide-react";
+import Sidebar from "@/components/ui/sidebar";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -17,6 +18,8 @@ export default function DashboardPage() {
   const [userId, setUserId] = useState("");
   const [teacherCode, setTeacherCode] = useState("");
   const [department, setDepartment] = useState("Mathematics");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data }) => {
@@ -90,7 +93,15 @@ export default function DashboardPage() {
     : "Teacher";
 
   return (
-    <div className="min-h-dvh bg-gradient-to-br from-purple-50 via-violet-50 to-purple-100 dark:from-gray-900 dark:via-purple-950 dark:to-gray-900 p-6 space-y-6">
+    <div className="min-h-dvh bg-gradient-to-br from-purple-50 via-violet-50 to-purple-100 dark:from-gray-900 dark:via-purple-950 dark:to-gray-900 p-6">
+      <div className="w-full mx-auto flex flex-col lg:flex-row gap-6">
+        <Sidebar
+          open={sidebarOpen}
+          onOpenChange={setSidebarOpen}
+          collapsed={sidebarCollapsed}
+          onToggleCollapsed={() => setSidebarCollapsed((v) => !v)}
+        />
+        <main className="flex-1 space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
@@ -119,6 +130,15 @@ export default function DashboardPage() {
           </div>
         </div>
         <div className="flex items-center gap-2 w-full sm:w-auto">
+          <Button
+            variant="ghost"
+            className="p-2 rounded-full sm:hidden"
+            onClick={() => setSidebarOpen(true)}
+            aria-label="Open sidebar"
+          >
+            {/* simple hamburger */}
+            <svg className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path d="M3 6h14M3 10h14M3 14h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
+          </Button>
           <Button
             variant="ghost"
             className="p-2 rounded-full"
@@ -407,6 +427,8 @@ export default function DashboardPage() {
           </p>
         </CardContent>
       </Card>
+        </main>
+      </div>
     </div>
   );
 }
