@@ -14,6 +14,9 @@ export default function DashboardPage() {
   const [fullName, setFullName] = useState("");
   const [assignedClasses, setAssignedClasses] = useState([]);
   const [classesLoading, setClassesLoading] = useState(true);
+  const [userId, setUserId] = useState("");
+  const [teacherCode, setTeacherCode] = useState("");
+  const [department, setDepartment] = useState("Mathematics");
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data }) => {
@@ -29,6 +32,7 @@ export default function DashboardPage() {
         return;
       }
       setEmail(user.email || "");
+      setUserId(user.id || "");
       // Load teacher display name from profiles
       try {
         const { data: profile } = await supabase
@@ -54,6 +58,19 @@ export default function DashboardPage() {
       }
     });
   }, [router]);
+
+  // Create a deterministic teacher code without changing backend
+  useEffect(() => {
+    if (!userId) return;
+    // Simple, readable code like TEA-2025-334 (stable per userId)
+    const year = new Date().getFullYear();
+    let hash = 0;
+    for (let i = 0; i < userId.length; i++) {
+      hash = (hash * 31 + userId.charCodeAt(i)) >>> 0;
+    }
+    const suffix = (hash % 900 + 100).toString();
+    setTeacherCode(`TEA-${year}-${suffix}`);
+  }, [userId]);
 
   const toggleTheme = () => {
     document.documentElement.classList.toggle("dark");
@@ -149,6 +166,45 @@ export default function DashboardPage() {
             </span>
           </div>
         </div>
+      </Card>
+
+      {/* Teacher Info */}
+      <Card className="shadow-md border border-purple-200 dark:border-purple-800 bg-white/70 dark:bg-gray-900/30">
+        <CardContent>
+          <div className="p-5 flex flex-col sm:flex-row items-start sm:items-center gap-5">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-violet-600 flex items-center justify-center text-white text-xl font-semibold shadow-lg">
+              {displayName?.[0] || "T"}
+            </div>
+            <div className="flex-1 grid gap-1">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                <span className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-gray-100">
+                  {displayName ? `Mr. ${displayName}` : "Teacher"}
+                </span>
+                {teacherCode && (
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 border border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800">
+                    Teacher ID: {teacherCode}
+                  </span>
+                )}
+              </div>
+              <div className="text-sm text-gray-700 dark:text-gray-300">
+                <span className="font-medium">Department:</span> {department}
+              </div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">
+                <span className="font-medium">Email:</span> {email}
+              </div>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {['Algebra','Calculus','Statistics'].map((tag) => (
+                  <span
+                    key={tag}
+                    className="text-xs px-3 py-1 rounded-full bg-gradient-to-r from-purple-50 to-violet-50 text-purple-700 border border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+        </CardContent>
       </Card>
 
       {/* Main Dashboard Grid */}
