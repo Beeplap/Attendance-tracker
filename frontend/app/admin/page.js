@@ -11,10 +11,67 @@ import {
 } from "@/components/ui/card";
 import { supabase } from "@/lib/supabaseClient";
 import { resolveUserRole } from "@/lib/utils";
-import { Moon, Sun, MoreHorizontal, User, BookOpen, CheckCircle, XCircle, Calendar } from "lucide-react";
+import { Moon, Sun, MoreHorizontal, User, BookOpen, CheckCircle, XCircle, Calendar, BarChart3, Users, Clock } from "lucide-react";
 import { Dialog, Menu, Transition } from "@headlessui/react";
 import AddClass from "@/components/ui/addClass";
 import Sidebar from "@/components/ui/sidebar";
+
+// Simple bar chart component for attendance visualization
+const AttendanceBarChart = ({ present, total, className = "" }) => {
+  const percentage = total > 0 ? (present / total) * 100 : 0;
+  
+  return (
+    <div className={`w-full bg-gray-200 rounded-full h-2 dark:bg-gray-700 ${className}`}>
+      <div
+        className="bg-green-500 h-2 rounded-full transition-all duration-300"
+        style={{ width: `${percentage}%` }}
+      ></div>
+    </div>
+  );
+};
+
+// Pie chart component for attendance distribution
+const AttendancePieChart = ({ present, absent, className = "" }) => {
+  const total = present + absent;
+  const presentPercentage = total > 0 ? (present / total) * 100 : 0;
+  const absentPercentage = total > 0 ? (absent / total) * 100 : 0;
+  
+  return (
+    <div className={`relative w-20 h-20 ${className}`}>
+      <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90">
+        {/* Present segment */}
+        <circle
+          cx="50"
+          cy="50"
+          r="40"
+          stroke="currentColor"
+          strokeWidth="20"
+          fill="none"
+          strokeLinecap="round"
+          className="text-green-500"
+          strokeDasharray={`${presentPercentage} ${100 - presentPercentage}`}
+          strokeDashoffset="0"
+        />
+        {/* Absent segment */}
+        <circle
+          cx="50"
+          cy="50"
+          r="40"
+          stroke="currentColor"
+          strokeWidth="20"
+          fill="none"
+          strokeLinecap="round"
+          className="text-red-500"
+          strokeDasharray={`${absentPercentage} ${100 - absentPercentage}`}
+          strokeDashoffset={-presentPercentage}
+        />
+      </svg>
+      <div className="absolute inset-0 flex items-center justify-center text-xs font-bold">
+        {total > 0 ? Math.round(presentPercentage) : 0}%
+      </div>
+    </div>
+  );
+};
 
 export default function AdminPage() {
   const router = useRouter();
@@ -51,6 +108,8 @@ export default function AdminPage() {
   const [statsLoading, setStatsLoading] = useState(false);
   const [selectedTeacher, setSelectedTeacher] = useState(null);
   const [showTeacherDetails, setShowTeacherDetails] = useState(false);
+  const [teacherClassDetails, setTeacherClassDetails] = useState([]);
+  const [detailsLoading, setDetailsLoading] = useState(false);
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data }) => {
@@ -163,9 +222,70 @@ export default function AdminPage() {
     setStatsLoading(false);
   };
 
-  const viewTeacherDetails = (teacher) => {
+  const fetchTeacherClassDetails = async (teacherId) => {
+    setDetailsLoading(true);
+    
+    // Fetch all classes for this teacher
+    const { data: classes, error: classesError } = await supabase
+      .from("classes")
+      .select("id, name, subject, grade, section, created_at")
+      .eq("teacher_id", teacherId);
+
+    if (classesError) {
+      console.error("Error fetching classes:", classesError);
+      setDetailsLoading(false);
+      return [];
+    }
+
+    const classDetails = await Promise.all(
+      classes.map(async (classItem) => {
+        // Fetch attendance records for this class
+        const { data: attendance, error: attendanceError } = await supabase
+          .from("attendance")
+          .select("date, present_count, total_students, present_students")
+          .eq("class_id", classItem.id)
+          .order("date", { ascending: false });
+
+        if (attendanceError) {
+          console.error("Error fetching attendance:", attendanceError);
+          return {
+            ...classItem,
+            attendanceRecords: [],
+            totalSessions: 0,
+            averageAttendance: 0,
+            lastAttendance: null
+          };
+        }
+
+        const today = new Date().toISOString().split('T')[0];
+        const hasTodayAttendance = attendance.some(record => record.date === today);
+        
+        // Calculate statistics
+        const totalSessions = attendance.length;
+        const averageAttendance = totalSessions > 0 
+          ? attendance.reduce((sum, record) => sum + (record.present_count / record.total_students), 0) / totalSessions * 100
+          : 0;
+
+        return {
+          ...classItem,
+          attendanceRecords: attendance,
+          totalSessions,
+          averageAttendance: Math.round(averageAttendance),
+          hasTodayAttendance,
+          lastAttendance: attendance.length > 0 ? attendance[0] : null
+        };
+      })
+    );
+
+    setTeacherClassDetails(classDetails);
+    setDetailsLoading(false);
+    return classDetails;
+  };
+
+  const viewTeacherDetails = async (teacher) => {
     setSelectedTeacher(teacher);
     setShowTeacherDetails(true);
+    await fetchTeacherClassDetails(teacher.id);
   };
 
   // Role changes are disabled: admins cannot promote/demote users.
@@ -414,7 +534,7 @@ export default function AdminPage() {
             </Card>
           ) : null}
 
-          {/* Teacher Details Modal */}
+          {/* Enhanced Teacher Details Modal */}
           <Dialog
             open={showTeacherDetails}
             onClose={() => setShowTeacherDetails(false)}
@@ -422,57 +542,176 @@ export default function AdminPage() {
           >
             <div className="fixed inset-0 bg-black/50" aria-hidden="true" />
             <div className="fixed inset-0 flex items-center justify-center p-4">
-              <Dialog.Panel className="bg-white dark:bg-gray-900 rounded-lg shadow-xl w-full max-w-2xl border border-gray-300 dark:border-gray-700">
+              <Dialog.Panel className="bg-white dark:bg-gray-900 rounded-lg shadow-xl w-full max-w-6xl border border-gray-300 dark:border-gray-700 max-h-[90vh] overflow-y-auto">
                 <Card className="shadow-none border-none">
                   <CardHeader>
                     <CardTitle className="text-lg font-semibold text-gray-800 dark:text-gray-100">
                       Teacher Details - {selectedTeacher?.full_name}
                     </CardTitle>
                     <div className="text-xs opacity-70">
-                      Complete overview of classes and attendance
+                      Complete overview of classes, attendance, and performance analytics
                     </div>
                   </CardHeader>
 
-                  <CardContent className="space-y-4">
-                    {selectedTeacher && (
+                  <CardContent className="space-y-6">
+                    {detailsLoading ? (
+                      <div className="text-center py-8">Loading detailed information...</div>
+                    ) : selectedTeacher && (
                       <>
+                        {/* Summary Cards */}
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                           <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 p-4 rounded-lg text-center">
                             <BookOpen className="w-8 h-8 text-blue-500 mx-auto mb-2" />
-                            <div className="text-2xl font-bold text-blue-600">{selectedTeacher.totalClasses}</div>
+                            <div className="text-2xl font-bold text-blue-600">{teacherClassDetails.length}</div>
                             <div className="text-xs text-blue-600">Total Classes</div>
                           </div>
                           
                           <div className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 p-4 rounded-lg text-center">
                             <CheckCircle className="w-8 h-8 text-green-500 mx-auto mb-2" />
-                            <div className="text-2xl font-bold text-green-600">{selectedTeacher.completedClasses}</div>
-                            <div className="text-xs text-green-600">Completed</div>
+                            <div className="text-2xl font-bold text-green-600">
+                              {teacherClassDetails.filter(c => c.hasTodayAttendance).length}
+                            </div>
+                            <div className="text-xs text-green-600">Today's Completed</div>
                           </div>
                           
                           <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 dark:from-yellow-900/20 dark:to-yellow-800/20 p-4 rounded-lg text-center">
-                            <Calendar className="w-8 h-8 text-yellow-500 mx-auto mb-2" />
-                            <div className="text-2xl font-bold text-yellow-600">{selectedTeacher.pendingClasses}</div>
-                            <div className="text-xs text-yellow-600">Pending</div>
+                            <Clock className="w-8 h-8 text-yellow-500 mx-auto mb-2" />
+                            <div className="text-2xl font-bold text-yellow-600">
+                              {teacherClassDetails.filter(c => !c.hasTodayAttendance).length}
+                            </div>
+                            <div className="text-xs text-yellow-600">Pending Today</div>
                           </div>
                           
-                          <div className="bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 p-4 rounded-lg text-center">
-                            <XCircle className="w-8 h-8 text-red-500 mx-auto mb-2" />
-                            <div className="text-2xl font-bold text-red-600">{selectedTeacher.missedClasses?.length || 0}</div>
-                            <div className="text-xs text-red-600">Missed Today</div>
+                          <div className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 p-4 rounded-lg text-center">
+                            <BarChart3 className="w-8 h-8 text-purple-500 mx-auto mb-2" />
+                            <div className="text-2xl font-bold text-purple-600">
+                              {teacherClassDetails.length > 0 
+                                ? Math.round(teacherClassDetails.reduce((sum, c) => sum + c.averageAttendance, 0) / teacherClassDetails.length)
+                                : 0
+                              }%
+                            </div>
+                            <div className="text-xs text-purple-600">Avg Attendance</div>
                           </div>
                         </div>
 
+                        {/* Individual Class Details */}
+                        <div className="space-y-4">
+                          <h3 className="font-semibold text-gray-800 dark:text-gray-200">Class-wise Details</h3>
+                          
+                          {teacherClassDetails.map((classItem, index) => (
+                            <div key={classItem.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-3">
+                                <div className="flex-1">
+                                  <h4 className="font-semibold text-gray-800 dark:text-gray-200">
+                                    {classItem.name} - {classItem.subject}
+                                  </h4>
+                                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                                    {classItem.grade} • Section {classItem.section}
+                                  </p>
+                                </div>
+                                
+                                <div className="flex items-center gap-4">
+                                  <div className="text-center">
+                                    <div className="text-2xl font-bold text-blue-600">{classItem.totalSessions}</div>
+                                    <div className="text-xs text-gray-500">Sessions</div>
+                                  </div>
+                                  
+                                  <div className="text-center">
+                                    <div className="text-2xl font-bold text-green-600">{classItem.averageAttendance}%</div>
+                                    <div className="text-xs text-gray-500">Avg Attendance</div>
+                                  </div>
+                                  
+                                  <div className={`px-3 py-1 rounded-full text-xs font-medium ${
+                                    classItem.hasTodayAttendance 
+                                      ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
+                                      : 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'
+                                  }`}>
+                                    {classItem.hasTodayAttendance ? 'Completed Today' : 'Pending Today'}
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Attendance Graph */}
+                              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-3">
+                                <div className="space-y-2">
+                                  <div className="flex items-center justify-between text-sm">
+                                    <span className="text-gray-600 dark:text-gray-400">Today's Attendance:</span>
+                                    <span className="font-medium">
+                                      {classItem.lastAttendance 
+                                        ? `${classItem.lastAttendance.present_count}/${classItem.lastAttendance.total_students}`
+                                        : 'No data'
+                                      }
+                                    </span>
+                                  </div>
+                                  <AttendanceBarChart
+                                    present={classItem.lastAttendance?.present_count || 0}
+                                    total={classItem.lastAttendance?.total_students || 1}
+                                  />
+                                </div>
+                                
+                                <div className="flex items-center justify-center">
+                                  <AttendancePieChart
+                                    present={classItem.lastAttendance?.present_count || 0}
+                                    absent={(classItem.lastAttendance?.total_students || 0) - (classItem.lastAttendance?.present_count || 0)}
+                                  />
+                                </div>
+                              </div>
+
+                              {/* Recent Attendance Records */}
+                              <div className="mt-3">
+                                <h5 className="font-medium text-sm text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
+                                  <Users className="w-4 h-4" />
+                                  Recent Attendance Records
+                                </h5>
+                                <div className="space-y-2 max-h-32 overflow-y-auto">
+                                  {classItem.attendanceRecords.slice(0, 5).map((record, recordIndex) => (
+                                    <div key={recordIndex} className="flex items-center justify-between text-sm p-2 bg-gray-50 dark:bg-gray-800 rounded">
+                                      <span className="text-gray-600 dark:text-gray-400">{record.date}</span>
+                                      <div className="flex items-center gap-4">
+                                        <span className="text-green-600 font-medium">
+                                          {record.present_count} present
+                                        </span>
+                                        <span className="text-red-600 font-medium">
+                                          {record.total_students - record.present_count} absent
+                                        </span>
+                                        <span className="text-blue-600 font-medium">
+                                          {Math.round((record.present_count / record.total_students) * 100)}%
+                                        </span>
+                                      </div>
+                                    </div>
+                                  ))}
+                                  {classItem.attendanceRecords.length === 0 && (
+                                    <div className="text-center text-gray-500 dark:text-gray-400 py-2 text-sm">
+                                      No attendance records found
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                          
+                          {teacherClassDetails.length === 0 && (
+                            <div className="text-center text-gray-500 dark:text-gray-400 py-8">
+                              No classes assigned to this teacher
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Missed Classes Section */}
                         {selectedTeacher.missedClasses && selectedTeacher.missedClasses.length > 0 && (
-                          <div>
-                            <h4 className="font-semibold text-red-600 mb-2">Missed Attendance Today:</h4>
+                          <div className="border border-red-200 dark:border-red-800 rounded-lg p-4 bg-red-50 dark:bg-red-900/20">
+                            <h4 className="font-semibold text-red-600 mb-3 flex items-center gap-2">
+                              <XCircle className="w-5 h-5" />
+                              Missed Attendance Today
+                            </h4>
                             <div className="space-y-2">
                               {selectedTeacher.missedClasses.map((missedClass, index) => (
-                                <div key={index} className="flex items-center justify-between p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
+                                <div key={index} className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-lg">
                                   <div>
                                     <div className="font-medium">{missedClass.className}</div>
                                     <div className="text-sm text-gray-600 dark:text-gray-400">{missedClass.subject}</div>
                                   </div>
-                                  <div className="text-sm text-red-600">{missedClass.date}</div>
+                                  <div className="text-sm text-red-600 font-medium">{missedClass.date}</div>
                                 </div>
                               ))}
                             </div>
