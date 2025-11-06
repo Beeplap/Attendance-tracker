@@ -15,6 +15,7 @@ import { Moon, Sun, MoreHorizontal, User, BookOpen, CheckCircle, XCircle, Calend
 import { Dialog, Menu, Transition } from "@headlessui/react";
 import AddClass from "@/components/ui/addClass";
 import Sidebar from "@/components/ui/sidebar";
+import AddUser from "@/components/ui/addUser";
 
 export default function AdminPage() {
   const router = useRouter();
@@ -22,13 +23,6 @@ export default function AdminPage() {
   const [email, setEmail] = useState("");
   const [profiles, setProfiles] = useState([]);
   const [listLoading, setListLoading] = useState(false);
-  const [addLoading, setAddLoading] = useState(false);
-  const [addError, setAddError] = useState("");
-  const [addSuccess, setAddSuccess] = useState("");
-  const [newEmail, setNewEmail] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [newFullName, setNewFullName] = useState("");
-  const [newRole, setNewRole] = useState("teacher");
   const [search, setSearch] = useState("");
   const [filterRole, setFilterRole] = useState("all");
   const [showAddUser, setShowAddUser] = useState(false);
@@ -168,7 +162,6 @@ export default function AdminPage() {
     setShowTeacherDetails(true);
   };
 
-  // Role changes are disabled: admins cannot promote/demote users.
 
   const deleteUser = async (id) => {
     if (!confirm("Are you sure you want to delete this user?")) return;
@@ -496,152 +489,14 @@ export default function AdminPage() {
             </div>
           </Dialog>
 
-          {/* Add User Modal */}
-          <Dialog
+          <AddUser
             open={showAddUser}
             onClose={() => setShowAddUser(false)}
-            className="relative z-50"
-          >
-            <div className="fixed inset-0 bg-black/50" aria-hidden="true" />
-            <div className="fixed inset-0 flex items-center justify-center p-4">
-              <Dialog.Panel className="bg-white dark:bg-gray-900 rounded-lg shadow-xl w-full max-w-md border border-gray-300 dark:border-gray-700">
-                <Card className="shadow-none border-none">
-                  <CardHeader>
-                    <CardTitle className="text-lg font-semibold text-gray-800 dark:text-gray-100">
-                      Add New User
-                    </CardTitle>
-                    <div className="text-xs opacity-70">
-                      Create a new user account
-                    </div>
-                  </CardHeader>
-
-                  <CardContent className="space-y-4">
-                    {addError && (
-                      <div className="p-3 bg-red-50 dark:bg-red-900/20 text-red-600 rounded-lg text-sm">
-                        {addError}
-                      </div>
-                    )}
-                    {addSuccess && (
-                      <div className="p-3 bg-green-50 dark:bg-green-900/20 text-green-600 rounded-lg text-sm">
-                        {addSuccess}
-                      </div>
-                    )}
-
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Full Name</label>
-                      <input
-                        type="text"
-                        value={newFullName}
-                        onChange={(e) => setNewFullName(e.target.value)}
-                        className="w-full border rounded-md px-3 py-2 bg-white/80 dark:bg-black/20"
-                        placeholder="John Doe"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Email</label>
-                      <input
-                        type="email"
-                        value={newEmail}
-                        onChange={(e) => setNewEmail(e.target.value)}
-                        className="w-full border rounded-md px-3 py-2 bg-white/80 dark:bg-black/20"
-                        placeholder="user@example.com"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Password</label>
-                      <input
-                        type="password"
-                        value={newPassword}
-                        onChange={(e) => setNewPassword(e.target.value)}
-                        className="w-full border rounded-md px-3 py-2 bg-white/80 dark:bg-black/20"
-                        placeholder="Min 6 characters"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Role</label>
-                      <select
-                        value={newRole}
-                        onChange={(e) => setNewRole(e.target.value)}
-                        className="w-full border rounded-md px-3 py-2 bg-white/80 dark:bg-black/20"
-                      >
-                        <option value="student">Student</option>
-                        <option value="teacher">Teacher</option>
-                        <option value="admin">Admin</option>
-                      </select>
-                    </div>
-                  </CardContent>
-
-                  <CardFooter className="flex gap-2 justify-end">
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        setShowAddUser(false);
-                        setAddError("");
-                        setAddSuccess("");
-                      }}
-                      disabled={addLoading}
-                      className="border-gray-400 text-gray-700 dark:text-gray-200"
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      onClick={async () => {
-                        setAddLoading(true);
-                        setAddError("");
-                        setAddSuccess("");
-
-                        try {
-                          const res = await fetch("/api/add", {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({
-                              email: newEmail,
-                              password: newPassword,
-                              full_name: newFullName,
-                              role: newRole,
-                            }),
-                          });
-
-                          const data = await res.json();
-
-                          if (!res.ok) {
-                            throw new Error(data.error || "Failed to add user");
-                          }
-
-                          setAddSuccess("User added successfully!");
-                          setNewEmail("");
-                          setNewPassword("");
-                          setNewFullName("");
-                          setNewRole("teacher");
-                          
-                          // Refresh the profiles list
-                          await fetchProfiles();
-                          await fetchTeacherStats();
-
-                          // Close modal after a short delay
-                          setTimeout(() => {
-                            setShowAddUser(false);
-                            setAddSuccess("");
-                          }, 1500);
-                        } catch (error) {
-                          setAddError(error.message);
-                        } finally {
-                          setAddLoading(false);
-                        }
-                      }}
-                      disabled={addLoading || !newEmail || !newPassword || !newFullName}
-                      className="bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-700 hover:to-violet-700 text-white"
-                    >
-                      {addLoading ? "Adding..." : "Add User"}
-                    </Button>
-                  </CardFooter>
-                </Card>
-              </Dialog.Panel>
-            </div>
-          </Dialog>
+            onUserAdded={() => {
+              fetchProfiles();
+              fetchTeacherStats();
+            }}
+          />
 
           <AddClass
             open={showAssignClass}
