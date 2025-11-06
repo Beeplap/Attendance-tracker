@@ -16,6 +16,9 @@ import { Dialog, Menu, Transition } from "@headlessui/react";
 import AddClass from "@/components/ui/addClass";
 import Sidebar from "@/components/ui/sidebar";
 import AddUser from "@/components/ui/addUser";
+import UsersTable from "@/components/ui/usersTable";
+import TeacherStats from "@/components/ui/teacherStats";
+import TeacherDetails from "@/components/ui/teacherDetails";
 
 export default function AdminPage() {
   const router = useRouter();
@@ -301,193 +304,20 @@ export default function AdminPage() {
 
           {/* Teacher Statistics Section */}
           {filterRole === "all" || filterRole === "teacher" ? (
-            <Card className="shadow-md border border-gray-200 dark:border-gray-700">
-              <CardHeader className="flex flex-col sm:flex-row gap-2 sm:items-center justify-between">
-                <div>
-                  <CardTitle className="text-lg font-semibold text-gray-800 dark:text-gray-100">
-                    Teacher Statistics
-                  </CardTitle>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Overview of teacher performance and class management
-                  </p>
-                </div>
-                <Button
-                  variant="outline"
-                  onClick={fetchTeacherStats}
-                  disabled={statsLoading}
-                  className="border-gray-400 text-gray-700 dark:text-gray-200"
-                >
-                  {statsLoading ? "Refreshing…" : "Refresh Stats"}
-                </Button>
-              </CardHeader>
-              <CardContent className="p-0">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead className="sr-only sm:not-sr-only">
-                      <tr className="text-left border-b bg-gray-100 dark:bg-gray-800">
-                        <th className="py-2 px-2 sm:px-4">Teacher</th>
-                        <th className="py-2 px-2 sm:px-4 hidden sm:table-cell">Email</th>
-                        <th className="py-2 px-2 sm:px-4">Total Classes</th>
-                        <th className="py-2 px-2 sm:px-4">Completed</th>
-                        <th className="py-2 px-2 sm:px-4">Pending</th>
-                        <th className="py-2 px-2 sm:px-4">Missed Today</th>
-                        <th className="py-2 px-2 sm:px-4 w-12 text-right">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredTeacherStats.map((teacher, idx) => (
-                        <tr
-                          key={teacher.id}
-                          className={`border-b last:border-0 ${
-                            idx % 2 === 0 ? "bg-white/50 dark:bg-gray-900/40" : ""
-                          }`}
-                        >
-                          <td className="py-2 px-2 sm:px-4">
-                            <div className="flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-2">
-                              <span className="font-medium">
-                                {teacher.full_name || teacher.id}
-                              </span>
-                              <span className="text-xs text-gray-500 sm:hidden">
-                                {teacher.email}
-                              </span>
-                            </div>
-                          </td>
-                          <td className="py-2 px-2 sm:px-4 hidden sm:table-cell">
-                            {teacher.email}
-                          </td>
-                          <td className="py-2 px-2 sm:px-4">
-                            <div className="flex items-center gap-1">
-                              <BookOpen className="w-4 h-4 text-blue-500" />
-                              <span className="font-medium">{teacher.totalClasses}</span>
-                            </div>
-                          </td>
-                          <td className="py-2 px-2 sm:px-4">
-                            <div className="flex items-center gap-1 text-green-600">
-                              <CheckCircle className="w-4 h-4" />
-                              <span>{teacher.completedClasses}</span>
-                            </div>
-                          </td>
-                          <td className="py-2 px-2 sm:px-4">
-                            <div className="flex items-center gap-1 text-yellow-600">
-                              <Calendar className="w-4 h-4" />
-                              <span>{teacher.pendingClasses}</span>
-                            </div>
-                          </td>
-                          <td className="py-2 px-2 sm:px-4">
-                            <div className="flex items-center gap-1 text-red-600">
-                              <XCircle className="w-4 h-4" />
-                              <span>{teacher.missedClasses?.length || 0}</span>
-                            </div>
-                          </td>
-                          <td className="py-2 px-2 sm:px-4">
-                            <div className="flex justify-end">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => viewTeacherDetails(teacher)}
-                                className="text-xs"
-                              >
-                                View Details
-                              </Button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                      {filteredTeacherStats.length === 0 && (
-                        <tr>
-                          <td className="py-4 text-center opacity-70" colSpan={7}>
-                            {statsLoading ? "Loading teacher statistics..." : "No teachers found"}
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </CardContent>
-            </Card>
+            <TeacherStats
+              filteredTeacherStats={filteredTeacherStats}
+              statsLoading={statsLoading}
+              fetchTeacherStats={fetchTeacherStats}
+              viewTeacherDetails={viewTeacherDetails}
+            />
           ) : null}
 
           {/* Teacher Details Modal */}
-          <Dialog
+          <TeacherDetails
             open={showTeacherDetails}
             onClose={() => setShowTeacherDetails(false)}
-            className="relative z-50"
-          >
-            <div className="fixed inset-0 bg-black/50" aria-hidden="true" />
-            <div className="fixed inset-0 flex items-center justify-center p-4">
-              <Dialog.Panel className="bg-white dark:bg-gray-900 rounded-lg shadow-xl w-full max-w-2xl border border-gray-300 dark:border-gray-700">
-                <Card className="shadow-none border-none">
-                  <CardHeader>
-                    <CardTitle className="text-lg font-semibold text-gray-800 dark:text-gray-100">
-                      Teacher Details - {selectedTeacher?.full_name}
-                    </CardTitle>
-                    <div className="text-xs opacity-70">
-                      Complete overview of classes and attendance
-                    </div>
-                  </CardHeader>
-
-                  <CardContent className="space-y-4">
-                    {selectedTeacher && (
-                      <>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                          <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 p-4 rounded-lg text-center">
-                            <BookOpen className="w-8 h-8 text-blue-500 mx-auto mb-2" />
-                            <div className="text-2xl font-bold text-blue-600">{selectedTeacher.totalClasses}</div>
-                            <div className="text-xs text-blue-600">Total Classes</div>
-                          </div>
-                          
-                          <div className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 p-4 rounded-lg text-center">
-                            <CheckCircle className="w-8 h-8 text-green-500 mx-auto mb-2" />
-                            <div className="text-2xl font-bold text-green-600">{selectedTeacher.completedClasses}</div>
-                            <div className="text-xs text-green-600">Completed</div>
-                          </div>
-                          
-                          <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 dark:from-yellow-900/20 dark:to-yellow-800/20 p-4 rounded-lg text-center">
-                            <Calendar className="w-8 h-8 text-yellow-500 mx-auto mb-2" />
-                            <div className="text-2xl font-bold text-yellow-600">{selectedTeacher.pendingClasses}</div>
-                            <div className="text-xs text-yellow-600">Pending</div>
-                          </div>
-                          
-                          <div className="bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 p-4 rounded-lg text-center">
-                            <XCircle className="w-8 h-8 text-red-500 mx-auto mb-2" />
-                            <div className="text-2xl font-bold text-red-600">{selectedTeacher.missedClasses?.length || 0}</div>
-                            <div className="text-xs text-red-600">Missed Today</div>
-                          </div>
-                        </div>
-
-                        {selectedTeacher.missedClasses && selectedTeacher.missedClasses.length > 0 && (
-                          <div>
-                            <h4 className="font-semibold text-red-600 mb-2">Missed Attendance Today:</h4>
-                            <div className="space-y-2">
-                              {selectedTeacher.missedClasses.map((missedClass, index) => (
-                                <div key={index} className="flex items-center justify-between p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
-                                  <div>
-                                    <div className="font-medium">{missedClass.className}</div>
-                                    <div className="text-sm text-gray-600 dark:text-gray-400">{missedClass.subject}</div>
-                                  </div>
-                                  <div className="text-sm text-red-600">{missedClass.date}</div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </>
-                    )}
-                  </CardContent>
-
-                  <CardFooter className="flex justify-end">
-                    <Button
-                      variant="outline"
-                      onClick={() => setShowTeacherDetails(false)}
-                      className="border-gray-400 text-gray-700 dark:text-gray-200"
-                    >
-                      Close
-                    </Button>
-                  </CardFooter>
-                </Card>
-              </Dialog.Panel>
-            </div>
-          </Dialog>
+            selectedTeacher={selectedTeacher}
+          />
 
           <AddUser
             open={showAddUser}
@@ -509,135 +339,13 @@ export default function AdminPage() {
           />
 
           {/* Users Table */}
-          <Card className="shadow-md border border-gray-200 dark:border-gray-700">
-            <CardHeader className="flex flex-col sm:flex-row gap-2 sm:items-center justify-between">
-              <div>
-                <CardTitle className="text-lg font-semibold text-gray-800 dark:text-gray-100">
-                  Users 
-                </CardTitle>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  {profiles.filter((p) => p.role === "admin").length} admins,{" "}
-                  {profiles.filter((p) => p.role === "teacher").length} teachers,{" "}
-                  {profiles.filter((p) => p.role === "student").length} students
-                </p>
-              </div>
-              <Button
-                variant="outline"
-                onClick={fetchProfiles}
-                disabled={listLoading}
-                className="border-gray-400 text-gray-700 dark:text-gray-200"
-              >
-                {listLoading ? "Refreshing…" : "Refresh"}
-              </Button>
-            </CardHeader>
-            <CardContent className="p-0">
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead className="sr-only sm:not-sr-only">
-                    <tr className="text-left border-b bg-gray-100 dark:bg-gray-800">
-                      <th className="py-2 px-2 sm:px-4">User</th>
-                      <th className="py-2 px-2 sm:px-4 hidden sm:table-cell">
-                        Email
-                      </th>
-                      <th className="py-2 px-2 sm:px-4">Role</th>
-                      <th className="py-2 px-2 sm:px-4 hidden sm:table-cell">
-                        Joined
-                      </th>
-                      <th className="py-2 px-2 sm:px-4 w-12 text-right"></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredProfiles.map((p, idx) => (
-                      <tr
-                        key={p.id}
-                        className={`border-b last:border-0 ${
-                          idx % 2 === 0 ? "bg-white/50 dark:bg-gray-900/40" : ""
-                        }`}
-                      >
-                        <td className="py-2 px-2 sm:px-4">
-                          <div className="flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-2">
-                            <span className="font-medium">
-                              {p.full_name || p.id}
-                            </span>
-                            <span className="text-xs text-gray-500 sm:hidden">
-                              {p.email}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="py-2 px-2 sm:px-4 hidden sm:table-cell">
-                          {p.email}
-                        </td>
-                        <td className="py-2 px-2 sm:px-4">
-                          <span
-                            className={`inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium text-white
-                            ${p.role === 'admin' ? 'bg-red-500' : 
-                              p.role === 'teacher' ? 'bg-blue-500' : 
-                              'bg-green-500'}`}
-                          >
-                            {p.role || "student"}
-                          </span>
-                        </td>
-                        <td className="py-2 px-2 sm:px-4 text-xs opacity-70 hidden sm:table-cell">
-                          {new Date(p.created_at).toLocaleDateString()}
-                        </td>
-                        <td className="py-2 px-2 sm:px-4">
-                          <div className="flex justify-end">
-                            <Menu
-                              as="div"
-                              className="relative inline-block text-left"
-                            >
-                              <Menu.Button
-                                as={Button}
-                                variant="ghost"
-                                size="sm"
-                                className="p-1.5 sm:p-2"
-                              >
-                                <MoreHorizontal className="w-4 h-4" />
-                              </Menu.Button>
-                              <Transition
-                                enter="transition ease-out duration-100"
-                                enterFrom="transform opacity-0 scale-95"
-                                enterTo="transform opacity-100 scale-100"
-                                leave="transition ease-in duration-75"
-                                leaveFrom="transform opacity-100 scale-100"
-                                leaveTo="transform opacity-0 scale-95"
-                              >
-                                <Menu.Items className="absolute right-0 mt-2 w-40 origin-top-right rounded-md border bg-white dark:bg-gray-900 shadow-lg focus:outline-none">
-                                  <div className="py-1">
-                                    <Menu.Item>
-                                      {({ active }) => (
-                                        <button
-                                          onClick={() => deleteUser(p.id)}
-                                          className={`${
-                                            active
-                                              ? "bg-gray-100 dark:bg-gray-800"
-                                              : ""
-                                          } flex w-full px-3 py-2 text-left text-sm text-red-600`}
-                                        >
-                                          Delete
-                                        </button>
-                                      )}
-                                    </Menu.Item>
-                                  </div>
-                                </Menu.Items>
-                              </Transition>
-                            </Menu>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                    {filteredProfiles.length === 0 && (
-                      <tr>
-                        <td className="py-4 text-center opacity-70" colSpan={5}>
-                          No users found
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </CardContent>
-          </Card>
+          <UsersTable
+            profiles={profiles}
+            listLoading={listLoading}
+            fetchProfiles={fetchProfiles}
+            deleteUser={deleteUser}
+            filteredProfiles={filteredProfiles}
+          />
         </main>
       </div>
     </div>
