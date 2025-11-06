@@ -105,7 +105,7 @@ export default function AdminPage() {
         // Fetch classes assigned to this teacher
         const { data: classes, error: classesError } = await supabase
           .from("classes")
-          .select("id, name, subject, created_at")
+          .select("id, course, semester, subject, created_at")
           .eq("teacher_id", teacher.id);
 
         if (classesError) {
@@ -138,7 +138,7 @@ export default function AdminPage() {
               if (shouldHaveAttendance && !attendanceError && (!attendance || attendance.length === 0)) {
                 missedClasses.push({
                   classId: classItem.id,
-                  className: classItem.name,
+                  className: `${classItem.course}${classItem.semester ? ' - ' + classItem.semester : ''}`,
                   subject: classItem.subject,
                   date: today
                 });
