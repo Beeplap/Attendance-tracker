@@ -11,7 +11,16 @@ import {
 } from "@/components/ui/card";
 import { supabase } from "@/lib/supabaseClient";
 import { resolveUserRole } from "@/lib/utils";
-import { Moon, Sun, MoreHorizontal, User, BookOpen, CheckCircle, XCircle, Calendar } from "lucide-react";
+import {
+  Moon,
+  Sun,
+  MoreHorizontal,
+  User,
+  BookOpen,
+  CheckCircle,
+  XCircle,
+  Calendar,
+} from "lucide-react";
 import { Dialog, Menu, Transition } from "@headlessui/react";
 import AddClass from "@/components/ui/addClass";
 import Sidebar from "@/components/ui/sidebar";
@@ -42,7 +51,7 @@ export default function AdminPage() {
   });
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  
+
   // New state for teacher statistics
   const [teacherStats, setTeacherStats] = useState([]);
   const [statsLoading, setStatsLoading] = useState(false);
@@ -84,7 +93,7 @@ export default function AdminPage() {
 
   const fetchTeacherStats = async () => {
     setStatsLoading(true);
-    
+
     // Fetch teachers
     const { data: teachers, error: teachersError } = await supabase
       .from("profiles")
@@ -107,15 +116,21 @@ export default function AdminPage() {
 
         if (classesError) {
           console.error("Error fetching classes:", classesError);
-          return { ...teacher, totalClasses: 0, completedClasses: 0, pendingClasses: 0, missedClasses: [] };
+          return {
+            ...teacher,
+            totalClasses: 0,
+            completedClasses: 0,
+            pendingClasses: 0,
+            missedClasses: [],
+          };
         }
 
         const totalClasses = classes.length;
-        
+
         // Fetch attendance records to determine completed classes
         let completedClasses = 0;
         const missedClasses = [];
-        const today = new Date().toISOString().split('T')[0];
+        const today = new Date().toISOString().split("T")[0];
 
         await Promise.all(
           classes.map(async (classItem) => {
@@ -131,13 +146,19 @@ export default function AdminPage() {
               // Check if this class should have had attendance taken today
               const classDate = new Date(classItem.created_at);
               const shouldHaveAttendance = classDate <= new Date();
-              
-              if (shouldHaveAttendance && !attendanceError && (!attendance || attendance.length === 0)) {
+
+              if (
+                shouldHaveAttendance &&
+                !attendanceError &&
+                (!attendance || attendance.length === 0)
+              ) {
                 missedClasses.push({
                   classId: classItem.id,
-                  className: `${classItem.course}${classItem.semester ? ' - ' + classItem.semester : ''}`,
+                  className: `${classItem.course}${
+                    classItem.semester ? " - " + classItem.semester : ""
+                  }`,
                   subject: classItem.subject,
-                  date: today
+                  date: today,
                 });
               }
             }
@@ -151,7 +172,7 @@ export default function AdminPage() {
           totalClasses,
           completedClasses,
           pendingClasses,
-          missedClasses
+          missedClasses,
         };
       })
     );
@@ -164,7 +185,6 @@ export default function AdminPage() {
     setSelectedTeacher(teacher);
     setShowTeacherDetails(true);
   };
-
 
   const deleteUser = async (id) => {
     if (!confirm("Are you sure you want to delete this user?")) return;
@@ -185,9 +205,10 @@ export default function AdminPage() {
     return matchesSearch && matchesRole;
   });
 
-  const filteredTeacherStats = teacherStats.filter((t) =>
-    t.full_name?.toLowerCase().includes(search.toLowerCase()) ||
-    t.email?.toLowerCase().includes(search.toLowerCase())
+  const filteredTeacherStats = teacherStats.filter(
+    (t) =>
+      t.full_name?.toLowerCase().includes(search.toLowerCase()) ||
+      t.email?.toLowerCase().includes(search.toLowerCase())
   );
 
   if (loading)
@@ -239,13 +260,26 @@ export default function AdminPage() {
                 onClick={() => setSidebarOpen(true)}
                 aria-label="Open sidebar"
               >
-                <svg className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path d="M3 6h14M3 10h14M3 14h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
+                <svg
+                  className="w-5 h-5"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    d="M3 6h14M3 10h14M3 14h14"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                  />
+                </svg>
               </Button>
               <Button
                 variant="ghost"
                 size="sm"
                 className="p-2 rounded-full"
-                onClick={() => document.documentElement.classList.toggle("dark")}
+                onClick={() =>
+                  document.documentElement.classList.toggle("dark")
+                }
               >
                 <Moon className="hidden dark:block w-5 h-5" />
                 <Sun className="block dark:hidden w-5 h-5" />
