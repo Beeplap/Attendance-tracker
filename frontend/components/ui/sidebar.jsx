@@ -47,19 +47,36 @@ export default function Sidebar({
           collapsed ? "justify-center p-2" : "p-3"
         }`}
       >
+      <div className="flex items-center gap-3 ">
         <img
           src="https://images.unsplash.com/photo-1607746882042-944635dfe10e?q=80&w=96&auto=format&fit=crop"
           alt="teacher-avatar"
           className="w-9 h-9 rounded-full object-cover"
+          
         />
+        {onToggleCollapsed && (
+          <button
+            onClick={onToggleCollapsed}
+            className="inline-flex items-center justify-center w-9 h-9 rounded-md border border-purple-200 dark:border-purple-700 hover:bg-purple-50/70 dark:hover:bg-purple-900/20 transition"
+            aria-label="Toggle sidebar"
+          >
+            <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+              <path
+                d="M3 6h14M3 10h14M3 14h14"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+              />
+            </svg>
+          </button>
+        )}
+        </div>
         {!collapsed && (
           <div className="min-w-0">
             <div className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
               Mr. Rajesh Sharma
             </div>
-            <div className="text-[11px] text-gray-600 dark:text-gray-400 truncate">
-              Computer Science Teacher
-            </div>
+            
           </div>
         )}
       </div>
