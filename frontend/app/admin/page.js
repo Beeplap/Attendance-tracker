@@ -11,10 +11,23 @@ import {
 } from "@/components/ui/card";
 import { supabase } from "@/lib/supabaseClient";
 import { resolveUserRole } from "@/lib/utils";
-import { Moon, Sun, MoreHorizontal, User, BookOpen, CheckCircle, XCircle, Calendar } from "lucide-react";
+import {
+  Moon,
+  Sun,
+  MoreHorizontal,
+  User,
+  BookOpen,
+  CheckCircle,
+  XCircle,
+  Calendar,
+} from "lucide-react";
 import { Dialog, Menu, Transition } from "@headlessui/react";
 import AddClass from "@/components/ui/addClass";
 import Sidebar from "@/components/ui/sidebar";
+import AddUser from "@/components/ui/addUser";
+import UsersTable from "@/components/ui/usersTable";
+import TeacherStats from "@/components/ui/teacherStats";
+import TeacherDetails from "@/components/ui/teacherDetails";
 
 export default function AdminPage() {
   const router = useRouter();
@@ -44,8 +57,6 @@ export default function AdminPage() {
   const [statsLoading, setStatsLoading] = useState(false);
   const [selectedTeacher, setSelectedTeacher] = useState(null);
   const [showTeacherDetails, setShowTeacherDetails] = useState(false);
-  const [teacherClassDetails, setTeacherClassDetails] = useState([]);
-  const [detailsLoading, setDetailsLoading] = useState(false);
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data }) => {
@@ -170,70 +181,9 @@ export default function AdminPage() {
     setStatsLoading(false);
   };
 
-  const fetchTeacherClassDetails = async (teacherId) => {
-    setDetailsLoading(true);
-    
-    // Fetch all classes for this teacher
-    const { data: classes, error: classesError } = await supabase
-      .from("classes")
-      .select("id, name, subject, grade, section, created_at")
-      .eq("teacher_id", teacherId);
-
-    if (classesError) {
-      console.error("Error fetching classes:", classesError);
-      setDetailsLoading(false);
-      return [];
-    }
-
-    const classDetails = await Promise.all(
-      classes.map(async (classItem) => {
-        // Fetch attendance records for this class
-        const { data: attendance, error: attendanceError } = await supabase
-          .from("attendance")
-          .select("date, present_count, total_students, present_students")
-          .eq("class_id", classItem.id)
-          .order("date", { ascending: false });
-
-        if (attendanceError) {
-          console.error("Error fetching attendance:", attendanceError);
-          return {
-            ...classItem,
-            attendanceRecords: [],
-            totalSessions: 0,
-            averageAttendance: 0,
-            lastAttendance: null
-          };
-        }
-
-        const today = new Date().toISOString().split('T')[0];
-        const hasTodayAttendance = attendance.some(record => record.date === today);
-        
-        // Calculate statistics
-        const totalSessions = attendance.length;
-        const averageAttendance = totalSessions > 0 
-          ? attendance.reduce((sum, record) => sum + (record.present_count / record.total_students), 0) / totalSessions * 100
-          : 0;
-
-        return {
-          ...classItem,
-          attendanceRecords: attendance,
-          totalSessions,
-          averageAttendance: Math.round(averageAttendance),
-          hasTodayAttendance,
-          lastAttendance: attendance.length > 0 ? attendance[0] : null
-        };
-      })
-    );
-
-    setTeacherClassDetails(classDetails);
-    setDetailsLoading(false);
-    return classDetails;
-  };
-
-  const viewTeacherDetails = async (teacher) => {
+  const viewTeacherDetails = (teacher) => {
     setSelectedTeacher(teacher);
     setShowTeacherDetails(true);
-    await fetchTeacherClassDetails(teacher.id);
   };
 
   const deleteUser = async (id) => {
@@ -397,89 +347,13 @@ export default function AdminPage() {
           ) : null}
 
           {/* Teacher Details Modal */}
-          <Dialog
+          <TeacherDetails
             open={showTeacherDetails}
             onClose={() => setShowTeacherDetails(false)}
-            className="relative z-50"
-          >
-            <div className="fixed inset-0 bg-black/50" aria-hidden="true" />
-            <div className="fixed inset-0 flex items-center justify-center p-4">
-              <Dialog.Panel className="bg-white dark:bg-gray-900 rounded-lg shadow-xl w-full max-w-2xl border border-gray-300 dark:border-gray-700">
-                <Card className="shadow-none border-none">
-                  <CardHeader>
-                    <CardTitle className="text-lg font-semibold text-gray-800 dark:text-gray-100">
-                      Teacher Details - {selectedTeacher?.full_name}
-                    </CardTitle>
-                    <div className="text-xs opacity-70">
-                      Complete overview of classes and attendance
-                    </div>
-                  </CardHeader>
+            selectedTeacher={selectedTeacher}
+          />
 
-                  <CardContent className="space-y-4">
-                    {selectedTeacher && (
-                      <>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                          <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 p-4 rounded-lg text-center">
-                            <BookOpen className="w-8 h-8 text-blue-500 mx-auto mb-2" />
-                            <div className="text-2xl font-bold text-blue-600">{selectedTeacher.totalClasses}</div>
-                            <div className="text-xs text-blue-600">Total Classes</div>
-                          </div>
-                          
-                          <div className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 p-4 rounded-lg text-center">
-                            <CheckCircle className="w-8 h-8 text-green-500 mx-auto mb-2" />
-                            <div className="text-2xl font-bold text-green-600">{selectedTeacher.completedClasses}</div>
-                            <div className="text-xs text-green-600">Completed</div>
-                          </div>
-                          
-                          <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 dark:from-yellow-900/20 dark:to-yellow-800/20 p-4 rounded-lg text-center">
-                            <Calendar className="w-8 h-8 text-yellow-500 mx-auto mb-2" />
-                            <div className="text-2xl font-bold text-yellow-600">{selectedTeacher.pendingClasses}</div>
-                            <div className="text-xs text-yellow-600">Pending</div>
-                          </div>
-                          
-                          <div className="bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 p-4 rounded-lg text-center">
-                            <XCircle className="w-8 h-8 text-red-500 mx-auto mb-2" />
-                            <div className="text-2xl font-bold text-red-600">{selectedTeacher.missedClasses?.length || 0}</div>
-                            <div className="text-xs text-red-600">Missed Today</div>
-                          </div>
-                        </div>
-
-                        {selectedTeacher.missedClasses && selectedTeacher.missedClasses.length > 0 && (
-                          <div>
-                            <h4 className="font-semibold text-red-600 mb-2">Missed Attendance Today:</h4>
-                            <div className="space-y-2">
-                              {selectedTeacher.missedClasses.map((missedClass, index) => (
-                                <div key={index} className="flex items-center justify-between p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
-                                  <div>
-                                    <div className="font-medium">{missedClass.className}</div>
-                                    <div className="text-sm text-gray-600 dark:text-gray-400">{missedClass.subject}</div>
-                                  </div>
-                                  <div className="text-sm text-red-600">{missedClass.date}</div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </>
-                    )}
-                  </CardContent>
-
-                  <CardFooter className="flex justify-end">
-                    <Button
-                      variant="outline"
-                      onClick={() => setShowTeacherDetails(false)}
-                      className="border-gray-400 text-gray-700 dark:text-gray-200"
-                    >
-                      Close
-                    </Button>
-                  </CardFooter>
-                </Card>
-              </Dialog.Panel>
-            </div>
-          </Dialog>
-
-          {/* Existing Add User and Assign Class modals remain the same */}
-          <Dialog
+          <AddUser
             open={showAddUser}
             onClose={() => setShowAddUser(false)}
             onUserAdded={() => {
