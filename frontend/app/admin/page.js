@@ -15,6 +15,8 @@ import { Moon, Sun, MoreHorizontal, User, BookOpen, CheckCircle, XCircle, Calend
 import { Dialog, Menu, Transition } from "@headlessui/react";
 import AddClass from "@/components/ui/addClass";
 import Sidebar from "@/components/ui/sidebar";
+import TeacherStats from "@/components/ui/teacherStats";
+import UsersTable from "@/components/ui/usersTable";
 
 export default function AdminPage() {
   const router = useRouter();
