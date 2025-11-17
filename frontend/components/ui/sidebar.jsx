@@ -10,6 +10,8 @@ import {
   LogOut,
   Menu,
 } from "lucide-react";
+import { supabase } from "@/lib/supabaseClient";
+
 
 export default function Sidebar({
   open,
@@ -37,6 +39,10 @@ export default function Sidebar({
     if (which === "teachers") setTeachersOpen((s) => !s);
     if (which === "students") setStudentsOpen((s) => !s);
   };
+    const signOut = async () => {
+      await supabase.auth.signOut();
+      router.replace("/");
+    };
 
   const navItemClass = (active) =>
     `group w-full flex items-center px-3 py-2 rounded-xl border transition-all duration-200 text-sm ${
@@ -163,7 +169,7 @@ export default function Sidebar({
       {/* Sign out at bottom */}
       <div className="mt-4">
         <button
-          onClick={() => (onSignOut ? onSignOut() : console.log("sign out"))}
+          onClick={signOut}
           className="group w-full flex items-center px-3 py-2 rounded-xl border transition-all duration-200 text-sm bg-white/50 dark:bg-transparent border-transparent hover:bg-purple-50/70 dark:hover:bg-purple-900/20 hover:border-purple-200 dark:hover:border-purple-800 text-gray-700 dark:text-gray-300"
         >
           <LogOut className="w-4 h-4 text-gray-600 dark:text-gray-400 group-hover:text-purple-600" />
