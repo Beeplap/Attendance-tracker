@@ -25,6 +25,11 @@ import { Dialog, Menu, Transition } from "@headlessui/react";
 import AddClass from "@/components/ui/addClass";
 import Sidebar from "@/components/ui/sidebar";
 
+import AddUser from "@/components/ui/addUser";
+import UsersTable from "@/components/ui/usersTable";
+import TeacherStats from "@/components/ui/teacherStats";
+import TeacherDetails from "@/components/ui/teacherDetails";
+
 export default function AdminPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
