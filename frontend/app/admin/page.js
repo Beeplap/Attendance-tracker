@@ -125,7 +125,6 @@ export default function AdminPage() {
 
         const totalClasses = classes.length;
 
-        // Fetch attendance records to determine completed classes
         let completedClasses = 0;
         const missedClasses = [];
         const today = new Date().toISOString().split("T")[0];
@@ -141,7 +140,6 @@ export default function AdminPage() {
             if (!attendanceError && attendance && attendance.length > 0) {
               completedClasses++;
             } else {
-              // Check if this class should have had attendance taken today
               const classDate = new Date(classItem.created_at);
               const shouldHaveAttendance = classDate <= new Date();
 
