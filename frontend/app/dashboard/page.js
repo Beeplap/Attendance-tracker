@@ -360,7 +360,6 @@ export default function DashboardPage() {
                                     size="sm"
                                     className="text-purple-600 dark:text-purple-400"
                                     onClick={() => {
-                                      // Add student management functionality
                                     }}
                                   >
                                     <Users size={14} className="mr-1" /> Manage
