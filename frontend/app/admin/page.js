@@ -199,69 +199,99 @@ export default function AdminPage() {
 
     const stats = await Promise.all(
       teachers.map(async (teacher) => {
-        // Fetch classes assigned to this teacher
+        // Fetch classes/subjects assigned to this teacher
         const { data: classes, error: classesError } = await supabase
           .from("classes")
           .select("id, course, semester, subject, created_at")
-          .eq("teacher_id", teacher.id);
+          .eq("teacher_id", teacher.id)
+          .order("created_at", { ascending: true }); // Order by creation to assign periods
 
         if (classesError) {
           console.error("Error fetching classes:", classesError);
           return {
             ...teacher,
-            totalClasses: 0,
-            completedClasses: 0,
-            pendingClasses: 0,
-            missedClasses: [],
+            periods: [],
+            totalTime: 0,
           };
         }
 
-        const totalClasses = classes.length;
+        // Standard period duration in minutes (45 minutes per period)
+        const PERIOD_DURATION = 45;
 
-        let completedClasses = 0;
-        const missedClasses = [];
-        const today = new Date().toISOString().split("T")[0];
+        // Organize classes into periods (1st, 2nd, 3rd, etc.)
+        const periods = [];
+        let totalTimeMinutes = 0;
 
-        await Promise.all(
-          classes.map(async (classItem) => {
-            const { data: attendance, error: attendanceError } = await supabase
+        for (let i = 0; i < Math.min(classes.length, 6); i++) {
+          const classItem = classes[i];
+          const periodNumber = i + 1;
+
+          // Fetch attendance records for this subject/class to calculate time
+          // We'll count unique dates where this teacher marked attendance for this subject
+          // Since attendance.subject_id references courses(id), we need to find matching courses
+          // First, try to find a course that matches this class's subject name
+          const { data: matchingCourse } = await supabase
+            .from("courses")
+            .select("id")
+            .ilike("name", `%${classItem.subject}%`)
+            .maybeSingle();
+
+          let daysWithAttendance = 0;
+
+          if (matchingCourse) {
+            // Count unique dates where attendance was marked for this subject by this teacher
+            const { data: attendanceRecords } = await supabase
               .from("attendance")
-              .select("date, present_count, total_students")
-              .eq("class_id", classItem.id)
-              .eq("date", today);
+              .select("date")
+              .eq("subject_id", matchingCourse.id)
+              .eq("marked_by", teacher.id);
 
-            if (!attendanceError && attendance && attendance.length > 0) {
-              completedClasses++;
-            } else {
-              const classDate = new Date(classItem.created_at);
-              const shouldHaveAttendance = classDate <= new Date();
-
-              if (
-                shouldHaveAttendance &&
-                !attendanceError &&
-                (!attendance || attendance.length === 0)
-              ) {
-                missedClasses.push({
-                  classId: classItem.id,
-                  className: `${classItem.course}${
-                    classItem.semester ? " - " + classItem.semester : ""
-                  }`,
-                  subject: classItem.subject,
-                  date: today,
-                });
-              }
+            if (attendanceRecords && attendanceRecords.length > 0) {
+              daysWithAttendance = new Set(attendanceRecords.map((r) => r.date))
+                .size;
             }
-          })
-        );
+          } else {
+            // Fallback: Count days where teacher marked attendance (any subject)
+            // We'll estimate by dividing total teacher attendance days by number of periods
+            const { data: allAttendanceRecords } = await supabase
+              .from("attendance")
+              .select("date")
+              .eq("marked_by", teacher.id);
 
-        const pendingClasses = totalClasses - completedClasses;
+            if (allAttendanceRecords && allAttendanceRecords.length > 0) {
+              const totalDays = new Set(allAttendanceRecords.map((r) => r.date))
+                .size;
+              // Distribute evenly across periods (rough estimate)
+              daysWithAttendance = Math.ceil(
+                totalDays / Math.max(classes.length, 1)
+              );
+            }
+          }
+
+          // Calculate time spent: number of days with attendance * period duration
+          const timeSpentMinutes = daysWithAttendance * PERIOD_DURATION;
+          totalTimeMinutes += timeSpentMinutes;
+
+          periods.push({
+            periodNumber,
+            subject: classItem.subject,
+            course: classItem.course,
+            semester: classItem.semester,
+            timeSpentMinutes,
+            daysWithAttendance,
+          });
+        }
+
+        // Convert total time to hours and minutes for display
+        const totalHours = Math.floor(totalTimeMinutes / 60);
+        const totalMins = totalTimeMinutes % 60;
 
         return {
           ...teacher,
-          totalClasses,
-          completedClasses,
-          pendingClasses,
-          missedClasses,
+          periods,
+          totalTimeMinutes,
+          totalTimeDisplay:
+            totalHours > 0 ? `${totalHours}h ${totalMins}m` : `${totalMins}m`,
         };
       })
     );

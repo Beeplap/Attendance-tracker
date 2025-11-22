@@ -40,83 +40,92 @@ export default function TeacherStats({
           <table className="w-full text-sm">
             <thead className="sr-only sm:not-sr-only">
               <tr className="text-left border-b bg-gray-100 dark:bg-gray-800">
-                <th className="py-2 px-2 sm:px-4">Teacher</th>
-                <th className="py-2 px-2 sm:px-4 hidden sm:table-cell">
-                  Email
+                <th className="py-3 px-4 font-semibold text-gray-700 dark:text-gray-300">
+                  Teacher Name
                 </th>
-                <th className="py-2 px-2 sm:px-4">Total Classes</th>
-                <th className="py-2 px-2 sm:px-4">Completed</th>
-                <th className="py-2 px-2 sm:px-4">Pending</th>
-                <th className="py-2 px-2 sm:px-4">Missed Today</th>
-                <th className="py-2 px-2 sm:px-4 w-12 text-right">Actions</th>
+                <th className="py-3 px-4 font-semibold text-gray-700 dark:text-gray-300">
+                  1st Period
+                </th>
+                <th className="py-3 px-4 font-semibold text-gray-700 dark:text-gray-300">
+                  2nd Period
+                </th>
+                <th className="py-3 px-4 font-semibold text-gray-700 dark:text-gray-300">
+                  3rd Period
+                </th>
+                <th className="py-3 px-4 font-semibold text-gray-700 dark:text-gray-300">
+                  4th Period
+                </th>
+                <th className="py-3 px-4 font-semibold text-gray-700 dark:text-gray-300">
+                  5th Period
+                </th>
+                <th className="py-3 px-4 font-semibold text-gray-700 dark:text-gray-300">
+                  6th Period
+                </th>
+                <th className="py-3 px-4 font-semibold text-gray-700 dark:text-gray-300">
+                  Total Time
+                </th>
               </tr>
             </thead>
             <tbody>
-              {filteredTeacherStats.map((teacher, idx) => (
-                <tr
-                  key={teacher.id}
-                  className={`border-b last:border-0 ${
-                    idx % 2 === 0 ? "bg-white/50 dark:bg-gray-900/40" : ""
-                  }`}
-                >
-                  <td className="py-2 px-2 sm:px-4">
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-2">
-                      <span className="font-medium">
+              {filteredTeacherStats.map((teacher, idx) => {
+                const formatTime = (minutes) => {
+                  if (!minutes || minutes === 0) return "-";
+                  const hours = Math.floor(minutes / 60);
+                  const mins = minutes % 60;
+                  return hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
+                };
+
+                const getPeriodData = (periodNum) => {
+                  const period = teacher.periods?.find((p) => p.periodNumber === periodNum);
+                  return period
+                    ? {
+                        subject: period.subject,
+                        time: formatTime(period.timeSpentMinutes),
+                      }
+                    : { subject: "-", time: "-" };
+                };
+
+                return (
+                  <tr
+                    key={teacher.id}
+                    className={`border-b last:border-0 ${
+                      idx % 2 === 0 ? "bg-white/50 dark:bg-gray-900/40" : ""
+                    }`}
+                  >
+                    <td className="py-3 px-4">
+                      <div className="font-medium text-gray-900 dark:text-gray-100">
                         {teacher.full_name || teacher.id}
-                      </span>
-                      <span className="text-xs text-gray-500 sm:hidden">
+                      </div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">
                         {teacher.email}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="py-2 px-2 sm:px-4 hidden sm:table-cell">
-                    {teacher.email}
-                  </td>
-                  <td className="py-2 px-2 sm:px-4">
-                    <div className="flex items-center gap-1">
-                      <BookOpen className="w-4 h-4 text-blue-500" />
-                      <span className="font-medium">
-                        {teacher.totalClasses}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="py-2 px-2 sm:px-4">
-                    <div className="flex items-center gap-1 text-green-600">
-                      <CheckCircle className="w-4 h-4" />
-                      <span>{teacher.completedClasses}</span>
-                    </div>
-                  </td>
-                  <td className="py-2 px-2 sm:px-4">
-                    <div className="flex items-center gap-1 text-yellow-600">
-                      <Calendar className="w-4 h-4" />
-                      <span>{teacher.pendingClasses}</span>
-                    </div>
-                  </td>
-                  <td className="py-2 px-2 sm:px-4">
-                    <div className="flex items-center gap-1 text-red-600">
-                      <XCircle className="w-4 h-4" />
-                      <span>{teacher.missedClasses?.length || 0}</span>
-                    </div>
-                  </td>
-                  <td className="py-2 px-2 sm:px-4">
-                    <div className="flex justify-end">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => viewTeacherDetails(teacher)}
-                        className="text-xs"
-                      >
-                        View Details
-                      </Button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                      </div>
+                    </td>
+                    {[1, 2, 3, 4, 5, 6].map((periodNum) => {
+                      const periodData = getPeriodData(periodNum);
+                      return (
+                        <td key={periodNum} className="py-3 px-4">
+                          <div className="text-gray-900 dark:text-gray-100 font-medium">
+                            {periodData.subject}
+                          </div>
+                          <div className="text-xs text-gray-600 dark:text-gray-400">
+                            {periodData.time}
+                          </div>
+                        </td>
+                      );
+                    })}
+                    <td className="py-3 px-4">
+                      <div className="font-semibold text-blue-600 dark:text-blue-400">
+                        {teacher.totalTimeDisplay || "0m"}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
               {filteredTeacherStats.length === 0 && (
                 <tr>
                   <td
                     className="py-4 text-center opacity-70"
-                    colSpan={7}
+                    colSpan={8}
                   >
                     {statsLoading
                       ? "Loading teacher statistics..."
