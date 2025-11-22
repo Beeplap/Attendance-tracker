@@ -28,7 +28,6 @@ export default function DashboardPage() {
         router.replace("/");
         return;
       }
-      // Check role from database instead of hardcoded emails
       const role = await resolveUserRole(supabase, user);
       if (role === "admin") {
         router.replace("/admin");
@@ -36,7 +35,6 @@ export default function DashboardPage() {
       }
       setEmail(user.email || "");
       setUserId(user.id || "");
-      // Load teacher display name from profiles
       try {
         const { data: profile } = await supabase
           .from("profiles")
