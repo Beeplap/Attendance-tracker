@@ -58,6 +58,18 @@ export default function AdminPage() {
   const [statsLoading, setStatsLoading] = useState(false);
   const [selectedTeacher, setSelectedTeacher] = useState(null);
   const [showTeacherDetails, setShowTeacherDetails] = useState(false);
+  const [currentView, setCurrentView] = useState("dashboard"); // 'dashboard', 'teachers', 'students'
+
+  // Teachers view state
+  const [teachers, setTeachers] = useState([]);
+  const [teachersLoading, setTeachersLoading] = useState(false);
+
+  // Students view state
+  const [students, setStudents] = useState([]);
+  const [studentsLoading, setStudentsLoading] = useState(false);
+  const [studentSearch, setStudentSearch] = useState("");
+  const [studentClassFilter, setStudentClassFilter] = useState("");
+  const [studentSectionFilter, setStudentSectionFilter] = useState("");
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data }) => {
@@ -102,6 +114,73 @@ export default function AdminPage() {
     if (!error) setProfiles(data || []);
     setListLoading(false);
   };
+
+  const fetchTeachers = async () => {
+    setTeachersLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("users")
+        .select("*")
+        .eq("role", "teacher")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      setTeachers(data || []);
+    } catch (error) {
+      console.error("Error fetching teachers:", error);
+    } finally {
+      setTeachersLoading(false);
+    }
+  };
+
+  const fetchStudents = async () => {
+    setStudentsLoading(true);
+    try {
+      let query = supabase.from("students").select("*");
+      if (studentClassFilter) {
+        query = query.eq("class", studentClassFilter);
+      }
+      if (studentSectionFilter) {
+        query = query.eq("section", studentSectionFilter);
+      }
+      const { data, error } = await query.order("created_at", {
+        ascending: false,
+      });
+      if (error) throw error;
+      let filtered = data || [];
+      if (studentSearch) {
+        const searchLower = studentSearch.toLowerCase();
+        filtered = filtered.filter(
+          (s) =>
+            s.full_name?.toLowerCase().includes(searchLower) ||
+            s.roll?.toLowerCase().includes(searchLower) ||
+            s.guardian_name?.toLowerCase().includes(searchLower)
+        );
+      }
+      setStudents(filtered);
+    } catch (error) {
+      console.error("Error fetching students:", error);
+    } finally {
+      setStudentsLoading(false);
+    }
+  };
+
+  // Fetch data when view changes
+  useEffect(() => {
+    if (currentView === "teachers") {
+      fetchTeachers();
+    } else if (currentView === "students") {
+      fetchStudents();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentView]);
+
+  // Refetch students when filters change
+  useEffect(() => {
+    if (currentView === "students") {
+      fetchStudents();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [studentClassFilter, studentSectionFilter, studentSearch]);
 
   const fetchTeacherStats = async () => {
     setStatsLoading(true);
@@ -240,6 +319,11 @@ export default function AdminPage() {
             setAddUserRole("student");
             setShowAddUser(true);
           }}
+          onAssignClass={() => {
+            setShowAssignClass(true);
+          }}
+          currentView={currentView}
+          onViewChange={setCurrentView}
         />
         <main className="flex-1 space-y-8">
           {/* Header */}
@@ -262,10 +346,17 @@ export default function AdminPage() {
               </div>
               <div>
                 <h1 className="text-2xl sm:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-violet-600">
-                  Admin Panel
+                  {currentView === "dashboard" && "Admin Panel"}
+                  {currentView === "teachers" && "Teachers"}
+                  {currentView === "students" && "Students"}
                 </h1>
                 <p className="text-sm text-gray-700">
-                  Manage users and system settings
+                  {currentView === "dashboard" &&
+                    "Manage users and system settings"}
+                  {currentView === "teachers" &&
+                    "Manage teacher accounts and information"}
+                  {currentView === "students" &&
+                    "Manage student records and information"}
                 </p>
               </div>
             </div>
@@ -291,51 +382,263 @@ export default function AdminPage() {
                   />
                 </svg>
               </Button>
-
-              <Button
-                onClick={() => setShowAssignClass(true)}
-                size="sm"
-                className="flex-1 sm:flex-none bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-700 hover:to-violet-700 text-white px-3 py-2 rounded-lg shadow-md transition-all duration-200 text-sm"
-              >
-                + Class
-              </Button>
             </div>
           </div>
 
-          {/* Search + Filter */}
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="flex-1">
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search by name/email…"
-                className="w-full border border-gray-300 rounded-md px-3 h-10 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500"
+          {/* Dashboard View */}
+          {currentView === "dashboard" && (
+            <>
+              {/* Search + Filter */}
+              <div className="flex flex-col sm:flex-row gap-3">
+                <div className="flex-1">
+                  <input
+                    type="text"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Search by name/email…"
+                    className="w-full border border-gray-300 rounded-md px-3 h-10 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  />
+                </div>
+                <div className="w-full sm:w-48">
+                  <select
+                    value={filterRole}
+                    onChange={(e) => setFilterRole(e.target.value)}
+                    className="w-full border border-gray-300 rounded-md px-3 h-10 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  >
+                    <option value="all">All Roles</option>
+                    <option value="admin">Admins</option>
+                    <option value="teacher">Teachers</option>
+                    <option value="student">Students</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Teacher Statistics Section */}
+              {filterRole === "all" || filterRole === "teacher" ? (
+                <TeacherStats
+                  filteredTeacherStats={filteredTeacherStats}
+                  statsLoading={statsLoading}
+                  fetchTeacherStats={fetchTeacherStats}
+                  viewTeacherDetails={viewTeacherDetails}
+                />
+              ) : null}
+
+              {/* Users Table */}
+              <UsersTable
+                profiles={profiles}
+                listLoading={listLoading}
+                fetchProfiles={fetchProfiles}
+                deleteUser={deleteUser}
+                filteredProfiles={filteredProfiles}
               />
-            </div>
-            <div className="w-full sm:w-48">
-              <select
-                value={filterRole}
-                onChange={(e) => setFilterRole(e.target.value)}
-                className="w-full border border-gray-300 rounded-md px-3 h-10 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500"
-              >
-                <option value="all">All Roles</option>
-                <option value="admin">Admins</option>
-                <option value="teacher">Teachers</option>
-                <option value="student">Students</option>
-              </select>
-            </div>
-          </div>
+            </>
+          )}
 
-          {/* Teacher Statistics Section */}
-          {filterRole === "all" || filterRole === "teacher" ? (
-            <TeacherStats
-              filteredTeacherStats={filteredTeacherStats}
-              statsLoading={statsLoading}
-              fetchTeacherStats={fetchTeacherStats}
-              viewTeacherDetails={viewTeacherDetails}
-            />
-          ) : null}
+          {/* Teachers View */}
+          {currentView === "teachers" && (
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-lg font-semibold text-gray-900">
+                  Teacher List ({teachers.length})
+                </h2>
+              </div>
+
+              {teachersLoading ? (
+                <div className="text-center py-12">
+                  <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                  <p className="mt-4 text-gray-600">Loading teachers...</p>
+                </div>
+              ) : teachers.length === 0 ? (
+                <div className="text-center py-12">
+                  <p className="text-gray-600">No teachers found.</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full bg-white border border-gray-200 rounded-lg">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                          Name
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                          Email
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                          Role
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                          Joined
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200">
+                      {teachers.map((teacher) => (
+                        <tr key={teacher.id} className="hover:bg-gray-50">
+                          <td className="px-4 py-3 text-sm font-medium text-gray-900">
+                            {teacher.full_name || "N/A"}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-600">
+                            {teacher.email}
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium text-white bg-blue-500">
+                              {teacher.role}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-600">
+                            {new Date(teacher.created_at).toLocaleDateString()}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Students View */}
+          {currentView === "students" && (
+            <>
+              {/* Search and Filters */}
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Search
+                    </label>
+                    <input
+                      type="text"
+                      value={studentSearch}
+                      onChange={(e) => setStudentSearch(e.target.value)}
+                      placeholder="Search by name, roll, or guardian..."
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Class
+                    </label>
+                    <select
+                      value={studentClassFilter}
+                      onChange={(e) => setStudentClassFilter(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">All Classes</option>
+                      {Array.from(
+                        new Set(students.map((s) => s.class).filter(Boolean))
+                      )
+                        .sort()
+                        .map((cls) => (
+                          <option key={cls} value={cls}>
+                            {cls}
+                          </option>
+                        ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Section
+                    </label>
+                    <select
+                      value={studentSectionFilter}
+                      onChange={(e) => setStudentSectionFilter(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">All Sections</option>
+                      {Array.from(
+                        new Set(students.map((s) => s.section).filter(Boolean))
+                      )
+                        .sort()
+                        .map((sec) => (
+                          <option key={sec} value={sec}>
+                            {sec}
+                          </option>
+                        ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Students Table */}
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-lg font-semibold text-gray-900">
+                    Student List ({students.length})
+                  </h2>
+                </div>
+
+                {studentsLoading ? (
+                  <div className="text-center py-12">
+                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                    <p className="mt-4 text-gray-600">Loading students...</p>
+                  </div>
+                ) : students.length === 0 ? (
+                  <div className="text-center py-12">
+                    <p className="text-gray-600">No students found.</p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full bg-white border border-gray-200 rounded-lg">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                            Profile
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                            Roll
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                            Name
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                            Class
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                            Section
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                            Guardian
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-200">
+                        {students.map((student) => (
+                          <tr key={student.id} className="hover:bg-gray-50">
+                            <td className="px-4 py-3">
+                              <div className="w-10 h-10 rounded-full bg-blue-500 text-white flex items-center justify-center font-semibold">
+                                {student.full_name
+                                  ?.split(" ")
+                                  .map((n) => n[0])
+                                  .join("")
+                                  .toUpperCase()
+                                  .slice(0, 2) || "?"}
+                              </div>
+                            </td>
+                            <td className="px-4 py-3 text-sm font-medium text-gray-900">
+                              {student.roll}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-900">
+                              {student.full_name}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-600">
+                              {student.class || "-"}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-600">
+                              {student.section || "-"}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-600">
+                              {student.guardian_name || "-"}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
 
           {/* Teacher Details Modal */}
           <TeacherDetails
@@ -348,11 +651,13 @@ export default function AdminPage() {
             open={showAddUser}
             onClose={() => {
               setShowAddUser(false);
-              setAddUserRole("teacher"); // Reset to default
+              setAddUserRole("teacher");
             }}
             onUserAdded={() => {
               fetchProfiles();
               fetchTeacherStats();
+              if (currentView === "teachers") fetchTeachers();
+              if (currentView === "students") fetchStudents();
             }}
             defaultRole={addUserRole}
           />
@@ -365,15 +670,6 @@ export default function AdminPage() {
               fetchProfiles();
               fetchTeacherStats();
             }}
-          />
-
-          {/* Users Table */}
-          <UsersTable
-            profiles={profiles}
-            listLoading={listLoading}
-            fetchProfiles={fetchProfiles}
-            deleteUser={deleteUser}
-            filteredProfiles={filteredProfiles}
           />
         </main>
       </div>
