@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { supabase } from '@/lib/supabaseClient';
-import { updateStudent, deleteStudent } from '@/lib/supabaseClient';
 import type { Database } from '@/lib/supabaseClient';
 import { requireAuth } from '@/lib/auth-helpers';
 
@@ -156,17 +155,20 @@ export async function PUT(
       );
     }
 
-    // Update student using helper function
-    const updatedStudent = await updateStudent(
-      id,
-      updateData as Database['public']['Tables']['students']['Update']
-    );
+    // Update student
+    const { data: updatedStudent, error: updateError } = await supabase
+      .from('students')
+      .update(updateData as Database['public']['Tables']['students']['Update'])
+      .eq('id', id)
+      .select()
+      .single();
 
-    if (!updatedStudent) {
+    if (updateError || !updatedStudent) {
+      console.error('Error updating student:', updateError);
       return NextResponse.json(
         {
           ok: false,
-          error: 'Failed to update student',
+          error: updateError?.message || 'Failed to update student',
         },
         { status: 500 }
       );
@@ -247,14 +249,18 @@ export async function DELETE(
       );
     }
 
-    // Delete student using helper function
-    const success = await deleteStudent(id);
+    // Delete student
+    const { error: deleteError } = await supabase
+      .from('students')
+      .delete()
+      .eq('id', id);
 
-    if (!success) {
+    if (deleteError) {
+      console.error('Error deleting student:', deleteError);
       return NextResponse.json(
         {
           ok: false,
-          error: 'Failed to delete student',
+          error: deleteError.message || 'Failed to delete student',
         },
         { status: 500 }
       );

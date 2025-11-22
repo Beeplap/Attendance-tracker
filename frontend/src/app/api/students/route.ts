@@ -37,10 +37,23 @@ export async function GET(request: NextRequest) {
     const searchQuery = searchParams.get('search') || undefined;
 
     // Get students with filters
-    let students = await getStudents({
-      class: classFilter,
-      section: sectionFilter,
-    });
+    let query = supabase.from('students').select('*');
+
+    if (classFilter) {
+      query = query.eq('class', classFilter);
+    }
+
+    if (sectionFilter) {
+      query = query.eq('section', sectionFilter);
+    }
+
+    const { data: studentsData, error: studentsError } = await query.order('created_at', { ascending: false });
+
+    if (studentsError) {
+      throw studentsError;
+    }
+
+    let students = studentsData || [];
 
     // Apply search filter if provided (searches in full_name, roll, guardian_name)
     if (searchQuery) {
@@ -102,16 +115,19 @@ export async function POST(request: NextRequest) {
 
     const studentData = validationResult.data;
 
-    // Create student using helper function
-    const newStudent = await createStudent(
-      studentData as Database['public']['Tables']['students']['Insert']
-    );
+    // Create student
+    const { data: newStudent, error: createError } = await supabase
+      .from('students')
+      .insert(studentData as Database['public']['Tables']['students']['Insert'])
+      .select()
+      .single();
 
-    if (!newStudent) {
+    if (createError || !newStudent) {
+      console.error('Error creating student:', createError);
       return NextResponse.json(
         {
           ok: false,
-          error: 'Failed to create student',
+          error: createError?.message || 'Failed to create student',
         },
         { status: 500 }
       );

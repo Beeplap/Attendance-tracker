@@ -47,13 +47,19 @@ export async function getAuthenticatedUser(request: NextRequest) {
 
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
     const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-    const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
+    const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
+      global: {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    });
 
     // Verify token and get user
     const {
       data: { user },
       error,
-    } = await supabase.auth.getUser(token);
+    } = await supabase.auth.getUser();
 
     if (error || !user) {
       return null;
