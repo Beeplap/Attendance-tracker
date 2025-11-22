@@ -1,12 +1,12 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { supabase } from "@/lib/supabaseClient";
-import { resolveUserRole } from "@/lib/utils";
+import { Button } from "../../components/ui/button";
+import { Card, CardHeader, CardTitle, CardContent } from "../../components/ui/card";
+import { supabase } from "../../lib/supabaseClient";
+import { resolveUserRole } from "../../lib/utils";
 import { Moon, Sun, Bell, Users, Clock, BookOpen } from "lucide-react";
-import Sidebar from "@/components/ui/sidebar";
+import Sidebar from "../../components/ui/sidebar";
 
 export default function DashboardPage() {
   const router = useRouter();

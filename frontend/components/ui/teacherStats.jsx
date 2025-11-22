@@ -1,12 +1,12 @@
 "use client";
 import React from "react";
-import { Button } from "@/components/ui/button";
+import { Button } from "./button";
 import {
   Card,
   CardHeader,
   CardTitle,
   CardContent,
-} from "@/components/ui/card";
+} from "./card";
 import { BookOpen, CheckCircle, XCircle, Calendar } from "lucide-react";
 
 export default function TeacherStats({

@@ -1,14 +1,14 @@
 "use client";
 import React, { useState, Fragment } from "react";
 import { Dialog, Transition } from "@headlessui/react";
-import { Button } from "@/components/ui/button";
+import { Button } from "./button";
 import {
   Card,
   CardHeader,
   CardTitle,
   CardContent,
   CardFooter,
-} from "@/components/ui/card";
+} from "./card";
 
 export default function AddClass({ open, onClose, profiles = [], onCreated }) {
   const [newClass, setNewClass] = useState({

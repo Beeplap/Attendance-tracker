@@ -10,7 +10,7 @@ import {
   LogOut,
   Menu,
 } from "lucide-react";
-import { supabase } from "@/lib/supabaseClient";
+import { supabase } from "../../lib/supabaseClient";
 
 
 export default function Sidebar({
