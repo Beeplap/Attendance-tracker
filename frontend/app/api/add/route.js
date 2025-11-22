@@ -46,9 +46,9 @@ export async function POST(req) {
     const user = userData?.user
     if (!user) throw new Error("User creation failed")
 
-    // Add the new user's profile record
+    // Add the new user's profile record to users table
     const { error: profileError } = await adminClient
-      .from("profiles")
+      .from("users")
       .insert({
         id: user.id,
         full_name,
