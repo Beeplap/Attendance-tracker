@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@hookform/resolvers": "^3.3.4",
     "@supabase/supabase-js": "^2.45.4",
     "axios": "^1.7.7",
     "next": "^14.2.5",
