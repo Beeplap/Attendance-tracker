@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { supabase } from '@/lib/supabaseClient';
 import type { Database } from '@/lib/supabaseClient';
+import { requireAuth } from '@/lib/auth-helpers';
 
 // Zod schema for attendance record
 const attendanceRecordSchema = z.object({
@@ -18,6 +19,15 @@ const attendanceBatchSchema = z.object({
 
 // POST /api/attendance - Create or update attendance records
 export async function POST(request: NextRequest) {
+  // Require teacher or admin role (only teachers and admins can mark attendance)
+  const authResult = await requireAuth(request, 'teacher');
+  if ('error' in authResult) {
+    return NextResponse.json(
+      { ok: false, error: authResult.error },
+      { status: authResult.status }
+    );
+  }
+
   try {
     const body = await request.json();
 
@@ -115,6 +125,15 @@ export async function POST(request: NextRequest) {
 
 // GET /api/attendance - Get attendance records with filters
 export async function GET(request: NextRequest) {
+  // Require authentication
+  const authResult = await requireAuth(request);
+  if ('error' in authResult) {
+    return NextResponse.json(
+      { ok: false, error: authResult.error },
+      { status: authResult.status }
+    );
+  }
+
   try {
     const searchParams = request.nextUrl.searchParams;
     const studentId = searchParams.get('student_id');

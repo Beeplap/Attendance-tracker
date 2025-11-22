@@ -15,8 +15,12 @@ export default function AuthGuard({ children, requiredRole }: AuthGuardProps) {
   const { user, profile, loading } = useUser();
 
   useEffect(() => {
-    // Don't redirect on login page
-    if (pathname === '/login' || pathname.startsWith('/auth/')) {
+    // Don't redirect on login page or auth callback
+    if (
+      pathname === '/login' ||
+      pathname.startsWith('/auth/') ||
+      pathname === '/'
+    ) {
       return;
     }
 

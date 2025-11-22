@@ -4,6 +4,26 @@
 
 const API_BASE = '/api';
 
+/**
+ * Get auth headers for API requests
+ */
+async function getAuthHeaders(): Promise<HeadersInit> {
+  const { supabase } = await import('@/lib/supabaseClient');
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+  };
+
+  if (session?.access_token) {
+    headers['Authorization'] = `Bearer ${session.access_token}`;
+  }
+
+  return headers;
+}
+
 export interface Student {
   id: string;
   roll: string;
@@ -57,7 +77,8 @@ export async function getStudents(filters?: {
   if (filters?.search) params.append('search', filters.search);
 
   const url = `${API_BASE}/students${params.toString() ? `?${params.toString()}` : ''}`;
-  const response = await fetch(url);
+  const headers = await getAuthHeaders();
+  const response = await fetch(url, { headers });
   const data: ApiResponse<Student[]> = await response.json();
 
   if (!data.ok || !data.data) {
@@ -71,7 +92,8 @@ export async function getStudents(filters?: {
  * Get a single student by ID
  */
 export async function getStudentById(id: string): Promise<Student> {
-  const response = await fetch(`${API_BASE}/students/${id}`);
+  const headers = await getAuthHeaders();
+  const response = await fetch(`${API_BASE}/students/${id}`, { headers });
   const data: ApiResponse<Student> = await response.json();
 
   if (!data.ok || !data.data) {
@@ -87,11 +109,10 @@ export async function getStudentById(id: string): Promise<Student> {
 export async function createStudent(
   student: CreateStudentInput
 ): Promise<Student> {
+  const headers = await getAuthHeaders();
   const response = await fetch(`${API_BASE}/students`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers,
     body: JSON.stringify(student),
   });
 
@@ -116,11 +137,10 @@ export async function updateStudent(
   id: string,
   student: UpdateStudentInput
 ): Promise<Student> {
+  const headers = await getAuthHeaders();
   const response = await fetch(`${API_BASE}/students/${id}`, {
     method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers,
     body: JSON.stringify(student),
   });
 
@@ -142,8 +162,10 @@ export async function updateStudent(
  * Delete a student
  */
 export async function deleteStudent(id: string): Promise<void> {
+  const headers = await getAuthHeaders();
   const response = await fetch(`${API_BASE}/students/${id}`, {
     method: 'DELETE',
+    headers,
   });
 
   const data: ApiResponse<{ message: string }> = await response.json();
@@ -178,11 +200,10 @@ export interface AttendanceInput {
 export async function saveAttendance(
   records: AttendanceInput[]
 ): Promise<{ saved: number; records: AttendanceRecord[] }> {
+  const headers = await getAuthHeaders();
   const response = await fetch(`${API_BASE}/attendance`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers,
     body: JSON.stringify({ records }),
   });
 
@@ -214,7 +235,8 @@ export async function getAttendance(filters?: {
   if (filters?.end_date) params.append('end_date', filters.end_date);
 
   const url = `${API_BASE}/attendance${params.toString() ? `?${params.toString()}` : ''}`;
-  const response = await fetch(url);
+  const headers = await getAuthHeaders();
+  const response = await fetch(url, { headers });
   const data: ApiResponse<AttendanceRecord[]> = await response.json();
 
   if (!data.ok || !data.data) {

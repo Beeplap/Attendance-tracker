@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { supabase } from '@/lib/supabaseClient';
 import { updateStudent, deleteStudent } from '@/lib/supabaseClient';
 import type { Database } from '@/lib/supabaseClient';
+import { requireAuth } from '@/lib/auth-helpers';
 
 // Zod schema for updating a student (all fields optional except id)
 const updateStudentSchema = z.object({
@@ -24,6 +25,15 @@ export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  // Require authentication
+  const authResult = await requireAuth(request);
+  if ('error' in authResult) {
+    return NextResponse.json(
+      { ok: false, error: authResult.error },
+      { status: authResult.status }
+    );
+  }
+
   try {
     const { id } = params;
 
@@ -89,6 +99,15 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  // Require teacher or admin role
+  const authResult = await requireAuth(request, 'teacher');
+  if ('error' in authResult) {
+    return NextResponse.json(
+      { ok: false, error: authResult.error },
+      { status: authResult.status }
+    );
+  }
+
   try {
     const { id } = params;
 
@@ -189,6 +208,15 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  // Require admin role only
+  const authResult = await requireAuth(request, 'admin');
+  if ('error' in authResult) {
+    return NextResponse.json(
+      { ok: false, error: authResult.error },
+      { status: authResult.status }
+    );
+  }
+
   try {
     const { id } = params;
 

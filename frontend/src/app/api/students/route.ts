@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { getStudents, createStudent } from '@/lib/supabaseClient';
+import { supabase } from '@/lib/supabaseClient';
 import type { Database } from '@/lib/supabaseClient';
+import { requireAuth } from '@/lib/auth-helpers';
 
 // Zod schema for creating a student
 const createStudentSchema = z.object({
@@ -20,6 +21,15 @@ const createStudentSchema = z.object({
 
 // GET /api/students - List students with optional filters
 export async function GET(request: NextRequest) {
+  // Require authentication
+  const authResult = await requireAuth(request);
+  if ('error' in authResult) {
+    return NextResponse.json(
+      { ok: false, error: authResult.error },
+      { status: authResult.status }
+    );
+  }
+
   try {
     const searchParams = request.nextUrl.searchParams;
     const classFilter = searchParams.get('class') || undefined;
@@ -64,6 +74,15 @@ export async function GET(request: NextRequest) {
 
 // POST /api/students - Create a new student
 export async function POST(request: NextRequest) {
+  // Require admin or teacher role
+  const authResult = await requireAuth(request, 'teacher');
+  if ('error' in authResult) {
+    return NextResponse.json(
+      { ok: false, error: authResult.error },
+      { status: authResult.status }
+    );
+  }
+
   try {
     const body = await request.json();
 
