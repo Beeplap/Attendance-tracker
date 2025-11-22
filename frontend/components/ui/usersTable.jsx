@@ -18,13 +18,13 @@ export default function UsersTable({
   filteredProfiles,
 }) {
   return (
-    <Card className="shadow-md border border-gray-200 dark:border-gray-700">
+    <Card className="shadow-md border border-gray-200">
       <CardHeader className="flex flex-col sm:flex-row gap-2 sm:items-center justify-between">
         <div>
-          <CardTitle className="text-lg font-semibold text-gray-800 dark:text-gray-100">
+          <CardTitle className="text-lg font-semibold text-gray-900">
             Users
           </CardTitle>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+          <p className="text-sm text-gray-700">
             {profiles.filter((p) => p.role === "admin").length} admins,{" "}
             {profiles.filter((p) => p.role === "teacher").length} teachers,{" "}
             {profiles.filter((p) => p.role === "student").length} students
@@ -34,7 +34,7 @@ export default function UsersTable({
           variant="outline"
           onClick={fetchProfiles}
           disabled={listLoading}
-          className="border-gray-400 text-gray-700 dark:text-gray-200"
+          className="border-gray-300 text-gray-700 hover:bg-gray-50"
         >
           {listLoading ? "Refreshing…" : "Refresh"}
         </Button>
@@ -43,7 +43,7 @@ export default function UsersTable({
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="sr-only sm:not-sr-only">
-              <tr className="text-left border-b bg-gray-100 dark:bg-gray-800">
+              <tr className="text-left border-b border-gray-200 bg-gray-50">
                 <th className="py-2 px-2 sm:px-4">User</th>
                 <th className="py-2 px-2 sm:px-4 hidden sm:table-cell">
                   Email
@@ -59,21 +59,21 @@ export default function UsersTable({
               {filteredProfiles.map((p, idx) => (
                 <tr
                   key={p.id}
-                  className={`border-b last:border-0 ${
-                    idx % 2 === 0 ? "bg-white/50 dark:bg-gray-900/40" : ""
+                  className={`border-b border-gray-100 last:border-0 ${
+                    idx % 2 === 0 ? "bg-gray-50" : "bg-white"
                   }`}
                 >
                   <td className="py-2 px-2 sm:px-4">
                     <div className="flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-2">
-                      <span className="font-medium">
+                      <span className="font-medium text-gray-900">
                         {p.full_name || p.id}
                       </span>
-                      <span className="text-xs text-gray-500 sm:hidden">
+                      <span className="text-xs text-gray-600 sm:hidden">
                         {p.email}
                       </span>
                     </div>
                   </td>
-                  <td className="py-2 px-2 sm:px-4 hidden sm:table-cell">
+                  <td className="py-2 px-2 sm:px-4 hidden sm:table-cell text-gray-700">
                     {p.email}
                   </td>
                   <td className="py-2 px-2 sm:px-4">
@@ -90,7 +90,7 @@ export default function UsersTable({
                       {p.role || "student"}
                     </span>
                   </td>
-                  <td className="py-2 px-2 sm:px-4 text-xs opacity-70 hidden sm:table-cell">
+                  <td className="py-2 px-2 sm:px-4 text-xs text-gray-600 hidden sm:table-cell">
                     {new Date(p.created_at).toLocaleDateString()}
                   </td>
                   <td className="py-2 px-2 sm:px-4">

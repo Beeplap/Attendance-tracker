@@ -227,7 +227,7 @@ export default function AdminPage() {
     return <div className="p-6 text-center text-gray-600">Loading…</div>;
 
   return (
-    <div className="min-h-dvh bg-gradient-to-br from-purple-50 via-violet-50 to-purple-100 dark:from-gray-900 dark:via-purple-950 dark:to-gray-900 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-violet-50 to-purple-100 p-6">
       <div className="w-full mx-auto flex flex-col lg:flex-row gap-6">
         <Sidebar
           open={sidebarOpen}
@@ -255,10 +255,10 @@ export default function AdminPage() {
                 </svg>
               </div>
               <div>
-                <h1 className="text-2xl sm:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-violet-600 dark:from-purple-400 dark:to-violet-400">
+                <h1 className="text-2xl sm:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-violet-600">
                   Admin Panel
                 </h1>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
+                <p className="text-sm text-gray-700">
                   Manage users and system settings
                 </p>
               </div>
@@ -293,8 +293,7 @@ export default function AdminPage() {
                   document.documentElement.classList.toggle("dark")
                 }
               >
-                <Moon className="hidden dark:block w-5 h-5" />
-                <Sun className="block dark:hidden w-5 h-5" />
+                <Sun className="w-5 h-5 text-gray-600" />
               </Button>
 
               <Button
@@ -325,14 +324,14 @@ export default function AdminPage() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search by name/email…"
-                className="w-full border rounded-md px-3 h-10 bg-white/80 dark:bg-black/20"
+                className="w-full border border-gray-300 rounded-md px-3 h-10 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500"
               />
             </div>
             <div className="w-full sm:w-48">
               <select
                 value={filterRole}
                 onChange={(e) => setFilterRole(e.target.value)}
-                className="w-full border rounded-md px-3 h-10 bg-white/80 dark:bg-black/20"
+                className="w-full border border-gray-300 rounded-md px-3 h-10 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500"
               >
                 <option value="all">All Roles</option>
                 <option value="admin">Admins</option>
