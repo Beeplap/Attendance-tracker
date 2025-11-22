@@ -31,13 +31,33 @@ export default function LoginPage() {
 
       if (data.user) {
         // Fetch profile to determine redirect
-        const { data: profileData } = await supabase
+        const { data: profileData, error: profileError } = await supabase
           .from("users")
-          .select("role")
+          .select("role, email, full_name")
           .eq("id", data.user.id)
           .single();
 
+        if (profileError) {
+          console.error("Error fetching user profile:", profileError);
+          // If user doesn't exist in users table, try to create one
+          const { error: createError } = await supabase
+            .from("users")
+            .insert({
+              id: data.user.id,
+              email: data.user.email,
+              role: "staff", // Default role
+              full_name: data.user.user_metadata?.full_name || null,
+            });
+
+          if (createError) {
+            console.error("Error creating user record:", createError);
+          }
+          router.replace("/dashboard");
+          return;
+        }
+
         if (profileData) {
+          console.log("User role:", profileData.role, "Email:", profileData.email);
           switch (profileData.role) {
             case "admin":
               router.replace("/admin");
@@ -49,6 +69,7 @@ export default function LoginPage() {
               router.replace("/dashboard");
           }
         } else {
+          console.warn("No profile data found for user:", data.user.id);
           router.replace("/dashboard");
         }
       }

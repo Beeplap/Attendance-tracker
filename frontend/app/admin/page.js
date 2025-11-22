@@ -66,10 +66,26 @@ export default function AdminPage() {
         router.replace("/");
         return;
       }
-      const role = await resolveUserRole(supabase, user);
-      if (role !== "admin") {
-        return router.replace("/dashboard");
+      
+      // Check role from users table (not profiles)
+      const { data: userData, error: userError } = await supabase
+        .from("users")
+        .select("role, email")
+        .eq("id", user.id)
+        .single();
+      
+      if (userError || !userData) {
+        console.error("Error fetching user role:", userError);
+        router.replace("/dashboard");
+        return;
       }
+      
+      if (userData.role !== "admin") {
+        console.log("User role is not admin:", userData.role);
+        router.replace("/dashboard");
+        return;
+      }
+      
       setEmail(user.email || "");
       setLoading(false);
       fetchProfiles();
@@ -82,7 +98,7 @@ export default function AdminPage() {
   const fetchProfiles = async () => {
     setListLoading(true);
     const { data, error } = await supabase
-      .from("profiles")
+      .from("users")
       .select("id, full_name, email, role, created_at")
       .order("created_at", { ascending: false });
     if (!error) setProfiles(data || []);
@@ -94,7 +110,7 @@ export default function AdminPage() {
 
     // Fetch teachers
     const { data: teachers, error: teachersError } = await supabase
-      .from("profiles")
+      .from("users")
       .select("id, full_name, email")
       .eq("role", "teacher");
 
@@ -184,7 +200,7 @@ export default function AdminPage() {
 
   const deleteUser = async (id) => {
     if (!confirm("Are you sure you want to delete this user?")) return;
-    const { error } = await supabase.from("profiles").delete().eq("id", id);
+    const { error } = await supabase.from("users").delete().eq("id", id);
     if (error) {
       alert(error.message);
     } else {
