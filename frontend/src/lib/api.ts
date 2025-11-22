@@ -153,3 +153,74 @@ export async function deleteStudent(id: string): Promise<void> {
   }
 }
 
+// Attendance types and functions
+export interface AttendanceRecord {
+  id: string;
+  student_id: string;
+  date: string;
+  status: 'present' | 'absent' | 'late' | 'excused';
+  subject_id: string | null;
+  marked_by: string | null;
+  created_at: string;
+}
+
+export interface AttendanceInput {
+  student_id: string;
+  date: string;
+  status: 'present' | 'absent' | 'late' | 'excused';
+  subject_id?: string | null;
+  marked_by?: string | null;
+}
+
+/**
+ * Save attendance records (upsert)
+ */
+export async function saveAttendance(
+  records: AttendanceInput[]
+): Promise<{ saved: number; records: AttendanceRecord[] }> {
+  const response = await fetch(`${API_BASE}/attendance`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ records }),
+  });
+
+  const data: ApiResponse<{ saved: number; records: AttendanceRecord[] }> =
+    await response.json();
+
+  if (!data.ok || !data.data) {
+    throw new Error(data.error || 'Failed to save attendance');
+  }
+
+  return data.data;
+}
+
+/**
+ * Get attendance records with filters
+ */
+export async function getAttendance(filters?: {
+  student_id?: string;
+  date?: string;
+  class?: string;
+  start_date?: string;
+  end_date?: string;
+}): Promise<AttendanceRecord[]> {
+  const params = new URLSearchParams();
+  if (filters?.student_id) params.append('student_id', filters.student_id);
+  if (filters?.date) params.append('date', filters.date);
+  if (filters?.class) params.append('class', filters.class);
+  if (filters?.start_date) params.append('start_date', filters.start_date);
+  if (filters?.end_date) params.append('end_date', filters.end_date);
+
+  const url = `${API_BASE}/attendance${params.toString() ? `?${params.toString()}` : ''}`;
+  const response = await fetch(url);
+  const data: ApiResponse<AttendanceRecord[]> = await response.json();
+
+  if (!data.ok || !data.data) {
+    throw new Error(data.error || 'Failed to fetch attendance');
+  }
+
+  return data.data;
+}
+
