@@ -47,19 +47,19 @@ export default function Sidebar({
   const navItemClass = (active) =>
     `group w-full flex items-center px-3 py-2 rounded-xl border transition-all duration-200 text-sm ${
       active
-        ? "bg-purple-100 dark:bg-purple-900/30 border-purple-300 dark:border-purple-700 text-gray-900 dark:text-gray-100"
-        : "bg-white/50 dark:bg-transparent border-transparent hover:bg-purple-50/70 dark:hover:bg-purple-900/20 hover:border-purple-200 dark:hover:border-purple-800 text-gray-700 dark:text-gray-300"
+        ? "bg-purple-100 border-purple-300 text-gray-900 font-medium"
+        : "bg-white border-transparent hover:bg-purple-50 hover:border-purple-200 text-gray-700"
     }`;
 
   const Content = (
     <div
-      className={`rounded-2xl border border-purple-200 dark:border-purple-800 bg-white/70 dark:bg-gray-900/80 ${
+      className={`rounded-2xl border border-purple-200 bg-white ${
         collapsed ? "p-2" : "p-3 sm:p-4"
       } shadow-sm h-full flex flex-col`}
     >
       {/* Top: teacher name + single toggle */}
       <div
-        className={`flex items-center gap-3 rounded-xl bg-purple-50/70 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 ${
+        className={`flex items-center gap-3 rounded-xl bg-purple-50 border border-purple-200 ${
           collapsed ? "justify-center p-2" : "p-3"
         }`}
       >
@@ -68,7 +68,7 @@ export default function Sidebar({
           {onToggleCollapsed && (
             <button
               onClick={onToggleCollapsed}
-              className="inline-flex items-center justify-center w-9 h-9 rounded-md border border-purple-200 dark:border-purple-700 hover:bg-purple-50/70 dark:hover:bg-purple-900/20 transition"
+              className="inline-flex items-center justify-center w-9 h-9 rounded-md border border-purple-200 hover:bg-purple-100 transition text-gray-700"
               aria-label="Toggle sidebar"
             >
               <Menu className="w-4 h-4" />
@@ -78,7 +78,7 @@ export default function Sidebar({
 
         {!collapsed && (
           <div className="min-w-0">
-            <div className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+            <div className="text-sm font-medium text-gray-900 truncate">
               Mr. Rajesh Sharma
             </div>
           </div>
@@ -92,7 +92,7 @@ export default function Sidebar({
           onClick={() => router.push("/dashboard")}
           className={navItemClass(pathname === "/dashboard")}
         >
-          <Home className={"w-4 h-4 text-gray-600 dark:text-gray-400 group-hover:text-purple-600"} />
+          <Home className={"w-4 h-4 text-gray-600 group-hover:text-purple-600"} />
           {!collapsed && <span className="flex-1 text-left">Dashboard</span>}
         </button>
 
@@ -102,7 +102,7 @@ export default function Sidebar({
             onClick={() => handleDropdownToggle("teachers")}
             className={navItemClass(pathname?.startsWith("/teachers")) + (collapsed ? " justify-center" : " gap-3")}
           >
-            <User className={"w-4 h-4 text-gray-600 dark:text-gray-400 group-hover:text-purple-600"} />
+            <User className={"w-4 h-4 text-gray-600 group-hover:text-purple-600"} />
             {!collapsed && <span className="flex-1 text-left">Teachers</span>}
             {!collapsed && (
               <ChevronDown
@@ -137,7 +137,7 @@ export default function Sidebar({
             onClick={() => handleDropdownToggle("students")}
             className={navItemClass(pathname?.startsWith("/students")) + (collapsed ? " justify-center" : " gap-3")}
           >
-            <Users className={"w-4 h-4 text-gray-600 dark:text-gray-400 group-hover:text-purple-600"} />
+            <Users className={"w-4 h-4 text-gray-600 group-hover:text-purple-600"} />
             {!collapsed && <span className="flex-1 text-left">Students</span>}
             {!collapsed && (
               <ChevronDown
@@ -170,9 +170,9 @@ export default function Sidebar({
       <div className="mt-4">
         <button
           onClick={signOut}
-          className="group w-full flex items-center px-3 py-2 rounded-xl border transition-all duration-200 text-sm bg-white/50 dark:bg-transparent border-transparent hover:bg-purple-50/70 dark:hover:bg-purple-900/20 hover:border-purple-200 dark:hover:border-purple-800 text-gray-700 dark:text-gray-300"
+          className="group w-full flex items-center px-3 py-2 rounded-xl border transition-all duration-200 text-sm bg-white border-transparent hover:bg-purple-50 hover:border-purple-200 text-gray-700"
         >
-          <LogOut className="w-4 h-4 text-gray-600 dark:text-gray-400 group-hover:text-purple-600" />
+          <LogOut className="w-4 h-4 text-gray-600 group-hover:text-purple-600" />
           {!collapsed && <span className="flex-1 text-left">Sign Out</span>}
         </button>
       </div>

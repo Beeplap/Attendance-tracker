@@ -115,7 +115,7 @@ export default function UsersTable({
                           leaveFrom="transform opacity-100 scale-100"
                           leaveTo="transform opacity-0 scale-95"
                         >
-                          <Menu.Items className="absolute right-0 mt-2 w-40 origin-top-right rounded-md border bg-white dark:bg-gray-900 shadow-lg focus:outline-none">
+                          <Menu.Items className="absolute right-0 mt-2 w-40 origin-top-right rounded-md border border-gray-200 bg-white shadow-lg focus:outline-none z-50">
                             <div className="py-1">
                               <Menu.Item>
                                 {({ active }) => (
@@ -123,9 +123,9 @@ export default function UsersTable({
                                     onClick={() => deleteUser(p.id)}
                                     className={`${
                                       active
-                                        ? "bg-gray-100 dark:bg-gray-800"
+                                        ? "bg-gray-100"
                                         : ""
-                                    } flex w-full px-3 py-2 text-left text-sm text-red-600`}
+                                    } flex w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-gray-50`}
                                   >
                                     Delete
                                   </button>
@@ -141,7 +141,7 @@ export default function UsersTable({
               ))}
               {filteredProfiles.length === 0 && (
                 <tr>
-                  <td className="py-4 text-center opacity-70" colSpan={5}>
+                  <td className="py-4 text-center text-gray-600" colSpan={5}>
                     No users found
                   </td>
                 </tr>

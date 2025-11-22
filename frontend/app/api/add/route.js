@@ -56,7 +56,45 @@ export async function POST(req) {
         role,
       })
 
-    if (profileError) throw profileError
+    if (profileError) {
+      // If role constraint error, provide helpful message
+      if (profileError.message?.includes("users_role_check")) {
+        throw new Error("Invalid role. Allowed roles: admin, teacher, staff, student. Please update the database constraint to include 'student'.")
+      }
+      throw profileError
+    }
+
+    // If creating a student, also create a record in students table
+    if (role === "student") {
+      const { error: studentError } = await adminClient
+        .from("students")
+        .insert({
+          id: user.id,
+          full_name,
+          roll: `STU-${Date.now()}`, // Generate a temporary roll number
+        })
+
+      if (studentError) {
+        console.error("Error creating student record:", studentError)
+        // Don't fail the whole operation, just log it
+      }
+    }
+
+    // If creating a teacher, also create a record in teachers table
+    if (role === "teacher") {
+      const { error: teacherError } = await adminClient
+        .from("teachers")
+        .insert({
+          id: user.id,
+          full_name,
+          email: email,
+        })
+
+      if (teacherError) {
+        console.error("Error creating teacher record:", teacherError)
+        // Don't fail the whole operation, just log it
+      }
+    }
 
     return NextResponse.json(
       { message: "User created successfully" },

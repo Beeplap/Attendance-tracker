@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "./button";
 import {
   Card,
@@ -10,14 +10,21 @@ import {
 } from "./card";
 import { Dialog } from "@headlessui/react";
 
-export default function AddUser({ open, onClose, onUserAdded }) {
+export default function AddUser({ open, onClose, onUserAdded, defaultRole = "teacher" }) {
   const [addLoading, setAddLoading] = useState(false);
   const [addError, setAddError] = useState("");
   const [addSuccess, setAddSuccess] = useState("");
   const [newEmail, setNewEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [newFullName, setNewFullName] = useState("");
-  const [newRole, setNewRole] = useState("teacher");
+  const [newRole, setNewRole] = useState(defaultRole);
+
+  // Update role when defaultRole prop changes
+  useEffect(() => {
+    if (open) {
+      setNewRole(defaultRole);
+    }
+  }, [defaultRole, open]);
 
   const handleAddUser = async () => {
     setAddLoading(true);

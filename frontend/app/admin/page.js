@@ -23,8 +23,7 @@ import {
 } from "lucide-react";
 import { Dialog, Menu, Transition } from "@headlessui/react";
 import AddClass from "../../components/ui/addClass";
-import Sidebar from "../../components/ui/sidebar";
-
+import AdminSidebar from "../../components/ui/adminSidebar";
 import AddUser from "../../components/ui/addUser";
 import UsersTable from "../../components/ui/usersTable";
 import TeacherStats from "../../components/ui/teacherStats";
@@ -39,6 +38,7 @@ export default function AdminPage() {
   const [search, setSearch] = useState("");
   const [filterRole, setFilterRole] = useState("all");
   const [showAddUser, setShowAddUser] = useState(false);
+  const [addUserRole, setAddUserRole] = useState("teacher"); // Default role for Add User modal
   const [showAssignClass, setShowAssignClass] = useState(false);
   const [assignClassLoading, setAssignClassLoading] = useState(false);
   const [assignClassError, setAssignClassError] = useState("");
@@ -66,34 +66,32 @@ export default function AdminPage() {
         router.replace("/");
         return;
       }
-      
+
       // Check role from users table (not profiles)
       const { data: userData, error: userError } = await supabase
         .from("users")
         .select("role, email")
         .eq("id", user.id)
         .single();
-      
+
       if (userError || !userData) {
         console.error("Error fetching user role:", userError);
         router.replace("/dashboard");
         return;
       }
-      
+
       if (userData.role !== "admin") {
         console.log("User role is not admin:", userData.role);
         router.replace("/dashboard");
         return;
       }
-      
+
       setEmail(user.email || "");
       setLoading(false);
       fetchProfiles();
       fetchTeacherStats();
     });
   }, [router]);
-
- 
 
   const fetchProfiles = async () => {
     setListLoading(true);
@@ -229,11 +227,19 @@ export default function AdminPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-violet-50 to-purple-100 p-6">
       <div className="w-full mx-auto flex flex-col lg:flex-row gap-6">
-        <Sidebar
+        <AdminSidebar
           open={sidebarOpen}
           onOpenChange={setSidebarOpen}
           collapsed={sidebarCollapsed}
           onToggleCollapsed={() => setSidebarCollapsed((v) => !v)}
+          onAddTeacher={() => {
+            setAddUserRole("teacher");
+            setShowAddUser(true);
+          }}
+          onAddStudent={() => {
+            setAddUserRole("student");
+            setShowAddUser(true);
+          }}
         />
         <main className="flex-1 space-y-8">
           {/* Header */}
@@ -285,24 +291,6 @@ export default function AdminPage() {
                   />
                 </svg>
               </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="p-2 rounded-full"
-                onClick={() =>
-                  document.documentElement.classList.toggle("dark")
-                }
-              >
-                <Sun className="w-5 h-5 text-gray-600" />
-              </Button>
-
-              <Button
-                onClick={() => setShowAddUser(true)}
-                size="sm"
-                className="flex-1 sm:flex-none bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-700 hover:to-violet-700 text-white px-3 py-2 rounded-lg shadow-md transition-all duration-200 text-sm"
-              >
-                + Add User
-              </Button>
 
               <Button
                 onClick={() => setShowAssignClass(true)}
@@ -311,8 +299,6 @@ export default function AdminPage() {
               >
                 + Class
               </Button>
-
-          
             </div>
           </div>
 
@@ -360,11 +346,15 @@ export default function AdminPage() {
 
           <AddUser
             open={showAddUser}
-            onClose={() => setShowAddUser(false)}
+            onClose={() => {
+              setShowAddUser(false);
+              setAddUserRole("teacher"); // Reset to default
+            }}
             onUserAdded={() => {
               fetchProfiles();
               fetchTeacherStats();
             }}
+            defaultRole={addUserRole}
           />
 
           <AddClass

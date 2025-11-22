@@ -5,7 +5,7 @@ import { Button } from "../../components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "../../components/ui/card";
 import { supabase } from "../../lib/supabaseClient";
 import { resolveUserRole } from "../../lib/utils";
-import { Moon, Sun, Bell, Users, Clock, BookOpen } from "lucide-react";
+import { Bell, Users, Clock, BookOpen } from "lucide-react";
 import Sidebar from "../../components/ui/sidebar";
 
 export default function DashboardPage() {
@@ -72,10 +72,6 @@ export default function DashboardPage() {
     const suffix = ((hash % 900) + 100).toString();
     setTeacherCode(`TEA-${year}-${suffix}`);
   }, [userId]);
-
-  const toggleTheme = () => {
-    document.documentElement.classList.toggle("dark");
-  };
 
   const signOut = async () => {
     await supabase.auth.signOut();
@@ -147,14 +143,6 @@ export default function DashboardPage() {
                     strokeLinecap="round"
                   />
                 </svg>
-              </Button>
-              <Button
-                variant="ghost"
-                className="p-2 rounded-full"
-                onClick={toggleTheme}
-              >
-                <Moon className="hidden dark:block w-5 h-5" />
-                <Sun className="block dark:hidden w-5 h-5" />
               </Button>
               <Button variant="ghost" className="p-2 rounded-full relative">
                 <Bell className="w-5 h-5 text-gray-700 dark:text-gray-300" />
