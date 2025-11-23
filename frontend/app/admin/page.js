@@ -16,10 +16,16 @@ import {
   Sun,
   MoreHorizontal,
   User,
+  Users,
   BookOpen,
   CheckCircle,
   XCircle,
   Calendar,
+  UserCheck,
+  School,
+  LayoutDashboard,
+  UserPlus,
+  GraduationCap,
 } from "lucide-react";
 import { Dialog, Menu, Transition } from "@headlessui/react";
 import AddClass from "../../components/ui/addClass";
@@ -168,8 +174,10 @@ export default function AdminPage() {
   useEffect(() => {
     if (currentView === "teachers") {
       fetchTeachers();
-    } else if (currentView === "students") {
+    } else if (currentView === "students" || currentView === "statistics/students") {
       fetchStudents();
+    } else if (currentView === "statistics/teachers") {
+      fetchTeacherStats();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentView]);
@@ -307,12 +315,53 @@ export default function AdminPage() {
 
   const deleteUser = async (id) => {
     if (!confirm("Are you sure you want to delete this user?")) return;
-    const { error } = await supabase.from("users").delete().eq("id", id);
-    if (error) {
-      alert(error.message);
-    } else {
+    
+    try {
+      // Get user role before deleting
+      const { data: userData } = await supabase
+        .from("users")
+        .select("role")
+        .eq("id", id)
+        .single();
+
+      if (!userData) {
+        alert("User not found");
+        return;
+      }
+
+      const role = userData.role;
+
+      // Call API route to delete from all tables
+      const response = await fetch("/api/delete-user", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ id, role }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        alert(`Error deleting user: ${result.error || "Unknown error"}`);
+        return;
+      }
+
+      // Update local state
       setProfiles((prev) => prev.filter((p) => p.id !== id));
       setTeacherStats((prev) => prev.filter((t) => t.id !== id));
+      
+      // Refresh data if needed
+      if (currentView === "teachers") {
+        fetchTeachers();
+      } else if (currentView === "students") {
+        fetchStudents();
+      }
+      
+      alert("User deleted successfully from all tables");
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      alert(`Error deleting user: ${error.message}`);
     }
   };
 
@@ -379,6 +428,9 @@ export default function AdminPage() {
                   {currentView === "dashboard" && "Admin Panel"}
                   {currentView === "teachers" && "Teachers"}
                   {currentView === "students" && "Students"}
+                  {currentView === "statistics/teachers" && "Teacher Statistics"}
+                  {currentView === "statistics/users" && "User Statistics"}
+                  {currentView === "statistics/students" && "Student Statistics"}
                 </h1>
                 <p className="text-sm text-gray-700">
                   {currentView === "dashboard" &&
@@ -387,6 +439,8 @@ export default function AdminPage() {
                     "Manage teacher accounts and information"}
                   {currentView === "students" &&
                     "Manage student records and information"}
+                  {currentView?.startsWith("statistics") &&
+                    "View detailed statistics and analytics"}
                 </p>
               </div>
             </div>
@@ -443,15 +497,143 @@ export default function AdminPage() {
                 </div>
               </div>
 
-              {/* Teacher Statistics Section */}
-              {filterRole === "all" || filterRole === "teacher" ? (
-                <TeacherStats
-                  filteredTeacherStats={filteredTeacherStats}
-                  statsLoading={statsLoading}
-                  fetchTeacherStats={fetchTeacherStats}
-                  viewTeacherDetails={viewTeacherDetails}
-                />
-              ) : null}
+              {/* Dashboard Overview Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <Card className="shadow-md border border-gray-200">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">
+                          Total Users
+                        </p>
+                        <p className="text-3xl font-bold text-gray-900 mt-2">
+                          {profiles.length}
+                        </p>
+                      </div>
+                      <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                        <Users className="w-6 h-6 text-blue-600" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="shadow-md border border-gray-200">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">
+                          Teachers
+                        </p>
+                        <p className="text-3xl font-bold text-gray-900 mt-2">
+                          {profiles.filter((p) => p.role === "teacher").length}
+                        </p>
+                      </div>
+                      <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+                        <UserCheck className="w-6 h-6 text-purple-600" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="shadow-md border border-gray-200">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">
+                          Students
+                        </p>
+                        <p className="text-3xl font-bold text-gray-900 mt-2">
+                          {profiles.filter((p) => p.role === "student").length}
+                        </p>
+                      </div>
+                      <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                        <School className="w-6 h-6 text-green-600" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="shadow-md border border-gray-200">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">
+                          Admins
+                        </p>
+                        <p className="text-3xl font-bold text-gray-900 mt-2">
+                          {profiles.filter((p) => p.role === "admin").length}
+                        </p>
+                      </div>
+                      <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                        <LayoutDashboard className="w-6 h-6 text-red-600" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Quick Actions */}
+              <Card className="shadow-md border border-gray-200">
+                <CardHeader>
+                  <CardTitle className="text-lg font-semibold text-gray-800">
+                    Quick Actions
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <button
+                      onClick={() => {
+                        setAddUserRole("teacher");
+                        setShowAddUser(true);
+                      }}
+                      className="flex items-center gap-3 p-4 border border-gray-200 rounded-lg hover:bg-purple-50 hover:border-purple-300 transition-colors text-left"
+                    >
+                      <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                        <UserPlus className="w-5 h-5 text-purple-600" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900">Add Teacher</p>
+                        <p className="text-sm text-gray-600">
+                          Create a new teacher account
+                        </p>
+                      </div>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        setAddUserRole("student");
+                        setShowAddUser(true);
+                      }}
+                      className="flex items-center gap-3 p-4 border border-gray-200 rounded-lg hover:bg-green-50 hover:border-green-300 transition-colors text-left"
+                    >
+                      <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                        <GraduationCap className="w-5 h-5 text-green-600" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900">Add Student</p>
+                        <p className="text-sm text-gray-600">
+                          Register a new student
+                        </p>
+                      </div>
+                    </button>
+
+                    <button
+                      onClick={() => setShowAssignClass(true)}
+                      className="flex items-center gap-3 p-4 border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-colors text-left"
+                    >
+                      <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <BookOpen className="w-5 h-5 text-blue-600" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900">Assign Class</p>
+                        <p className="text-sm text-gray-600">
+                          Assign classes to teachers
+                        </p>
+                      </div>
+                    </button>
+                  </div>
+                </CardContent>
+              </Card>
 
               {/* Users Table */}
               <UsersTable
@@ -525,6 +707,196 @@ export default function AdminPage() {
                 </div>
               )}
             </div>
+          )}
+
+          {/* Statistics Views */}
+          {currentView === "statistics/teachers" && (
+            <TeacherStats
+              filteredTeacherStats={filteredTeacherStats}
+              statsLoading={statsLoading}
+              fetchTeacherStats={fetchTeacherStats}
+              viewTeacherDetails={viewTeacherDetails}
+            />
+          )}
+
+          {currentView === "statistics/users" && (
+            <Card className="shadow-md border border-gray-200">
+              <CardHeader>
+                <CardTitle className="text-lg font-semibold text-gray-800">
+                  User Statistics
+                </CardTitle>
+                <p className="text-sm text-gray-600">
+                  Overview of all users in the system
+                </p>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="p-4 bg-blue-50 rounded-lg">
+                    <p className="text-sm font-medium text-blue-700">
+                      Total Users
+                    </p>
+                    <p className="text-3xl font-bold text-blue-900 mt-2">
+                      {profiles.length}
+                    </p>
+                  </div>
+                  <div className="p-4 bg-purple-50 rounded-lg">
+                    <p className="text-sm font-medium text-purple-700">
+                      Active Teachers
+                    </p>
+                    <p className="text-3xl font-bold text-purple-900 mt-2">
+                      {profiles.filter((p) => p.role === "teacher").length}
+                    </p>
+                  </div>
+                  <div className="p-4 bg-green-50 rounded-lg">
+                    <p className="text-sm font-medium text-green-700">
+                      Active Students
+                    </p>
+                    <p className="text-3xl font-bold text-green-900 mt-2">
+                      {profiles.filter((p) => p.role === "student").length}
+                    </p>
+                  </div>
+                </div>
+                <div className="mt-6">
+                  <h3 className="text-md font-semibold text-gray-800 mb-4">
+                    Users by Role
+                  </h3>
+                  <div className="space-y-2">
+                    {["admin", "teacher", "student"].map((role) => {
+                      const count = profiles.filter((p) => p.role === role)
+                        .length;
+                      const percentage =
+                        profiles.length > 0
+                          ? ((count / profiles.length) * 100).toFixed(1)
+                          : 0;
+                      return (
+                        <div key={role} className="flex items-center gap-4">
+                          <div className="w-24 text-sm font-medium text-gray-700 capitalize">
+                            {role}
+                          </div>
+                          <div className="flex-1 bg-gray-200 rounded-full h-6 relative">
+                            <div
+                              className={`h-6 rounded-full flex items-center justify-end pr-2 ${
+                                role === "admin"
+                                  ? "bg-red-500"
+                                  : role === "teacher"
+                                  ? "bg-purple-500"
+                                  : "bg-green-500"
+                              }`}
+                              style={{ width: `${percentage}%` }}
+                            >
+                              <span className="text-xs font-medium text-white">
+                                {count}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="w-16 text-sm text-gray-600 text-right">
+                            {percentage}%
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {currentView === "statistics/students" && (
+            <Card className="shadow-md border border-gray-200">
+              <CardHeader>
+                <CardTitle className="text-lg font-semibold text-gray-800">
+                  Student Statistics
+                </CardTitle>
+                <p className="text-sm text-gray-600">
+                  Overview of student enrollment and distribution
+                </p>
+              </CardHeader>
+              <CardContent>
+                {studentsLoading ? (
+                  <div className="text-center py-12">
+                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                    <p className="mt-4 text-gray-600">Loading statistics...</p>
+                  </div>
+                ) : (
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                      <div className="p-4 bg-green-50 rounded-lg">
+                        <p className="text-sm font-medium text-green-700">
+                          Total Students
+                        </p>
+                        <p className="text-3xl font-bold text-green-900 mt-2">
+                          {students.length}
+                        </p>
+                      </div>
+                      <div className="p-4 bg-blue-50 rounded-lg">
+                        <p className="text-sm font-medium text-blue-700">
+                          Unique Classes
+                        </p>
+                        <p className="text-3xl font-bold text-blue-900 mt-2">
+                          {
+                            new Set(
+                              students.map((s) => s.class).filter(Boolean)
+                            ).size
+                          }
+                        </p>
+                      </div>
+                      <div className="p-4 bg-purple-50 rounded-lg">
+                        <p className="text-sm font-medium text-purple-700">
+                          Unique Sections
+                        </p>
+                        <p className="text-3xl font-bold text-purple-900 mt-2">
+                          {
+                            new Set(
+                              students.map((s) => s.section).filter(Boolean)
+                            ).size
+                          }
+                        </p>
+                      </div>
+                    </div>
+                    <div>
+                      <h3 className="text-md font-semibold text-gray-800 mb-4">
+                        Students by Class
+                      </h3>
+                      <div className="space-y-2">
+                        {Array.from(
+                          new Set(students.map((s) => s.class).filter(Boolean))
+                        )
+                          .sort()
+                          .map((cls) => {
+                            const count = students.filter(
+                              (s) => s.class === cls
+                            ).length;
+                            const percentage =
+                              students.length > 0
+                                ? ((count / students.length) * 100).toFixed(1)
+                                : 0;
+                            return (
+                              <div key={cls} className="flex items-center gap-4">
+                                <div className="w-32 text-sm font-medium text-gray-700">
+                                  {cls}
+                                </div>
+                                <div className="flex-1 bg-gray-200 rounded-full h-6 relative">
+                                  <div
+                                    className="h-6 rounded-full flex items-center justify-end pr-2 bg-green-500"
+                                    style={{ width: `${percentage}%` }}
+                                  >
+                                    <span className="text-xs font-medium text-white">
+                                      {count}
+                                    </span>
+                                  </div>
+                                </div>
+                                <div className="w-16 text-sm text-gray-600 text-right">
+                                  {percentage}%
+                                </div>
+                              </div>
+                            );
+                          })}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </CardContent>
+            </Card>
           )}
 
           {/* Students View */}

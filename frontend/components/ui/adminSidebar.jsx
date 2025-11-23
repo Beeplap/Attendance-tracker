@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import {
   Home,
@@ -13,8 +13,12 @@ import {
   UserCheck,
   School,
   X,
+  BarChart3,
+  ChevronDown,
+  ChevronRight,
 } from "lucide-react";
 import { supabase } from "../../lib/supabaseClient";
+import ConfirmDialog from "./ConfirmDialog";
 
 export default function AdminSidebar({
   open,
@@ -29,6 +33,17 @@ export default function AdminSidebar({
 }) {
   const pathname = usePathname();
   const router = useRouter();
+  const [statsExpanded, setStatsExpanded] = useState(
+    currentView?.startsWith("statistics") || false
+  );
+  const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
+
+  // Auto-expand statistics when navigating to a statistics view
+  useEffect(() => {
+    if (currentView?.startsWith("statistics")) {
+      setStatsExpanded(true);
+    }
+  }, [currentView]);
 
   const signOut = async () => {
     await supabase.auth.signOut();
@@ -120,6 +135,79 @@ export default function AdminSidebar({
           <School className="w-5 h-5 shrink-0" />
           {!collapsed && <span className="flex-1 text-left">Students</span>}
         </button>
+
+        {/* Statistics with submenu */}
+        {!collapsed && (
+          <>
+            <button
+              onClick={() => setStatsExpanded(!statsExpanded)}
+              className={navItemClass(
+                currentView?.startsWith("statistics") || false
+              )}
+            >
+              <BarChart3 className="w-5 h-5 shrink-0" />
+              <span className="flex-1 text-left">Statistics</span>
+              {statsExpanded ? (
+                <ChevronDown className="w-4 h-4" />
+              ) : (
+                <ChevronRight className="w-4 h-4" />
+              )}
+            </button>
+            {statsExpanded && (
+              <div className="ml-8 space-y-1">
+                <button
+                  onClick={() =>
+                    onViewChange && onViewChange("statistics/teachers")
+                  }
+                  className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
+                    currentView === "statistics/teachers"
+                      ? "bg-purple-100 text-purple-700 font-medium"
+                      : "text-gray-600 hover:bg-gray-50 hover:text-purple-600"
+                  }`}
+                >
+                  <UserCheck className="w-4 h-4" />
+                  <span>Teacher Stats</span>
+                </button>
+                <button
+                  onClick={() =>
+                    onViewChange && onViewChange("statistics/users")
+                  }
+                  className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
+                    currentView === "statistics/users"
+                      ? "bg-purple-100 text-purple-700 font-medium"
+                      : "text-gray-600 hover:bg-gray-50 hover:text-purple-600"
+                  }`}
+                >
+                  <Users className="w-4 h-4" />
+                  <span>User Stats</span>
+                </button>
+                <button
+                  onClick={() =>
+                    onViewChange && onViewChange("statistics/students")
+                  }
+                  className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
+                    currentView === "statistics/students"
+                      ? "bg-purple-100 text-purple-700 font-medium"
+                      : "text-gray-600 hover:bg-gray-50 hover:text-purple-600"
+                  }`}
+                >
+                  <School className="w-4 h-4" />
+                  <span>Student Stats</span>
+                </button>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* Statistics (collapsed view) */}
+        {collapsed && (
+          <button
+            onClick={() => onViewChange && onViewChange("statistics/teachers")}
+            className={navItemClass(currentView?.startsWith("statistics"))}
+          >
+            <BarChart3 className="w-5 h-5 shrink-0" />
+          </button>
+        )}
 
         {/* Divider */}
         {!collapsed && (

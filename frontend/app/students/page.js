@@ -214,13 +214,31 @@ export default function StudentsPage() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => {
-                              if (confirm(`Delete ${student.full_name}?`)) {
-                                supabase
-                                  .from("students")
-                                  .delete()
-                                  .eq("id", student.id)
-                                  .then(() => fetchStudents());
+                            onClick={async () => {
+                              if (confirm(`Delete ${student.full_name}? This will delete from both students and users tables.`)) {
+                                try {
+                                  // Call API route to delete from all tables
+                                  const response = await fetch("/api/delete-user", {
+                                    method: "DELETE",
+                                    headers: {
+                                      "Content-Type": "application/json",
+                                    },
+                                    body: JSON.stringify({ id: student.id, role: "student" }),
+                                  });
+
+                                  const result = await response.json();
+
+                                  if (!response.ok) {
+                                    alert(`Error deleting student: ${result.error || "Unknown error"}`);
+                                    return;
+                                  }
+
+                                  fetchStudents();
+                                  alert("Student deleted successfully from all tables");
+                                } catch (error) {
+                                  console.error("Error deleting student:", error);
+                                  alert(`Error deleting student: ${error.message}`);
+                                }
                               }
                             }}
                             className="text-red-600 hover:text-red-700"

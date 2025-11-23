@@ -4,12 +4,14 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "../../components/ui/button";
 import { supabase } from "../../lib/supabaseClient";
+import ConfirmDialog from "../../components/ui/ConfirmDialog";
 
 export default function TeacherDashboardPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
+  const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
 
   useEffect(() => {
     const fetchUser = async () => {

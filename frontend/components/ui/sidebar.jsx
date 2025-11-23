@@ -40,6 +40,9 @@ export default function Sidebar({
     if (which === "students") setStudentsOpen((s) => !s);
   };
     const signOut = async () => {
+      if (!confirm("Are you sure you want to sign out?")) {
+        return;
+      }
       await supabase.auth.signOut();
       router.replace("/");
     };
