@@ -11,6 +11,7 @@ import {
   Menu,
 } from "lucide-react";
 import { supabase } from "../../lib/supabaseClient";
+import ConfirmDialog from "./ConfirmDialog";
 
 
 export default function Sidebar({
@@ -26,6 +27,7 @@ export default function Sidebar({
   // local state for dropdowns (teachers, students)
   const [teachersOpen, setTeachersOpen] = useState(false);
   const [studentsOpen, setStudentsOpen] = useState(false);
+  const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
 
   // Helper to handle dropdown click with Option A behaviour:
   // If sidebar is collapsed, DO NOT open dropdowns. Instead, expand sidebar first (user must click again to open dropdown).
@@ -40,9 +42,6 @@ export default function Sidebar({
     if (which === "students") setStudentsOpen((s) => !s);
   };
     const signOut = async () => {
-      if (!confirm("Are you sure you want to sign out?")) {
-        return;
-      }
       await supabase.auth.signOut();
       router.replace("/");
     };
@@ -172,13 +171,25 @@ export default function Sidebar({
       {/* Sign out at bottom */}
       <div className="mt-4">
         <button
-          onClick={signOut}
+          onClick={() => setShowSignOutConfirm(true)}
           className="group w-full flex items-center px-3 py-2 rounded-xl border transition-all duration-200 text-sm bg-white border-transparent hover:bg-purple-50 hover:border-purple-200 text-gray-700"
         >
           <LogOut className="w-4 h-4 text-gray-600 group-hover:text-purple-600" />
           {!collapsed && <span className="flex-1 text-left">Sign Out</span>}
         </button>
       </div>
+
+      {/* Sign Out Confirmation Dialog */}
+      <ConfirmDialog
+        open={showSignOutConfirm}
+        onClose={() => setShowSignOutConfirm(false)}
+        onConfirm={signOut}
+        title="Sign Out"
+        message="Are you sure you want to sign out? You will need to log in again to access your account."
+        confirmText="Sign Out"
+        cancelText="Cancel"
+        variant="danger"
+      />
     </div>
   );
 

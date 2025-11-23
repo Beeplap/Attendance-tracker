@@ -90,12 +90,24 @@ export default function TeacherDashboardPage() {
         </nav>
         <div className="absolute bottom-6 left-6 right-6">
           <button
-            onClick={handleSignOut}
+            onClick={() => setShowSignOutConfirm(true)}
             className="w-full px-4 py-2 bg-red-600 rounded-md hover:bg-red-700 transition-colors"
           >
             Sign Out
           </button>
         </div>
+
+        {/* Sign Out Confirmation Dialog */}
+        <ConfirmDialog
+          open={showSignOutConfirm}
+          onClose={() => setShowSignOutConfirm(false)}
+          onConfirm={handleSignOut}
+          title="Sign Out"
+          message="Are you sure you want to sign out? You will need to log in again to access your account."
+          confirmText="Sign Out"
+          cancelText="Cancel"
+          variant="danger"
+        />
       </aside>
 
       {/* Main Content */}

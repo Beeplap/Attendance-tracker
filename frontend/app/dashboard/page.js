@@ -7,6 +7,7 @@ import { supabase } from "../../lib/supabaseClient";
 import { resolveUserRole } from "../../lib/utils";
 import { Bell, Users, Clock, BookOpen } from "lucide-react";
 import Sidebar from "../../components/ui/sidebar";
+import ConfirmDialog from "../../components/ui/ConfirmDialog";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -73,10 +74,9 @@ export default function DashboardPage() {
     setTeacherCode(`TEA-${year}-${suffix}`);
   }, [userId]);
 
+  const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
+
   const signOut = async () => {
-    if (!confirm("Are you sure you want to sign out?")) {
-      return;
-    }
     await supabase.auth.signOut();
     router.replace("/");
   };
@@ -154,11 +154,23 @@ export default function DashboardPage() {
                 </span>
               </Button>
               <Button
-                onClick={signOut}
+                onClick={() => setShowSignOutConfirm(true)}
                 className="flex-1 sm:flex-none bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-700 hover:to-violet-700 text-white px-4 py-2 rounded-lg shadow-md transition-all duration-200"
               >
                 Sign out
               </Button>
+
+              {/* Sign Out Confirmation Dialog */}
+              <ConfirmDialog
+                open={showSignOutConfirm}
+                onClose={() => setShowSignOutConfirm(false)}
+                onConfirm={signOut}
+                title="Sign Out"
+                message="Are you sure you want to sign out? You will need to log in again to access your account."
+                confirmText="Sign Out"
+                cancelText="Cancel"
+                variant="danger"
+              />
             </div>
           </div>
 
