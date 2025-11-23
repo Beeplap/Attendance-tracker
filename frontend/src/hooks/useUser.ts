@@ -7,7 +7,7 @@ import type { User } from '@supabase/supabase-js';
 export interface UserProfile {
   id: string;
   email: string;
-  role: 'admin' | 'teacher' | 'staff';
+  role: 'admin' | 'teacher' | 'student';
   full_name: string | null;
 }
 
@@ -105,7 +105,7 @@ async function fetchUserProfile(userId: string): Promise<UserProfile | null> {
           .insert({
             id: authUser.user.id,
             email: authUser.user.email!,
-            role: 'staff', // Default role
+            role: 'student', // Default role
             full_name: authUser.user.user_metadata?.full_name || null,
           })
           .select()

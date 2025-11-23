@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import { useUser } from '@/hooks/useUser';
@@ -15,14 +15,7 @@ export default function LoginPage() {
   const [isMagicLink, setIsMagicLink] = useState(false);
   const [magicLinkSent, setMagicLinkSent] = useState(false);
 
-  // Redirect if already logged in
-  useEffect(() => {
-    if (!userLoading && user && profile) {
-      redirectByRole(profile.role);
-    }
-  }, [user, profile, userLoading]);
-
-  const redirectByRole = (role: string) => {
+  const redirectByRole = useCallback((role: string) => {
     switch (role) {
       case 'admin':
         router.replace('/admin');
@@ -30,10 +23,20 @@ export default function LoginPage() {
       case 'teacher':
         router.replace('/teacher');
         break;
+      case 'student':
+        router.replace('/students');
+        break;
       default:
-        router.replace('/dashboard');
+        router.replace('/students');
     }
-  };
+  }, [router]);
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (!userLoading && user && profile) {
+      redirectByRole(profile.role);
+    }
+  }, [user, profile, userLoading, redirectByRole]);
 
   const handleEmailSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,23 +56,24 @@ export default function LoginPage() {
 
       if (data.user) {
         // Wait a moment for session to be established, then redirect
-        setTimeout(() => {
-          // Fetch profile to determine redirect
-          supabase
-            .from('users')
-            .select('role')
-            .eq('id', data.user.id)
-            .single()
-            .then(({ data: profileData }) => {
-              if (profileData) {
-                redirectByRole(profileData.role);
-              } else {
-                router.replace('/dashboard');
-              }
-            })
-            .catch(() => {
-              router.replace('/dashboard');
-            });
+        setTimeout(async () => {
+          try {
+            // Fetch profile to determine redirect
+            const { data: profileData, error: profileError } = await supabase
+              .from('users')
+              .select('role')
+              .eq('id', data.user.id)
+              .single<{ role: 'admin' | 'teacher' | 'student' }>();
+            
+            if (profileError || !profileData) {
+              router.replace('/students');
+              return;
+            }
+            
+            redirectByRole(profileData.role);
+          } catch {
+            router.replace('/students');
+          }
         }, 500);
       }
     } catch (err) {
@@ -142,7 +146,7 @@ export default function LoginPage() {
               Check your email
             </h2>
             <p className="text-gray-600 mb-4">
-              We've sent a magic link to <strong>{email}</strong>
+              We&apos;ve sent a magic link to <strong>{email}</strong>
             </p>
             <p className="text-sm text-gray-500 mb-4">
               Click the link in the email to sign in.
@@ -159,7 +163,6 @@ export default function LoginPage() {
           </div>
         ) : (
           <>
-            {/* Toggle between email/password and magic link */}
             <div className="flex gap-2 mb-6 p-1 bg-gray-100 rounded-lg">
               <button
                 onClick={() => setIsMagicLink(false)}

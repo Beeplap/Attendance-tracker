@@ -6,7 +6,7 @@ import { useUser } from '@/hooks/useUser';
 
 interface AuthGuardProps {
   children: React.ReactNode;
-  requiredRole?: 'admin' | 'teacher' | 'staff';
+  requiredRole?: 'admin' | 'teacher' | 'student';
 }
 
 export default function AuthGuard({ children, requiredRole }: AuthGuardProps) {
@@ -34,7 +34,7 @@ export default function AuthGuard({ children, requiredRole }: AuthGuardProps) {
       if (requiredRole && profile) {
         // Check role-based access
         const roleHierarchy: Record<string, number> = {
-          staff: 1,
+          student: 1,
           teacher: 2,
           admin: 3,
         };
@@ -43,7 +43,7 @@ export default function AuthGuard({ children, requiredRole }: AuthGuardProps) {
         const requiredRoleLevel = roleHierarchy[requiredRole] || 0;
 
         if (userRoleLevel < requiredRoleLevel) {
-          // Insufficient permissions, redirect to appropriate dashboard
+          // Insufficient permissions, redirect to appropriate page
           switch (profile.role) {
             case 'admin':
               router.replace('/admin');
@@ -51,8 +51,11 @@ export default function AuthGuard({ children, requiredRole }: AuthGuardProps) {
             case 'teacher':
               router.replace('/teacher');
               break;
+            case 'student':
+              router.replace('/students');
+              break;
             default:
-              router.replace('/dashboard');
+              router.replace('/students');
           }
         }
       }
@@ -76,7 +79,7 @@ export default function AuthGuard({ children, requiredRole }: AuthGuardProps) {
   // Check role if required
   if (requiredRole && profile) {
     const roleHierarchy: Record<string, number> = {
-      staff: 1,
+      student: 1,
       teacher: 2,
       admin: 3,
     };

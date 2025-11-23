@@ -103,12 +103,12 @@ export async function getUserProfile(userId: string) {
  */
 export function hasRequiredRole(
   userRole: string | null,
-  requiredRole: 'admin' | 'teacher' | 'staff'
+  requiredRole: 'admin' | 'teacher' | 'student'
 ): boolean {
   if (!userRole) return false;
 
   const roleHierarchy: Record<string, number> = {
-    staff: 1,
+    student: 1,
     teacher: 2,
     admin: 3,
   };
@@ -124,7 +124,7 @@ export function hasRequiredRole(
  */
 export async function requireAuth(
   request: NextRequest,
-  requiredRole?: 'admin' | 'teacher' | 'staff'
+  requiredRole?: 'admin' | 'teacher' | 'student'
 ) {
   const user = await getAuthenticatedUser(request);
 

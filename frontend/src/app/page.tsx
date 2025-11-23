@@ -21,8 +21,11 @@ export default function Home() {
           case 'teacher':
             router.replace('/teacher');
             break;
+          case 'student':
+            router.replace('/students');
+            break;
           default:
-            router.replace('/dashboard');
+            router.replace('/students');
         }
       }
     }

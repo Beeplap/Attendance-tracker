@@ -16,21 +16,21 @@ export type Database = {
         Row: {
           id: string;
           email: string;
-          role: 'admin' | 'teacher' | 'staff';
+          role: 'admin' | 'teacher' | 'student';
           full_name: string | null;
           created_at: string;
         };
         Insert: {
           id?: string;
           email: string;
-          role: 'admin' | 'teacher' | 'staff';
+          role: 'admin' | 'teacher' | 'student';
           full_name?: string | null;
           created_at?: string;
         };
         Update: {
           id?: string;
           email?: string;
-          role?: 'admin' | 'teacher' | 'staff';
+          role?: 'admin' | 'teacher' | 'student';
           full_name?: string | null;
           created_at?: string;
         };
