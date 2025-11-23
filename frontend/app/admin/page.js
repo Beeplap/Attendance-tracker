@@ -30,6 +30,7 @@ import {
   Clock,
   ArrowRight,
   Activity,
+  Bell,
 } from "lucide-react";
 import { Dialog, Menu, Transition } from "@headlessui/react";
 import AddClass from "../../components/ui/addClass";
@@ -38,6 +39,8 @@ import AddUser from "../../components/ui/addUser";
 import UsersTable from "../../components/ui/usersTable";
 import TeacherStats from "../../components/ui/teacherStats";
 import TeacherDetails from "../../components/ui/teacherDetails";
+import NotificationPanel from "../../components/ui/notificationPanel";
+import NotificationBell from "../../components/ui/notificationBell";
 
 export default function AdminPage() {
   const router = useRouter();
@@ -81,6 +84,9 @@ export default function AdminPage() {
   const [studentClassFilter, setStudentClassFilter] = useState("");
   const [studentSectionFilter, setStudentSectionFilter] = useState("");
 
+  // Notification panel state
+  const [showNotificationPanel, setShowNotificationPanel] = useState(false);
+
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data }) => {
       const user = data?.user;
@@ -109,17 +115,28 @@ export default function AdminPage() {
       }
 
       setEmail(user.email || "");
+      setAdminUserId(user.id || "");
       setLoading(false);
       fetchProfiles();
       fetchTeacherStats();
     });
   }, [router]);
 
+  const [adminUserId, setAdminUserId] = useState("");
+  
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      if (data?.user) {
+        setAdminUserId(data.user.id);
+      }
+    });
+  }, []);
+
   const fetchProfiles = async () => {
     setListLoading(true);
     const { data, error } = await supabase
       .from("users")
-      .select("id, full_name, email, role, created_at")
+      .select("id, full_name, email, role, created_at, is_active")
       .order("created_at", { ascending: false });
     if (!error) setProfiles(data || []);
     setListLoading(false);
@@ -139,6 +156,67 @@ export default function AdminPage() {
       console.error("Error fetching teachers:", error);
     } finally {
       setTeachersLoading(false);
+    }
+  };
+
+  const toggleTeacherStatus = async (teacherId, currentStatus) => {
+    const newStatus = !currentStatus;
+    const action = newStatus ? "activate" : "deactivate";
+    
+    if (!confirm(`Are you sure you want to ${action} this teacher account?`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/toggle-teacher-status", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ id: teacherId, is_active: newStatus }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        // Check if this is a migration error
+        if (result.needsMigration && result.sql) {
+          const fullMessage = `${result.error}\n\n${result.instructions || "Please run this SQL in your Supabase SQL Editor:"}\n\n${result.sql}\n\nWould you like to copy this SQL to your clipboard?`;
+          if (confirm(fullMessage)) {
+            navigator.clipboard.writeText(result.sql).then(() => {
+              alert("SQL copied to clipboard! Please:\n1. Go to Supabase Dashboard > SQL Editor\n2. Paste and run the SQL\n3. Try again.");
+            }).catch(() => {
+              alert(`Please run this SQL in your Supabase SQL Editor:\n\n${result.sql}`);
+            });
+          }
+        } else {
+          alert(`Error: ${result.error || "Failed to update teacher status"}`);
+        }
+        return;
+      }
+
+      // Update local state
+      setTeachers((prev) =>
+        prev.map((teacher) =>
+          teacher.id === teacherId
+            ? { ...teacher, is_active: newStatus }
+            : teacher
+        )
+      );
+
+      // Also update profiles if needed
+      setProfiles((prev) =>
+        prev.map((profile) =>
+          profile.id === teacherId
+            ? { ...profile, is_active: newStatus }
+            : profile
+        )
+      );
+
+      alert(`Teacher account ${newStatus ? "activated" : "deactivated"} successfully`);
+    } catch (error) {
+      console.error("Error toggling teacher status:", error);
+      alert(`Error: ${error.message || "Failed to update teacher status"}`);
     }
   };
 
@@ -450,6 +528,7 @@ export default function AdminPage() {
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
+              <NotificationBell userRole="admin" userId={adminUserId} />
               <Button
                 variant="ghost"
                 size="sm"
@@ -590,6 +669,14 @@ export default function AdminPage() {
                 </Card>
               </div>
 
+              {/* Teacher Statistics Table */}
+              <TeacherStats
+                filteredTeacherStats={filteredTeacherStats}
+                statsLoading={statsLoading}
+                fetchTeacherStats={fetchTeacherStats}
+                viewTeacherDetails={viewTeacherDetails}
+              />
+
               {/* Quick Actions & Recent Activity */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Quick Actions */}
@@ -660,6 +747,24 @@ export default function AdminPage() {
                           </div>
                         </div>
                         <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-blue-600 transition-colors" />
+                      </button>
+
+                      <button
+                        onClick={() => setShowNotificationPanel(true)}
+                        className="w-full flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-yellow-50 hover:border-yellow-300 transition-all group"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center group-hover:bg-yellow-200 transition-colors">
+                            <Bell className="w-5 h-5 text-yellow-600" />
+                          </div>
+                          <div className="text-left">
+                            <p className="font-medium text-gray-900">Send Notification</p>
+                            <p className="text-sm text-gray-600">
+                              Send notification to all teachers
+                            </p>
+                          </div>
+                        </div>
+                        <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-yellow-600 transition-colors" />
                       </button>
                     </div>
                   </CardContent>
@@ -825,29 +930,63 @@ export default function AdminPage() {
                           Role
                         </th>
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                          Status
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                           Joined
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                          Actions
                         </th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200">
-                      {teachers.map((teacher) => (
-                        <tr key={teacher.id} className="hover:bg-gray-50">
-                          <td className="px-4 py-3 text-sm font-medium text-gray-900">
-                            {teacher.full_name || "N/A"}
-                          </td>
-                          <td className="px-4 py-3 text-sm text-gray-600">
-                            {teacher.email}
-                          </td>
-                          <td className="px-4 py-3">
-                            <span className="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium text-white bg-blue-500">
-                              {teacher.role}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3 text-sm text-gray-600">
-                            {new Date(teacher.created_at).toLocaleDateString()}
-                          </td>
-                        </tr>
-                      ))}
+                      {teachers.map((teacher) => {
+                        const isActive = teacher.is_active !== false; // Default to true if not set
+                        return (
+                          <tr key={teacher.id} className="hover:bg-gray-50">
+                            <td className="px-4 py-3 text-sm font-medium text-gray-900">
+                              {teacher.full_name || "N/A"}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-600">
+                              {teacher.email}
+                            </td>
+                            <td className="px-4 py-3">
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium text-white bg-blue-500">
+                                {teacher.role}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3">
+                              <span
+                                className={`inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium ${
+                                  isActive
+                                    ? "bg-green-100 text-green-800"
+                                    : "bg-red-100 text-red-800"
+                                }`}
+                              >
+                                {isActive ? "Active" : "Inactive"}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-600">
+                              {new Date(teacher.created_at).toLocaleDateString()}
+                            </td>
+                            <td className="px-4 py-3">
+                              <Button
+                                onClick={() => toggleTeacherStatus(teacher.id, isActive)}
+                                variant={isActive ? "outline" : "default"}
+                                size="sm"
+                                className={
+                                  isActive
+                                    ? "border-red-300 text-red-700 hover:bg-red-50"
+                                    : "bg-green-600 text-white hover:bg-green-700"
+                                }
+                              >
+                                {isActive ? "Deactivate" : "Activate"}
+                              </Button>
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
@@ -1253,6 +1392,14 @@ export default function AdminPage() {
             onCreated={() => {
               fetchProfiles();
               fetchTeacherStats();
+            }}
+          />
+
+          <NotificationPanel
+            open={showNotificationPanel}
+            onClose={() => setShowNotificationPanel(false)}
+            onNotificationSent={() => {
+              // Optionally refresh data or show success message
             }}
           />
         </main>

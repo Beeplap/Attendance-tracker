@@ -8,6 +8,7 @@ import { resolveUserRole } from "../../lib/utils";
 import { Bell, Users, Clock, BookOpen } from "lucide-react";
 import Sidebar from "../../components/ui/sidebar";
 import ConfirmDialog from "../../components/ui/ConfirmDialog";
+import NotificationBell from "../../components/ui/notificationBell";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -34,6 +35,7 @@ export default function DashboardPage() {
         router.replace("/admin");
         return;
       }
+      setUserRole(role || "teacher");
       setEmail(user.email || "");
       setUserId(user.id || "");
       try {
@@ -147,12 +149,7 @@ export default function DashboardPage() {
                   />
                 </svg>
               </Button>
-              <Button variant="ghost" className="p-2 rounded-full relative">
-                <Bell className="w-5 h-5 text-gray-700 dark:text-gray-300" />
-                <span className="absolute top-1 right-1 bg-red-500 text-white text-[10px] px-1 rounded-full">
-                  3
-                </span>
-              </Button>
+              <NotificationBell userRole={userRole} userId={userId} />
               <Button
                 onClick={() => setShowSignOutConfirm(true)}
                 className="flex-1 sm:flex-none bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-700 hover:to-violet-700 text-white px-4 py-2 rounded-lg shadow-md transition-all duration-200"

@@ -52,6 +52,7 @@ export async function POST(req) {
       full_name,
       email,
       role,
+      is_active: role === "teacher" ? true : undefined, // Set active by default for teachers
     });
 
     if (profileError) {
