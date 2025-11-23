@@ -256,7 +256,10 @@ export default function AdminPage() {
   useEffect(() => {
     if (currentView === "teachers") {
       fetchTeachers();
-    } else if (currentView === "students" || currentView === "statistics/students") {
+    } else if (
+      currentView === "students" ||
+      currentView === "statistics/students"
+    ) {
       fetchStudents();
     } else if (currentView === "statistics/teachers") {
       fetchTeacherStats();
@@ -397,7 +400,7 @@ export default function AdminPage() {
 
   const deleteUser = async (id) => {
     if (!confirm("Are you sure you want to delete this user?")) return;
-    
+
     try {
       // Get user role before deleting
       const { data: userData } = await supabase
@@ -432,14 +435,14 @@ export default function AdminPage() {
       // Update local state
       setProfiles((prev) => prev.filter((p) => p.id !== id));
       setTeacherStats((prev) => prev.filter((t) => t.id !== id));
-      
+
       // Refresh data if needed
       if (currentView === "teachers") {
         fetchTeachers();
       } else if (currentView === "students") {
         fetchStudents();
       }
-      
+
       alert("User deleted successfully from all tables");
     } catch (error) {
       console.error("Error deleting user:", error);
@@ -510,9 +513,11 @@ export default function AdminPage() {
                   {currentView === "dashboard" && "Admin Panel"}
                   {currentView === "teachers" && "Teachers"}
                   {currentView === "students" && "Students"}
-                  {currentView === "statistics/teachers" && "Teacher Statistics"}
+                  {currentView === "statistics/teachers" &&
+                    "Teacher Statistics"}
                   {currentView === "statistics/users" && "User Statistics"}
-                  {currentView === "statistics/students" && "Student Statistics"}
+                  {currentView === "statistics/students" &&
+                    "Student Statistics"}
                 </h1>
                 <p className="text-sm text-gray-700">
                   {currentView === "dashboard" &&
@@ -665,194 +670,6 @@ export default function AdminPage() {
                         <LayoutDashboard className="w-7 h-7 text-red-600" />
                       </div>
                     </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Teacher Statistics Table */}
-              <TeacherStats
-                filteredTeacherStats={filteredTeacherStats}
-                statsLoading={statsLoading}
-                fetchTeacherStats={fetchTeacherStats}
-                viewTeacherDetails={viewTeacherDetails}
-              />
-
-              {/* Quick Actions & Recent Activity */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Quick Actions */}
-                <Card className="shadow-md border border-gray-200">
-                  <CardHeader>
-                    <CardTitle className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-                      <Activity className="w-5 h-5 text-purple-600" />
-                      Quick Actions
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      <button
-                        onClick={() => {
-                          setAddUserRole("teacher");
-                          setShowAddUser(true);
-                        }}
-                        className="w-full flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-purple-50 hover:border-purple-300 transition-all group"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center group-hover:bg-purple-200 transition-colors">
-                            <UserPlus className="w-5 h-5 text-purple-600" />
-                          </div>
-                          <div className="text-left">
-                            <p className="font-medium text-gray-900">Add Teacher</p>
-                            <p className="text-sm text-gray-600">
-                              Create a new teacher account
-                            </p>
-                          </div>
-                        </div>
-                        <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-purple-600 transition-colors" />
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          setAddUserRole("student");
-                          setShowAddUser(true);
-                        }}
-                        className="w-full flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-green-50 hover:border-green-300 transition-all group"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center group-hover:bg-green-200 transition-colors">
-                            <GraduationCap className="w-5 h-5 text-green-600" />
-                          </div>
-                          <div className="text-left">
-                            <p className="font-medium text-gray-900">Add Student</p>
-                            <p className="text-sm text-gray-600">
-                              Register a new student
-                            </p>
-                          </div>
-                        </div>
-                        <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-green-600 transition-colors" />
-                      </button>
-
-                      <button
-                        onClick={() => setShowAssignClass(true)}
-                        className="w-full flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-all group"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center group-hover:bg-blue-200 transition-colors">
-                            <BookOpen className="w-5 h-5 text-blue-600" />
-                          </div>
-                          <div className="text-left">
-                            <p className="font-medium text-gray-900">Assign Class</p>
-                            <p className="text-sm text-gray-600">
-                              Assign classes to teachers
-                            </p>
-                          </div>
-                        </div>
-                        <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-blue-600 transition-colors" />
-                      </button>
-
-                      <button
-                        onClick={() => setShowNotificationPanel(true)}
-                        className="w-full flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-yellow-50 hover:border-yellow-300 transition-all group"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center group-hover:bg-yellow-200 transition-colors">
-                            <Bell className="w-5 h-5 text-yellow-600" />
-                          </div>
-                          <div className="text-left">
-                            <p className="font-medium text-gray-900">Send Notification</p>
-                            <p className="text-sm text-gray-600">
-                              Send notification to all teachers
-                            </p>
-                          </div>
-                        </div>
-                        <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-yellow-600 transition-colors" />
-                      </button>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Recent Users */}
-                <Card className="shadow-md border border-gray-200">
-                  <CardHeader>
-                    <CardTitle className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-                      <TrendingUp className="w-5 h-5 text-purple-600" />
-                      Recent Users
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {listLoading ? (
-                      <div className="text-center py-8">
-                        <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-purple-600"></div>
-                        <p className="mt-2 text-sm text-gray-600">Loading...</p>
-                      </div>
-                    ) : profiles.length === 0 ? (
-                      <div className="text-center py-8">
-                        <p className="text-gray-600">No users found</p>
-                      </div>
-                    ) : (
-                      <div className="space-y-3">
-                        {profiles.slice(0, 5).map((profile) => (
-                          <div
-                            key={profile.id}
-                            className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-                          >
-                            <div className="flex items-center gap-3">
-                              <div
-                                className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold ${
-                                  profile.role === "admin"
-                                    ? "bg-red-500"
-                                    : profile.role === "teacher"
-                                    ? "bg-purple-500"
-                                    : "bg-green-500"
-                                }`}
-                              >
-                                {profile.full_name
-                                  ?.split(" ")
-                                  .map((n) => n[0])
-                                  .join("")
-                                  .toUpperCase()
-                                  .slice(0, 2) || "?"}
-                              </div>
-                              <div>
-                                <p className="font-medium text-gray-900">
-                                  {profile.full_name || "Unknown"}
-                                </p>
-                                <p className="text-sm text-gray-600">
-                                  {profile.email}
-                                </p>
-                              </div>
-                            </div>
-                            <div className="flex flex-col items-end gap-1">
-                              <span
-                                className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
-                                  profile.role === "admin"
-                                    ? "bg-red-100 text-red-700"
-                                    : profile.role === "teacher"
-                                    ? "bg-purple-100 text-purple-700"
-                                    : "bg-green-100 text-green-700"
-                                }`}
-                              >
-                                {profile.role}
-                              </span>
-                              <p className="text-xs text-gray-500">
-                                {profile.created_at
-                                  ? new Date(
-                                      profile.created_at
-                                    ).toLocaleDateString()
-                                  : ""}
-                              </p>
-                            </div>
-                          </div>
-                        ))}
-                        {profiles.length > 5 && (
-                          <button
-                            onClick={() => setCurrentView("statistics/users")}
-                            className="w-full mt-2 py-2 text-sm font-medium text-purple-600 hover:text-purple-700 hover:bg-purple-50 rounded-lg transition-colors"
-                          >
-                            View all users →
-                          </button>
-                        )}
-                      </div>
-                    )}
                   </CardContent>
                 </Card>
               </div>
@@ -1048,8 +865,9 @@ export default function AdminPage() {
                     </h3>
                     <div className="space-y-2">
                       {["admin", "teacher", "student"].map((role) => {
-                        const count = profiles.filter((p) => p.role === role)
-                          .length;
+                        const count = profiles.filter(
+                          (p) => p.role === role
+                        ).length;
                         const percentage =
                           profiles.length > 0
                             ? ((count / profiles.length) * 100).toFixed(1)
@@ -1192,7 +1010,10 @@ export default function AdminPage() {
                                 ? ((count / students.length) * 100).toFixed(1)
                                 : 0;
                             return (
-                              <div key={cls} className="flex items-center gap-4">
+                              <div
+                                key={cls}
+                                className="flex items-center gap-4"
+                              >
                                 <div className="w-32 text-sm font-medium text-gray-700">
                                   {cls}
                                 </div>

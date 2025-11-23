@@ -113,7 +113,9 @@ export default function TeacherDashboardPage() {
       {/* Main Content */}
       <div className="ml-64 p-6">
         <div className="max-w-7xl">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Teacher Dashboard</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            Teacher Dashboard
+          </h1>
           <p className="text-gray-600 mb-6">
             Welcome, {profile?.full_name || user?.email || "Teacher"}!
           </p>
@@ -123,7 +125,9 @@ export default function TeacherDashboardPage() {
               href="/attendance"
               className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
             >
-              <h2 className="text-xl font-semibold text-gray-900 mb-2">Mark Attendance</h2>
+              <h2 className="text-xl font-semibold text-gray-900 mb-2">
+                Mark Attendance
+              </h2>
               <p className="text-gray-600">Record student attendance</p>
             </Link>
 
@@ -131,7 +135,9 @@ export default function TeacherDashboardPage() {
               href="/students"
               className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
             >
-              <h2 className="text-xl font-semibold text-gray-900 mb-2">View Students</h2>
+              <h2 className="text-xl font-semibold text-gray-900 mb-2">
+                View Students
+              </h2>
               <p className="text-gray-600">Browse student records</p>
             </Link>
           </div>
@@ -140,4 +146,3 @@ export default function TeacherDashboardPage() {
     </div>
   );
 }
-

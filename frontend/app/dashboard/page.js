@@ -2,7 +2,12 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "../../components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent } from "../../components/ui/card";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+} from "../../components/ui/card";
 import { supabase } from "../../lib/supabaseClient";
 import { resolveUserRole } from "../../lib/utils";
 import { Bell, Users, Clock, BookOpen } from "lucide-react";
@@ -357,8 +362,7 @@ export default function DashboardPage() {
                                     variant="ghost"
                                     size="sm"
                                     className="text-purple-600 dark:text-purple-400"
-                                    onClick={() => {
-                                    }}
+                                    onClick={() => {}}
                                   >
                                     <Users size={14} className="mr-1" /> Manage
                                     Students
