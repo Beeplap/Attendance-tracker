@@ -472,31 +472,6 @@ export default function AdminPage() {
           {/* Dashboard View */}
           {currentView === "dashboard" && (
             <>
-              {/* Search + Filter */}
-              <div className="flex flex-col sm:flex-row gap-3">
-                <div className="flex-1">
-                  <input
-                    type="text"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Search by name/email…"
-                    className="w-full border border-gray-300 rounded-md px-3 h-10 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  />
-                </div>
-                <div className="w-full sm:w-48">
-                  <select
-                    value={filterRole}
-                    onChange={(e) => setFilterRole(e.target.value)}
-                    className="w-full border border-gray-300 rounded-md px-3 h-10 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  >
-                    <option value="all">All Roles</option>
-                    <option value="admin">Admins</option>
-                    <option value="teacher">Teachers</option>
-                    <option value="student">Students</option>
-                  </select>
-                </div>
-              </div>
-
               {/* Dashboard Overview Cards */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <Card className="shadow-md border border-gray-200">
@@ -571,78 +546,6 @@ export default function AdminPage() {
                   </CardContent>
                 </Card>
               </div>
-
-              {/* Quick Actions */}
-              <Card className="shadow-md border border-gray-200">
-                <CardHeader>
-                  <CardTitle className="text-lg font-semibold text-gray-800">
-                    Quick Actions
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <button
-                      onClick={() => {
-                        setAddUserRole("teacher");
-                        setShowAddUser(true);
-                      }}
-                      className="flex items-center gap-3 p-4 border border-gray-200 rounded-lg hover:bg-purple-50 hover:border-purple-300 transition-colors text-left"
-                    >
-                      <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                        <UserPlus className="w-5 h-5 text-purple-600" />
-                      </div>
-                      <div>
-                        <p className="font-medium text-gray-900">Add Teacher</p>
-                        <p className="text-sm text-gray-600">
-                          Create a new teacher account
-                        </p>
-                      </div>
-                    </button>
-
-                    <button
-                      onClick={() => {
-                        setAddUserRole("student");
-                        setShowAddUser(true);
-                      }}
-                      className="flex items-center gap-3 p-4 border border-gray-200 rounded-lg hover:bg-green-50 hover:border-green-300 transition-colors text-left"
-                    >
-                      <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                        <GraduationCap className="w-5 h-5 text-green-600" />
-                      </div>
-                      <div>
-                        <p className="font-medium text-gray-900">Add Student</p>
-                        <p className="text-sm text-gray-600">
-                          Register a new student
-                        </p>
-                      </div>
-                    </button>
-
-                    <button
-                      onClick={() => setShowAssignClass(true)}
-                      className="flex items-center gap-3 p-4 border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-colors text-left"
-                    >
-                      <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                        <BookOpen className="w-5 h-5 text-blue-600" />
-                      </div>
-                      <div>
-                        <p className="font-medium text-gray-900">Assign Class</p>
-                        <p className="text-sm text-gray-600">
-                          Assign classes to teachers
-                        </p>
-                      </div>
-                    </button>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Users Table */}
-              <UsersTable
-                profiles={profiles}
-                listLoading={listLoading}
-                fetchProfiles={fetchProfiles}
-                deleteUser={deleteUser}
-                filteredProfiles={filteredProfiles}
-              />
             </>
           )}
 
@@ -720,85 +623,121 @@ export default function AdminPage() {
           )}
 
           {currentView === "statistics/users" && (
-            <Card className="shadow-md border border-gray-200">
-              <CardHeader>
-                <CardTitle className="text-lg font-semibold text-gray-800">
-                  User Statistics
-                </CardTitle>
-                <p className="text-sm text-gray-600">
-                  Overview of all users in the system
-                </p>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="p-4 bg-blue-50 rounded-lg">
-                    <p className="text-sm font-medium text-blue-700">
-                      Total Users
-                    </p>
-                    <p className="text-3xl font-bold text-blue-900 mt-2">
-                      {profiles.length}
-                    </p>
+            <>
+              <Card className="shadow-md border border-gray-200">
+                <CardHeader>
+                  <CardTitle className="text-lg font-semibold text-gray-800">
+                    User Statistics
+                  </CardTitle>
+                  <p className="text-sm text-gray-600">
+                    Overview of all users in the system
+                  </p>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="p-4 bg-blue-50 rounded-lg">
+                      <p className="text-sm font-medium text-blue-700">
+                        Total Users
+                      </p>
+                      <p className="text-3xl font-bold text-blue-900 mt-2">
+                        {profiles.length}
+                      </p>
+                    </div>
+                    <div className="p-4 bg-purple-50 rounded-lg">
+                      <p className="text-sm font-medium text-purple-700">
+                        Active Teachers
+                      </p>
+                      <p className="text-3xl font-bold text-purple-900 mt-2">
+                        {profiles.filter((p) => p.role === "teacher").length}
+                      </p>
+                    </div>
+                    <div className="p-4 bg-green-50 rounded-lg">
+                      <p className="text-sm font-medium text-green-700">
+                        Active Students
+                      </p>
+                      <p className="text-3xl font-bold text-green-900 mt-2">
+                        {profiles.filter((p) => p.role === "student").length}
+                      </p>
+                    </div>
                   </div>
-                  <div className="p-4 bg-purple-50 rounded-lg">
-                    <p className="text-sm font-medium text-purple-700">
-                      Active Teachers
-                    </p>
-                    <p className="text-3xl font-bold text-purple-900 mt-2">
-                      {profiles.filter((p) => p.role === "teacher").length}
-                    </p>
-                  </div>
-                  <div className="p-4 bg-green-50 rounded-lg">
-                    <p className="text-sm font-medium text-green-700">
-                      Active Students
-                    </p>
-                    <p className="text-3xl font-bold text-green-900 mt-2">
-                      {profiles.filter((p) => p.role === "student").length}
-                    </p>
-                  </div>
-                </div>
-                <div className="mt-6">
-                  <h3 className="text-md font-semibold text-gray-800 mb-4">
-                    Users by Role
-                  </h3>
-                  <div className="space-y-2">
-                    {["admin", "teacher", "student"].map((role) => {
-                      const count = profiles.filter((p) => p.role === role)
-                        .length;
-                      const percentage =
-                        profiles.length > 0
-                          ? ((count / profiles.length) * 100).toFixed(1)
-                          : 0;
-                      return (
-                        <div key={role} className="flex items-center gap-4">
-                          <div className="w-24 text-sm font-medium text-gray-700 capitalize">
-                            {role}
-                          </div>
-                          <div className="flex-1 bg-gray-200 rounded-full h-6 relative">
-                            <div
-                              className={`h-6 rounded-full flex items-center justify-end pr-2 ${
-                                role === "admin"
-                                  ? "bg-red-500"
-                                  : role === "teacher"
-                                  ? "bg-purple-500"
-                                  : "bg-green-500"
-                              }`}
-                              style={{ width: `${percentage}%` }}
-                            >
-                              <span className="text-xs font-medium text-white">
-                                {count}
-                              </span>
+                  <div className="mt-6">
+                    <h3 className="text-md font-semibold text-gray-800 mb-4">
+                      Users by Role
+                    </h3>
+                    <div className="space-y-2">
+                      {["admin", "teacher", "student"].map((role) => {
+                        const count = profiles.filter((p) => p.role === role)
+                          .length;
+                        const percentage =
+                          profiles.length > 0
+                            ? ((count / profiles.length) * 100).toFixed(1)
+                            : 0;
+                        return (
+                          <div key={role} className="flex items-center gap-4">
+                            <div className="w-24 text-sm font-medium text-gray-700 capitalize">
+                              {role}
+                            </div>
+                            <div className="flex-1 bg-gray-200 rounded-full h-6 relative">
+                              <div
+                                className={`h-6 rounded-full flex items-center justify-end pr-2 ${
+                                  role === "admin"
+                                    ? "bg-red-500"
+                                    : role === "teacher"
+                                    ? "bg-purple-500"
+                                    : "bg-green-500"
+                                }`}
+                                style={{ width: `${percentage}%` }}
+                              >
+                                <span className="text-xs font-medium text-white">
+                                  {count}
+                                </span>
+                              </div>
+                            </div>
+                            <div className="w-16 text-sm text-gray-600 text-right">
+                              {percentage}%
                             </div>
                           </div>
-                          <div className="w-16 text-sm text-gray-600 text-right">
-                            {percentage}%
-                          </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
+                    </div>
                   </div>
+                </CardContent>
+              </Card>
+
+              {/* Search + Filter */}
+              <div className="flex flex-col sm:flex-row gap-3">
+                <div className="flex-1">
+                  <input
+                    type="text"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Search by name/email…"
+                    className="w-full border border-gray-300 rounded-md px-3 h-10 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  />
                 </div>
-              </CardContent>
-            </Card>
+                <div className="w-full sm:w-48">
+                  <select
+                    value={filterRole}
+                    onChange={(e) => setFilterRole(e.target.value)}
+                    className="w-full border border-gray-300 rounded-md px-3 h-10 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  >
+                    <option value="all">All Roles</option>
+                    <option value="admin">Admins</option>
+                    <option value="teacher">Teachers</option>
+                    <option value="student">Students</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Users Table */}
+              <UsersTable
+                profiles={profiles}
+                listLoading={listLoading}
+                fetchProfiles={fetchProfiles}
+                deleteUser={deleteUser}
+                filteredProfiles={filteredProfiles}
+              />
+            </>
           )}
 
           {currentView === "statistics/students" && (
