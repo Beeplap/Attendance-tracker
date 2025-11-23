@@ -26,6 +26,10 @@ import {
   LayoutDashboard,
   UserPlus,
   GraduationCap,
+  TrendingUp,
+  Clock,
+  ArrowRight,
+  Activity,
 } from "lucide-react";
 import { Dialog, Menu, Transition } from "@headlessui/react";
 import AddClass from "../../components/ui/addClass";
@@ -472,9 +476,36 @@ export default function AdminPage() {
           {/* Dashboard View */}
           {currentView === "dashboard" && (
             <>
+              {/* Welcome Section */}
+              <Card className="shadow-md border border-gray-200 bg-gradient-to-r from-purple-50 to-violet-50">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h2 className="text-2xl font-bold text-gray-900 mb-1">
+                        Welcome back, Admin! 👋
+                      </h2>
+                      <p className="text-gray-600">
+                        Here's what's happening with your system today
+                      </p>
+                    </div>
+                    <div className="hidden md:flex items-center gap-2 px-4 py-2 bg-white rounded-lg shadow-sm">
+                      <Clock className="w-5 h-5 text-purple-600" />
+                      <span className="text-sm font-medium text-gray-700">
+                        {new Date().toLocaleDateString("en-US", {
+                          weekday: "long",
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                        })}
+                      </span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
               {/* Dashboard Overview Cards */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <Card className="shadow-md border border-gray-200">
+                <Card className="shadow-md border border-gray-200 hover:shadow-lg transition-shadow">
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between">
                       <div>
@@ -484,15 +515,18 @@ export default function AdminPage() {
                         <p className="text-3xl font-bold text-gray-900 mt-2">
                           {profiles.length}
                         </p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          All registered users
+                        </p>
                       </div>
-                      <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                        <Users className="w-6 h-6 text-blue-600" />
+                      <div className="w-14 h-14 bg-blue-100 rounded-xl flex items-center justify-center shadow-sm">
+                        <Users className="w-7 h-7 text-blue-600" />
                       </div>
                     </div>
                   </CardContent>
                 </Card>
 
-                <Card className="shadow-md border border-gray-200">
+                <Card className="shadow-md border border-gray-200 hover:shadow-lg transition-shadow">
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between">
                       <div>
@@ -502,15 +536,18 @@ export default function AdminPage() {
                         <p className="text-3xl font-bold text-gray-900 mt-2">
                           {profiles.filter((p) => p.role === "teacher").length}
                         </p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          Active educators
+                        </p>
                       </div>
-                      <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
-                        <UserCheck className="w-6 h-6 text-purple-600" />
+                      <div className="w-14 h-14 bg-purple-100 rounded-xl flex items-center justify-center shadow-sm">
+                        <UserCheck className="w-7 h-7 text-purple-600" />
                       </div>
                     </div>
                   </CardContent>
                 </Card>
 
-                <Card className="shadow-md border border-gray-200">
+                <Card className="shadow-md border border-gray-200 hover:shadow-lg transition-shadow">
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between">
                       <div>
@@ -520,15 +557,18 @@ export default function AdminPage() {
                         <p className="text-3xl font-bold text-gray-900 mt-2">
                           {profiles.filter((p) => p.role === "student").length}
                         </p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          Enrolled students
+                        </p>
                       </div>
-                      <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                        <School className="w-6 h-6 text-green-600" />
+                      <div className="w-14 h-14 bg-green-100 rounded-xl flex items-center justify-center shadow-sm">
+                        <School className="w-7 h-7 text-green-600" />
                       </div>
                     </div>
                   </CardContent>
                 </Card>
 
-                <Card className="shadow-md border border-gray-200">
+                <Card className="shadow-md border border-gray-200 hover:shadow-lg transition-shadow">
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between">
                       <div>
@@ -538,14 +578,217 @@ export default function AdminPage() {
                         <p className="text-3xl font-bold text-gray-900 mt-2">
                           {profiles.filter((p) => p.role === "admin").length}
                         </p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          System administrators
+                        </p>
                       </div>
-                      <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
-                        <LayoutDashboard className="w-6 h-6 text-red-600" />
+                      <div className="w-14 h-14 bg-red-100 rounded-xl flex items-center justify-center shadow-sm">
+                        <LayoutDashboard className="w-7 h-7 text-red-600" />
                       </div>
                     </div>
                   </CardContent>
                 </Card>
               </div>
+
+              {/* Quick Actions & Recent Activity */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Quick Actions */}
+                <Card className="shadow-md border border-gray-200">
+                  <CardHeader>
+                    <CardTitle className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                      <Activity className="w-5 h-5 text-purple-600" />
+                      Quick Actions
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      <button
+                        onClick={() => {
+                          setAddUserRole("teacher");
+                          setShowAddUser(true);
+                        }}
+                        className="w-full flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-purple-50 hover:border-purple-300 transition-all group"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center group-hover:bg-purple-200 transition-colors">
+                            <UserPlus className="w-5 h-5 text-purple-600" />
+                          </div>
+                          <div className="text-left">
+                            <p className="font-medium text-gray-900">Add Teacher</p>
+                            <p className="text-sm text-gray-600">
+                              Create a new teacher account
+                            </p>
+                          </div>
+                        </div>
+                        <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-purple-600 transition-colors" />
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setAddUserRole("student");
+                          setShowAddUser(true);
+                        }}
+                        className="w-full flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-green-50 hover:border-green-300 transition-all group"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center group-hover:bg-green-200 transition-colors">
+                            <GraduationCap className="w-5 h-5 text-green-600" />
+                          </div>
+                          <div className="text-left">
+                            <p className="font-medium text-gray-900">Add Student</p>
+                            <p className="text-sm text-gray-600">
+                              Register a new student
+                            </p>
+                          </div>
+                        </div>
+                        <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-green-600 transition-colors" />
+                      </button>
+
+                      <button
+                        onClick={() => setShowAssignClass(true)}
+                        className="w-full flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-all group"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center group-hover:bg-blue-200 transition-colors">
+                            <BookOpen className="w-5 h-5 text-blue-600" />
+                          </div>
+                          <div className="text-left">
+                            <p className="font-medium text-gray-900">Assign Class</p>
+                            <p className="text-sm text-gray-600">
+                              Assign classes to teachers
+                            </p>
+                          </div>
+                        </div>
+                        <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-blue-600 transition-colors" />
+                      </button>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Recent Users */}
+                <Card className="shadow-md border border-gray-200">
+                  <CardHeader>
+                    <CardTitle className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                      <TrendingUp className="w-5 h-5 text-purple-600" />
+                      Recent Users
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {listLoading ? (
+                      <div className="text-center py-8">
+                        <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-purple-600"></div>
+                        <p className="mt-2 text-sm text-gray-600">Loading...</p>
+                      </div>
+                    ) : profiles.length === 0 ? (
+                      <div className="text-center py-8">
+                        <p className="text-gray-600">No users found</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {profiles.slice(0, 5).map((profile) => (
+                          <div
+                            key={profile.id}
+                            className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                          >
+                            <div className="flex items-center gap-3">
+                              <div
+                                className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold ${
+                                  profile.role === "admin"
+                                    ? "bg-red-500"
+                                    : profile.role === "teacher"
+                                    ? "bg-purple-500"
+                                    : "bg-green-500"
+                                }`}
+                              >
+                                {profile.full_name
+                                  ?.split(" ")
+                                  .map((n) => n[0])
+                                  .join("")
+                                  .toUpperCase()
+                                  .slice(0, 2) || "?"}
+                              </div>
+                              <div>
+                                <p className="font-medium text-gray-900">
+                                  {profile.full_name || "Unknown"}
+                                </p>
+                                <p className="text-sm text-gray-600">
+                                  {profile.email}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex flex-col items-end gap-1">
+                              <span
+                                className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                                  profile.role === "admin"
+                                    ? "bg-red-100 text-red-700"
+                                    : profile.role === "teacher"
+                                    ? "bg-purple-100 text-purple-700"
+                                    : "bg-green-100 text-green-700"
+                                }`}
+                              >
+                                {profile.role}
+                              </span>
+                              <p className="text-xs text-gray-500">
+                                {profile.created_at
+                                  ? new Date(
+                                      profile.created_at
+                                    ).toLocaleDateString()
+                                  : ""}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                        {profiles.length > 5 && (
+                          <button
+                            onClick={() => setCurrentView("statistics/users")}
+                            className="w-full mt-2 py-2 text-sm font-medium text-purple-600 hover:text-purple-700 hover:bg-purple-50 rounded-lg transition-colors"
+                          >
+                            View all users →
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* System Overview */}
+              <Card className="shadow-md border border-gray-200">
+                <CardHeader>
+                  <CardTitle className="text-lg font-semibold text-gray-800">
+                    System Overview
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="text-center p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg">
+                      <Users className="w-8 h-8 text-blue-600 mx-auto mb-2" />
+                      <p className="text-2xl font-bold text-blue-900">
+                        {profiles.length}
+                      </p>
+                      <p className="text-sm text-blue-700 mt-1">Total Users</p>
+                    </div>
+                    <div className="text-center p-4 bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg">
+                      <UserCheck className="w-8 h-8 text-purple-600 mx-auto mb-2" />
+                      <p className="text-2xl font-bold text-purple-900">
+                        {profiles.filter((p) => p.role === "teacher").length}
+                      </p>
+                      <p className="text-sm text-purple-700 mt-1">
+                        Total Teachers
+                      </p>
+                    </div>
+                    <div className="text-center p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-lg">
+                      <School className="w-8 h-8 text-green-600 mx-auto mb-2" />
+                      <p className="text-2xl font-bold text-green-900">
+                        {profiles.filter((p) => p.role === "student").length}
+                      </p>
+                      <p className="text-sm text-green-700 mt-1">
+                        Total Students
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </>
           )}
 
