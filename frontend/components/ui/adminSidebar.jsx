@@ -16,6 +16,8 @@ import {
   BarChart3,
   ChevronDown,
   ChevronRight,
+  FileText,
+  ArrowRightLeft,
 } from "lucide-react";
 import { supabase } from "../../lib/supabaseClient";
 import ConfirmDialog from "./ConfirmDialog";
@@ -143,6 +145,28 @@ export default function AdminSidebar({
         >
           <BookOpen className="w-5 h-5 shrink-0" />
           {!collapsed && <span className="flex-1 text-left">Subjects</span>}
+        </button>
+
+        {/* Leave Requests */}
+        <button
+          onClick={() => onViewChange && onViewChange("leave-requests")}
+          className={navItemClass(currentView === "leave-requests")}
+        >
+          <FileText className="w-5 h-5 shrink-0" />
+          {!collapsed && (
+            <span className="flex-1 text-left">Leave Requests</span>
+          )}
+        </button>
+
+        {/* Class Switches */}
+        <button
+          onClick={() => onViewChange && onViewChange("class-switches")}
+          className={navItemClass(currentView === "class-switches")}
+        >
+          <ArrowRightLeft className="w-5 h-5 shrink-0" />
+          {!collapsed && (
+            <span className="flex-1 text-left">Class Switches</span>
+          )}
         </button>
 
         {/* Statistics with submenu */}

@@ -95,6 +95,14 @@ export default function AdminPage() {
   // Notification panel state
   const [showNotificationPanel, setShowNotificationPanel] = useState(false);
 
+  // Leave requests state
+  const [leaveRequests, setLeaveRequests] = useState([]);
+  const [leaveRequestsLoading, setLeaveRequestsLoading] = useState(false);
+
+  // Class switches state
+  const [classSwitches, setClassSwitches] = useState([]);
+  const [classSwitchesLoading, setClassSwitchesLoading] = useState(false);
+
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data }) => {
       const user = data?.user;
@@ -319,9 +327,90 @@ export default function AdminPage() {
       fetchTeacherStats();
     } else if (currentView === "subjects") {
       fetchSubjects();
+    } else if (currentView === "leave-requests") {
+      fetchLeaveRequests();
+    } else if (currentView === "class-switches") {
+      fetchClassSwitches();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentView]);
+
+  const fetchLeaveRequests = async () => {
+    setLeaveRequestsLoading(true);
+    try {
+      // Get session token from Supabase
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+
+      const res = await fetch("/api/leave-requests", {
+        headers: {
+          ...(token && { Authorization: `Bearer ${token}` })
+        }
+      });
+      const data = await res.json();
+      if (res.ok && data.leaveRequests) {
+        setLeaveRequests(data.leaveRequests);
+      }
+    } catch (error) {
+      console.error("Error fetching leave requests:", error);
+    } finally {
+      setLeaveRequestsLoading(false);
+    }
+  };
+
+  const fetchClassSwitches = async () => {
+    setClassSwitchesLoading(true);
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const token = session?.access_token;
+
+      const res = await fetch("/api/class-switches", {
+        headers: {
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
+      });
+      const data = await res.json();
+      if (res.ok && data.classSwitches) {
+        setClassSwitches(data.classSwitches);
+      }
+    } catch (error) {
+      console.error("Error fetching class switches:", error);
+    } finally {
+      setClassSwitchesLoading(false);
+    }
+  };
+
+  const handleLeaveRequestAction = async (id, status, adminNotes = "") => {
+    try {
+      // Get session token from Supabase
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+
+      const res = await fetch("/api/leave-requests", {
+        method: "PATCH",
+        headers: { 
+          "Content-Type": "application/json",
+          ...(token && { Authorization: `Bearer ${token}` })
+        },
+        body: JSON.stringify({ id, status, admin_notes: adminNotes }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.error || "Failed to update leave request");
+        return;
+      }
+
+      alert(`Leave request ${status} successfully`);
+      fetchLeaveRequests();
+    } catch (error) {
+      console.error("Error updating leave request:", error);
+      alert("Failed to update leave request");
+    }
+  };
 
   // Refetch students when filters change
   useEffect(() => {
@@ -574,6 +663,8 @@ export default function AdminPage() {
                   {currentView === "statistics/users" && "User Statistics"}
                   {currentView === "statistics/students" &&
                     "Student Statistics"}
+                  {currentView === "leave-requests" && "Leave Requests"}
+                  {currentView === "class-switches" && "Class Switches"}
                 </h1>
                 <p className="text-sm text-gray-700">
                   {currentView === "dashboard" &&
@@ -584,6 +675,10 @@ export default function AdminPage() {
                     "Manage student records and information"}
                   {currentView?.startsWith("statistics") &&
                     "View detailed statistics and analytics"}
+                  {currentView === "leave-requests" &&
+                    "Review and manage teacher leave requests"}
+                  {currentView === "class-switches" &&
+                    "View class switch requests and completions"}
                 </p>
               </div>
             </div>
@@ -917,6 +1012,196 @@ export default function AdminPage() {
                 filteredProfiles={filteredProfiles}
               />
             </>
+          )}
+
+          {/* Leave Requests View */}
+          {currentView === "leave-requests" && (
+            <Card className="shadow-md border border-gray-200">
+              <CardHeader>
+                <CardTitle className="text-lg font-semibold text-gray-800">
+                  Leave Requests
+                </CardTitle>
+                <p className="text-sm text-gray-600">
+                  Review and manage teacher leave requests
+                </p>
+              </CardHeader>
+              <CardContent>
+                {leaveRequestsLoading ? (
+                  <div className="text-center py-12">
+                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                    <p className="mt-4 text-gray-600">Loading leave requests...</p>
+                  </div>
+                ) : leaveRequests.length === 0 ? (
+                  <div className="text-center py-12">
+                    <p className="text-gray-600">No leave requests found.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {leaveRequests.map((request) => (
+                      <div
+                        key={request.id}
+                        className={`p-4 rounded-lg border ${
+                          request.status === "pending"
+                            ? "bg-yellow-50 border-yellow-200"
+                            : request.status === "approved"
+                            ? "bg-green-50 border-green-200"
+                            : "bg-red-50 border-red-200"
+                        }`}
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <p className="font-semibold text-gray-900">
+                                {request.teacher?.full_name || "Unknown Teacher"}
+                              </p>
+                              <span
+                                className={`px-2 py-1 rounded text-xs font-medium ${
+                                  request.status === "pending"
+                                    ? "bg-yellow-200 text-yellow-800"
+                                    : request.status === "approved"
+                                    ? "bg-green-200 text-green-800"
+                                    : "bg-red-200 text-red-800"
+                                }`}
+                              >
+                                {request.status.toUpperCase()}
+                              </span>
+                            </div>
+                            <p className="text-sm text-gray-600">
+                              <span className="font-medium">Period:</span>{" "}
+                              {new Date(request.start_date).toLocaleDateString()} -{" "}
+                              {new Date(request.end_date).toLocaleDateString()}
+                            </p>
+                            <p className="text-sm text-gray-600 mt-1">
+                              <span className="font-medium">Reason:</span> {request.reason}
+                            </p>
+                            {request.admin_notes && (
+                              <p className="text-sm text-gray-600 mt-1">
+                                <span className="font-medium">Admin Notes:</span> {request.admin_notes}
+                              </p>
+                            )}
+                            <p className="text-xs text-gray-500 mt-2">
+                              Requested: {new Date(request.created_at).toLocaleString()}
+                            </p>
+                          </div>
+                          {request.status === "pending" && (
+                            <div className="flex gap-2 ml-4">
+                              <Button
+                                size="sm"
+                                onClick={() => {
+                                  const notes = prompt("Add notes (optional):");
+                                  handleLeaveRequestAction(request.id, "approved", notes || "");
+                                }}
+                                className="bg-green-600 hover:bg-green-700 text-white"
+                              >
+                                Approve
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  const notes = prompt("Add rejection reason (optional):");
+                                  handleLeaveRequestAction(request.id, "rejected", notes || "");
+                                }}
+                                className="border-red-300 text-red-700 hover:bg-red-50"
+                              >
+                                Reject
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Class Switches View */}
+          {currentView === "class-switches" && (
+            <Card className="shadow-md border border-gray-200">
+              <CardHeader>
+                <CardTitle className="text-lg font-semibold text-gray-800">
+                  Class Switches
+                </CardTitle>
+                <p className="text-sm text-gray-600">
+                  View all class switch requests and completions
+                </p>
+              </CardHeader>
+              <CardContent>
+                {classSwitchesLoading ? (
+                  <div className="text-center py-12">
+                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                    <p className="mt-4 text-gray-600">Loading class switches...</p>
+                  </div>
+                ) : classSwitches.length === 0 ? (
+                  <div className="text-center py-12">
+                    <p className="text-gray-600">No class switches found.</p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full bg-white border border-gray-200 rounded-lg">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                            Requester
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                            Requester Class
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                            Target Teacher
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                            Target Class
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                            Switch Date
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                            Status
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-200">
+                        {classSwitches.map((switchReq) => (
+                          <tr key={switchReq.id} className="hover:bg-gray-50">
+                            <td className="px-4 py-3 text-sm text-gray-900">
+                              {switchReq.requester_teacher?.full_name || "Unknown"}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-600">
+                              {switchReq.requester_class?.subject} ({switchReq.requester_class?.course} - {switchReq.requester_class?.semester})
+                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-900">
+                              {switchReq.target_teacher?.full_name || "Unknown"}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-600">
+                              {switchReq.target_class?.subject} ({switchReq.target_class?.course} - {switchReq.target_class?.semester})
+                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-600">
+                              {new Date(switchReq.switch_date).toLocaleDateString()}
+                            </td>
+                            <td className="px-4 py-3">
+                              <span
+                                className={`px-2 py-1 rounded text-xs font-medium ${
+                                  switchReq.status === "pending"
+                                    ? "bg-yellow-200 text-yellow-800"
+                                    : switchReq.status === "accepted" || switchReq.status === "completed"
+                                    ? "bg-green-200 text-green-800"
+                                    : "bg-red-200 text-red-800"
+                                }`}
+                              >
+                                {switchReq.status.toUpperCase()}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           )}
 
           {currentView === "statistics/students" && (

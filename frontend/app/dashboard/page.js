@@ -10,7 +10,17 @@ import {
 } from "../../components/ui/card";
 import { supabase } from "../../lib/supabaseClient";
 import { resolveUserRole } from "../../lib/utils";
-import { Bell, Users, Clock, BookOpen } from "lucide-react";
+import {
+  Bell,
+  Users,
+  Clock,
+  BookOpen,
+  CheckCircle,
+  XCircle,
+  Calendar,
+  TrendingUp,
+  Activity,
+} from "lucide-react";
 import Sidebar from "../../components/ui/sidebar";
 import ConfirmDialog from "../../components/ui/ConfirmDialog";
 import NotificationBell from "../../components/ui/notificationBell";
@@ -27,6 +37,42 @@ export default function DashboardPage() {
   const [department, setDepartment] = useState("Mathematics");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [userRole, setUserRole] = useState("teacher");
+  const [nepalTime, setNepalTime] = useState("");
+  const [attendanceStats, setAttendanceStats] = useState({
+    todayTotal: 0,
+    todaySuccessful: 0,
+    todayMissed: 0,
+    timePercentages: {
+      day: 0,
+      week: 0,
+      month: 0,
+      threeMonths: 0,
+      sixMonths: 0,
+      year: 0,
+    },
+  });
+
+  // Nepal time with seconds (UTC+5:45)
+  useEffect(() => {
+    const updateNepalTime = () => {
+      const now = new Date();
+      // Nepal is UTC+5:45 = 5 hours 45 minutes = 345 minutes
+      const nepalOffsetMinutes = 5 * 60 + 45; // 345 minutes
+      const utc = now.getTime() + now.getTimezoneOffset() * 60 * 1000;
+      const nepalTime = new Date(utc + nepalOffsetMinutes * 60 * 1000);
+      
+      const hours = String(nepalTime.getHours()).padStart(2, "0");
+      const minutes = String(nepalTime.getMinutes()).padStart(2, "0");
+      const seconds = String(nepalTime.getSeconds()).padStart(2, "0");
+      
+      setNepalTime(`${hours}:${minutes}:${seconds}`);
+    };
+    
+    updateNepalTime();
+    const interval = setInterval(updateNepalTime, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data }) => {
@@ -43,15 +89,18 @@ export default function DashboardPage() {
       setUserRole(role || "teacher");
       setEmail(user.email || "");
       setUserId(user.id || "");
+
       try {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("full_name")
+        // Fetch user profile from users table
+        const { data: userProfile } = await supabase
+          .from("users")
+          .select("full_name, email")
           .eq("id", user.id)
           .maybeSingle();
-        if (profile?.full_name) setFullName(profile.full_name);
 
-        // Fetch assigned classes directly from Supabase
+        if (userProfile?.full_name) setFullName(userProfile.full_name);
+
+        // Fetch assigned classes
         const { data: classes } = await supabase
           .from("classes")
           .select("*")
@@ -59,8 +108,9 @@ export default function DashboardPage() {
           .order("created_at", { ascending: true });
 
         setAssignedClasses(classes || []);
-      } catch (_) {
-        // ignore load failure
+        await fetchAttendanceStats(user.id, classes || []);
+      } catch (error) {
+        console.error("Error fetching data:", error);
       } finally {
         setLoading(false);
         setClassesLoading(false);
@@ -68,10 +118,86 @@ export default function DashboardPage() {
     });
   }, [router]);
 
-  // Create a deterministic teacher code without changing backend
+  const fetchAttendanceStats = async (teacherId, classes) => {
+    try {
+      const today = new Date().toISOString().split("T")[0];
+      const now = new Date();
+
+      // Calculate date ranges
+      const ranges = {
+        day: new Date(now.getTime() - 24 * 60 * 60 * 1000),
+        week: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000),
+        month: new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000),
+        threeMonths: new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000),
+        sixMonths: new Date(now.getTime() - 180 * 24 * 60 * 60 * 1000),
+        year: new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000),
+      };
+
+      // Fetch today's attendance records
+      const { data: todayAttendance } = await supabase
+        .from("attendance")
+        .select("date, subject_id")
+        .eq("marked_by", teacherId)
+        .eq("date", today);
+
+      // Calculate today's stats
+      const todayTotal = classes.length;
+      // Count unique subjects/classes for today
+      const todayUniqueSubjects = new Set(
+        todayAttendance?.map((a) => a.subject_id).filter(Boolean) || []
+      ).size;
+      const todaySuccessful = todayUniqueSubjects || 0;
+      const todayMissed = Math.max(0, todayTotal - todaySuccessful);
+
+      // Calculate time percentages for each range
+      const timePercentages = {};
+      const PERIOD_DURATION = 45; // minutes per period
+
+      for (const [period, startDate] of Object.entries(ranges)) {
+        const startDateStr = startDate.toISOString().split("T")[0];
+        
+        // Fetch attendance records for this period
+        const { data: attendanceRecords } = await supabase
+          .from("attendance")
+          .select("date, subject_id")
+          .eq("marked_by", teacherId)
+          .gte("date", startDateStr);
+
+        if (attendanceRecords && attendanceRecords.length > 0) {
+          // Count unique days with attendance
+          const uniqueDays = new Set(attendanceRecords.map((r) => r.date)).size;
+          
+          // Calculate total time spent (unique days * period duration * number of classes)
+          const totalTimeSpent = uniqueDays * PERIOD_DURATION * classes.length;
+          
+          // Calculate expected time (assuming 5 working days per week)
+          const daysInRange = Math.ceil((now - startDate) / (24 * 60 * 60 * 1000));
+          const workingDays = Math.ceil((daysInRange / 7) * 5);
+          const expectedTime = workingDays * PERIOD_DURATION * classes.length;
+          
+          timePercentages[period] =
+            expectedTime > 0
+              ? Math.min(100, Math.round((totalTimeSpent / expectedTime) * 100))
+              : 0;
+        } else {
+          timePercentages[period] = 0;
+        }
+      }
+
+      setAttendanceStats({
+        todayTotal,
+        todaySuccessful,
+        todayMissed,
+        timePercentages,
+      });
+    } catch (error) {
+      console.error("Error fetching attendance stats:", error);
+    }
+  };
+
+  // Create a deterministic teacher code
   useEffect(() => {
     if (!userId) return;
-    // Simple, readable code like TEA-2025-334 (stable per userId)
     const year = new Date().getFullYear();
     let hash = 0;
     for (let i = 0; i < userId.length; i++) {
@@ -91,13 +217,12 @@ export default function DashboardPage() {
   if (loading)
     return <div className="p-6 text-center text-gray-600">Loading…</div>;
 
-  // Capitalize first letter of the display name (keep rest as-is). Falls back to 'Teacher'.
   const displayName = fullName?.trim()
     ? fullName.trim().charAt(0).toUpperCase() + fullName.trim().slice(1)
     : "Teacher";
 
   return (
-    <div className="min-h-dvh bg-gradient-to-br from-purple-50 via-violet-50 to-purple-100 dark:from-gray-900 dark:via-purple-950 dark:to-gray-900 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-violet-50 to-purple-100 p-6">
       <div className="w-full mx-auto flex flex-col lg:flex-row gap-6">
         <Sidebar
           open={sidebarOpen}
@@ -105,11 +230,11 @@ export default function DashboardPage() {
           collapsed={sidebarCollapsed}
           onToggleCollapsed={() => setSidebarCollapsed((v) => !v)}
         />
-        <main className="flex-1 space-y-6">
+        <main className="flex-1 space-y-8">
           {/* Header */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-violet-600 rounded-xl flex items-center justify-center shadow-lg shrink-0">
+              <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-violet-600 rounded-xl flex items-center justify-center shadow-lg">
                 <svg
                   className="w-6 h-6 text-white"
                   fill="none"
@@ -125,22 +250,24 @@ export default function DashboardPage() {
                 </svg>
               </div>
               <div>
-                <h1 className="text-2xl sm:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-violet-400 dark:from-purple-200 dark:to-violet-200">
+                <h1 className="text-2xl sm:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-violet-600">
                   Teacher Dashboard
                 </h1>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Manage your classes and track attendance
+                <p className="text-sm text-gray-700">
+                  Welcome, {displayName} • Nepal Time: {nepalTime}
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-2 w-full sm:w-auto">
+
+            <div className="flex flex-wrap items-center gap-2">
+              <NotificationBell userRole={userRole} userId={userId} />
               <Button
                 variant="ghost"
+                size="sm"
                 className="p-2 rounded-full sm:hidden"
                 onClick={() => setSidebarOpen(true)}
                 aria-label="Open sidebar"
               >
-                {/* simple hamburger */}
                 <svg
                   className="w-5 h-5"
                   viewBox="0 0 20 20"
@@ -154,21 +281,19 @@ export default function DashboardPage() {
                   />
                 </svg>
               </Button>
-              <NotificationBell userRole={userRole} userId={userId} />
               <Button
                 onClick={() => setShowSignOutConfirm(true)}
-                className="flex-1 sm:flex-none bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-700 hover:to-violet-700 text-white px-4 py-2 rounded-lg shadow-md transition-all duration-200"
+                className="bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-700 hover:to-violet-700 text-white px-4 py-2 rounded-lg shadow-md transition-all"
               >
                 Sign out
               </Button>
 
-              {/* Sign Out Confirmation Dialog */}
               <ConfirmDialog
                 open={showSignOutConfirm}
                 onClose={() => setShowSignOutConfirm(false)}
                 onConfirm={signOut}
                 title="Sign Out"
-                message="Are you sure you want to sign out? You will need to log in again to access your account."
+                message="Are you sure you want to sign out?"
                 confirmText="Sign Out"
                 cancelText="Cancel"
                 variant="danger"
@@ -176,280 +301,231 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Profile + Stats */}
-          <Card className="shadow-md border border-purple-200 dark:border-purple-800 bg-white/70 dark:bg-gray-900/30">
-            <CardContent>
-              <div className="p-5 grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
-                {/* Left: Teacher Profile */}
-                <div className="md:col-span-5 lg:col-span-4">
-                  <div className="flex items-start gap-4">
-                    <img
-                      alt="avatar"
-                      className="w-18 h-18 mt-11 rounded-2xl object-cover shadow-lg"
-                      src="https://img.freepik.com/premium-photo/profile-icon-white-background_941097-159423.jpg?w=2000"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <div className="text-lg sm:text-3xl -ml-22 font-semibold text-gray-900 dark:text-gray-100 truncate">
-                        {displayName ? `Mr. ${displayName}` : "Teacher"}
-                      </div>
-                      <div className="mt-1 text-sm text-gray-700 dark:text-gray-300">
-                        <span className="font-medium">Teacher ID: </span>
-                        {teacherCode || "—"}
-                      </div>
-                      <div className="text-sm text-gray-700 dark:text-gray-300">
-                        <span className="font-medium">Department:</span>{" "}
-                        {department}
-                      </div>
-                      <div className="text-sm text-gray-600 dark:text-gray-400 truncate">
-                        <span className="font-medium">Email:</span> {email}
-                      </div>
-                      <div className="mt-2 flex flex-wrap  gap-2">
-                        {["Algebra", "Java", "Statistics"].map((tag) => (
-                          <span
-                            key={tag}
-                            className="text-xs -ml-1 px-3 py-1 rounded-full bg-gradient-to-r from-purple-50 to-violet-50 text-purple-700 border border-purple-200 dark:text-purple-700 dark:text-purple-300 dark:border-purple-800"
-                          >
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
+          {/* Welcome Section */}
+          <Card className="shadow-md border border-gray-200 bg-gradient-to-r from-purple-50 to-violet-50">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900 mb-1">
+                    Welcome back, {displayName}! 👋
+                  </h2>
+                  <p className="text-gray-600">
+                    Here's your teaching overview for today
+                  </p>
                 </div>
-
-                {/* Right: Summary Stats */}
-                <div className="md:col-span-7 lg:col-span-8">
-                  {(() => {
-                    const total = assignedClasses.length;
-                    const marked = total > 0 ? 1 : 0;
-                    const pending = Math.max(0, total - marked);
-                    const pct =
-                      total > 0 ? Math.round((marked / total) * 100) : 0;
-                    const now = new Date();
-                    const time = now.toLocaleTimeString();
-                    const card = (label, value, icon) => (
-                      <div className="flex-1 min-w-[140px] rounded-xl bg-white/70 dark:bg-gray-800/60 border border-purple-200 dark:border-purple-800 p-4 flex items-center justify-between">
-                        <div>
-                          <div className="text-sm text-gray-600 dark:text-gray-400">
-                            {label}
-                          </div>
-                          <div className="mt-1 text-xl font-semibold text-gray-900 dark:text-gray-100">
-                            {value}
-                          </div>
-                        </div>
-                        <div className="text-xl">{icon}</div>
-                      </div>
-                    );
-                    return (
-                      <div className="flex flex-wrap gap-3">
-                        {card("Total Classes", total, "📅")}
-                        {card("Marked", marked, "✅")}
-                        {card("Pending", pending, "⏳")}
-                        {card("Attendance %", `${pct}%`, "📈")}
-                        <div className="basis-full text-right text-xs text-gray-600 dark:text-gray-400 mt-1">
-                          Last Updated: {time}
-                        </div>
-                      </div>
-                    );
-                  })()}
+                <div className="hidden md:flex items-center gap-2 px-4 py-2 bg-white rounded-lg shadow-sm">
+                  <Clock className="w-5 h-5 text-purple-600" />
+                  <span className="text-sm font-medium text-gray-700">
+                    {new Date().toLocaleDateString("en-US", {
+                      weekday: "long",
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                    })}
+                  </span>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          {/* Main Dashboard Grid */}
-          <div className="grid grid-cols-1 gap-6">
-            {/* Assigned Classes */}
-            <Card className="shadow-md border border-purple-200 dark:border-purple-800 hover:shadow-lg transition-shadow md:col-span-2">
-              <CardHeader>
-                <CardTitle className="text-lg font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2">
-                  <svg
-                    className="w-5 h-5 text-purple-600 dark:text-purple-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-                    />
-                  </svg>
-                  Assigned Classes
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="overflow-x-auto rounded-lg">
-                  <div className="inline-block min-w-full align-middle">
-                    <div className="overflow-hidden ring-1 ring-purple-200 dark:ring-purple-800 rounded-lg">
-                      <table className="min-w-full text-sm divide-y divide-purple-200 dark:divide-purple-800">
-                        <thead className="bg-gradient-to-r from-purple-100 to-violet-100 dark:from-purple-900/50 dark:to-violet-900/50">
-                          <tr>
-                            <th
-                              scope="col"
-                              className="py-3.5 pl-4 pr-3 text-left text-gray-800 dark:text-gray-100 sm:pl-6"
-                            >
-                              Subject
-                            </th>
-                            <th
-                              scope="col"
-                              className="px-3 py-3.5 text-left text-gray-800 dark:text-gray-100"
-                            >
-                              Class
-                            </th>
-                            <th
-                              scope="col"
-                              className="px-3 py-3.5 text-left text-gray-800 dark:text-gray-100"
-                            >
-                              Time
-                            </th>
-                            <th
-                              scope="col"
-                              className="px-3 py-3.5 text-left text-gray-800 dark:text-gray-100"
-                            >
-                              Students
-                            </th>
-                            <th
-                              scope="col"
-                              className="px-3 py-3.5 text-left text-gray-800 dark:text-gray-100"
-                            >
-                              Room
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-purple-100 dark:divide-purple-800 bg-white/50 dark:bg-gray-800/50">
-                          {classesLoading ? (
-                            <tr>
-                              <td
-                                colSpan="5"
-                                className="text-center py-4 text-gray-500"
-                              >
-                                Loading classes...
-                              </td>
-                            </tr>
-                          ) : assignedClasses.length === 0 ? (
-                            <tr>
-                              <td
-                                colSpan="5"
-                                className="text-center py-4 text-gray-500"
-                              >
-                                No classes assigned yet
-                              </td>
-                            </tr>
-                          ) : (
-                            assignedClasses.map((cls) => (
-                              <tr
-                                key={cls.id}
-                                className="hover:bg-purple-50 dark:hover:bg-purple-900/30 transition"
-                              >
-                                <td className="whitespace-nowrap py-4 pl-4 pr-3 text-purple-700 dark:text-purple-300 sm:pl-6">
-                                  <div className="flex items-center gap-2">
-                                    <BookOpen size={16} /> {cls.subject}
-                                  </div>
-                                </td>
-                                <td className="whitespace-nowrap px-3 py-4">
-                                  Grade {cls.grade} - {cls.section}
-                                </td>
-                                <td className="whitespace-nowrap px-3 py-4">
-                                  <div className="flex items-center gap-2">
-                                    <Clock size={14} />{" "}
-                                    {cls.time || "Schedule TBD"}
-                                  </div>
-                                </td>
-                                <td className="whitespace-nowrap px-3 py-4">
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="text-purple-600 dark:text-purple-400"
-                                    onClick={() => {}}
-                                  >
-                                    <Users size={14} className="mr-1" /> Manage
-                                    Students
-                                  </Button>
-                                </td>
-                                <td className="whitespace-nowrap px-3 py-4">
-                                  {cls.room || "Room TBD"}
-                                </td>
-                              </tr>
-                            ))
-                          )}
-                        </tbody>
-                      </table>
-                    </div>
+          {/* Today's Classes Overview Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Card className="shadow-md border border-gray-200 hover:shadow-lg transition-shadow">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">
+                      Total Classes Today
+                    </p>
+                    <p className="text-3xl font-bold text-gray-900 mt-2">
+                      {attendanceStats.todayTotal}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Classes scheduled
+                    </p>
+                  </div>
+                  <div className="w-14 h-14 bg-blue-100 rounded-xl flex items-center justify-center shadow-sm">
+                    <Calendar className="w-7 h-7 text-blue-600" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="shadow-md border border-gray-200 hover:shadow-lg transition-shadow">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">
+                      Successful Classes
+                    </p>
+                    <p className="text-3xl font-bold text-green-600 mt-2">
+                      {attendanceStats.todaySuccessful}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Completed today
+                    </p>
+                  </div>
+                  <div className="w-14 h-14 bg-green-100 rounded-xl flex items-center justify-center shadow-sm">
+                    <CheckCircle className="w-7 h-7 text-green-600" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="shadow-md border border-gray-200 hover:shadow-lg transition-shadow">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">
+                      Missed Classes
+                    </p>
+                    <p className="text-3xl font-bold text-red-600 mt-2">
+                      {attendanceStats.todayMissed}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Not completed
+                    </p>
+                  </div>
+                  <div className="w-14 h-14 bg-red-100 rounded-xl flex items-center justify-center shadow-sm">
+                    <XCircle className="w-7 h-7 text-red-600" />
                   </div>
                 </div>
               </CardContent>
             </Card>
           </div>
-          {/* Upcoming Events */}
-          <Card className="shadow-md border border-purple-200 dark:border-purple-800 hover:shadow-lg transition-shadow">
+
+          {/* Time Percentage Cards */}
+          <Card className="shadow-md border border-gray-200">
             <CardHeader>
-              <CardTitle className="text-lg font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2">
-                <svg
-                  className="w-5 h-5 text-violet-600 dark:text-violet-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                  />
-                </svg>
-                Upcoming Events
+              <CardTitle className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-purple-600" />
+                Average Time Spent on Classes
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <ul className="space-y-3 text-sm">
-                <li className="flex items-center gap-2 p-2 rounded-lg bg-purple-50 dark:bg-purple-900/30 text-gray-700 dark:text-gray-300">
-                  <span className="text-purple-600 dark:text-purple-400">
-                    📅
-                  </span>
-                  <span>Parent Meeting — Oct 8</span>
-                </li>
-                <li className="flex items-center gap-2 p-2 rounded-lg bg-violet-50 dark:bg-violet-900/30 text-gray-700 dark:text-gray-300">
-                  <span className="text-violet-600 dark:text-violet-400">
-                    🧾
-                  </span>
-                  <span>Monthly Report Submission — Oct 12</span>
-                </li>
-                <li className="flex items-center gap-2 p-2 rounded-lg bg-purple-50 dark:bg-purple-900/30 text-gray-700 dark:text-gray-300">
-                  <span className="text-purple-600 dark:text-purple-400">
-                    🎓
-                  </span>
-                  <span>Internal Exam — Oct 20</span>
-                </li>
-              </ul>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                <div className="p-4 bg-blue-50 rounded-lg">
+                  <p className="text-xs font-medium text-blue-700">Day</p>
+                  <p className="text-2xl font-bold text-blue-900 mt-2">
+                    {attendanceStats.timePercentages.day}%
+                  </p>
+                </div>
+                <div className="p-4 bg-purple-50 rounded-lg">
+                  <p className="text-xs font-medium text-purple-700">Week</p>
+                  <p className="text-2xl font-bold text-purple-900 mt-2">
+                    {attendanceStats.timePercentages.week}%
+                  </p>
+                </div>
+                <div className="p-4 bg-violet-50 rounded-lg">
+                  <p className="text-xs font-medium text-violet-700">Month</p>
+                  <p className="text-2xl font-bold text-violet-900 mt-2">
+                    {attendanceStats.timePercentages.month}%
+                  </p>
+                </div>
+                <div className="p-4 bg-indigo-50 rounded-lg">
+                  <p className="text-xs font-medium text-indigo-700">3 Months</p>
+                  <p className="text-2xl font-bold text-indigo-900 mt-2">
+                    {attendanceStats.timePercentages.threeMonths}%
+                  </p>
+                </div>
+                <div className="p-4 bg-pink-50 rounded-lg">
+                  <p className="text-xs font-medium text-pink-700">6 Months</p>
+                  <p className="text-2xl font-bold text-pink-900 mt-2">
+                    {attendanceStats.timePercentages.sixMonths}%
+                  </p>
+                </div>
+                <div className="p-4 bg-orange-50 rounded-lg">
+                  <p className="text-xs font-medium text-orange-700">1 Year</p>
+                  <p className="text-2xl font-bold text-orange-900 mt-2">
+                    {attendanceStats.timePercentages.year}%
+                  </p>
+                </div>
+              </div>
             </CardContent>
           </Card>
 
-          {/* Announcements */}
-          <Card className="shadow-md border border-purple-200 dark:border-purple-800 hover:shadow-lg transition-shadow">
+          {/* Assigned Classes */}
+          <Card className="shadow-md border border-gray-200">
             <CardHeader>
-              <CardTitle className="text-lg font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2">
-                <svg
-                  className="w-5 h-5 text-purple-600 dark:text-purple-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"
-                  />
-                </svg>
-                Announcements
+              <CardTitle className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                <BookOpen className="w-5 h-5 text-purple-600" />
+                Assigned Classes
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm opacity-80 text-gray-600 dark:text-gray-400">
-                No announcements yet.
-              </p>
+              <div className="overflow-x-auto">
+                <table className="min-w-full bg-white border border-gray-200 rounded-lg">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Subject
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Class
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Time
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Students
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Room
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {classesLoading ? (
+                      <tr>
+                        <td
+                          colSpan="5"
+                          className="text-center py-4 text-gray-500"
+                        >
+                          Loading classes...
+                        </td>
+                      </tr>
+                    ) : assignedClasses.length === 0 ? (
+                      <tr>
+                        <td
+                          colSpan="5"
+                          className="text-center py-4 text-gray-500"
+                        >
+                          No classes assigned yet
+                        </td>
+                      </tr>
+                    ) : (
+                      assignedClasses.map((cls) => (
+                        <tr
+                          key={cls.id}
+                          className="hover:bg-gray-50 transition"
+                        >
+                          <td className="px-4 py-3 text-sm font-medium text-gray-900">
+                            {cls.subject}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-600">
+                            {cls.course || cls.grade} - {cls.section || cls.semester}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-600">
+                            {cls.time || "Schedule TBD"}
+                          </td>
+                          <td className="px-4 py-3">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-purple-600"
+                            >
+                              <Users size={14} className="mr-1" /> Manage
+                            </Button>
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-600">
+                            {cls.room_number || "Room TBD"}
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </CardContent>
           </Card>
         </main>

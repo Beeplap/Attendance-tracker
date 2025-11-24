@@ -8,12 +8,14 @@ CREATE TABLE IF NOT EXISTS notifications (
   message TEXT NOT NULL,
   sender_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   recipient_role VARCHAR(50) DEFAULT 'teacher', -- 'teacher', 'student', 'all'
+  recipient_user_id UUID REFERENCES users(id) ON DELETE CASCADE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- Create index for faster queries
 CREATE INDEX IF NOT EXISTS idx_notifications_recipient_role ON notifications(recipient_role);
+CREATE INDEX IF NOT EXISTS idx_notifications_recipient_user_id ON notifications(recipient_user_id);
 CREATE INDEX IF NOT EXISTS idx_notifications_created_at ON notifications(created_at DESC);
 
 -- Add comment for documentation
@@ -42,9 +44,10 @@ CREATE POLICY "Users can read notifications for their role"
   FOR SELECT
   TO authenticated
   USING (
-    recipient_role = 'all' OR
-    recipient_role = (
+    recipient_role = 'all'
+    OR recipient_role = (
       SELECT role FROM users WHERE id = auth.uid()
     )
+    OR recipient_user_id = auth.uid()
   );
 
