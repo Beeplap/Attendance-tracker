@@ -88,8 +88,7 @@ export async function GET(req) {
       `)
       .order("created_at", { ascending: false });
 
-    // If teacher, only show their own requests
-    if (userData.role === "teacher") {
+    if (["teacher", "student"].includes(userData.role)) {
       query = query.eq("teacher_id", user.id);
     }
     // Admin can see all requests
@@ -122,7 +121,8 @@ export async function GET(req) {
 // POST: Create leave request
 export async function POST(req) {
   try {
-    const { start_date, end_date, reason } = await req.json();
+    const { start_date, end_date, reason, leave_type = "personal" } =
+      await req.json();
 
     if (!start_date || !end_date || !reason) {
       return NextResponse.json(
@@ -150,21 +150,18 @@ export async function POST(req) {
       );
     }
 
-    // Verify user is a teacher
     const { data: userData } = await supabase
       .from("users")
       .select("role, full_name")
       .eq("id", user.id)
       .single();
 
-    if (!userData || userData.role !== "teacher") {
+    if (!userData || !["teacher", "student"].includes(userData.role)) {
       return NextResponse.json(
-        { error: "Only teachers can create leave requests" },
+        { error: "Only teachers or students can create leave requests" },
         { status: 403 }
       );
     }
-
-    // Validate dates
     const start = new Date(start_date);
     const end = new Date(end_date);
     const today = new Date();
@@ -184,7 +181,11 @@ export async function POST(req) {
       );
     }
 
-    // Create leave request
+    const allowedLeaveTypes = ["personal", "medical", "academic", "other"];
+    const normalizedType = allowedLeaveTypes.includes(leave_type)
+      ? leave_type
+      : "personal";
+
     const { data, error } = await supabase
       .from("leave_requests")
       .insert({
@@ -192,6 +193,7 @@ export async function POST(req) {
         start_date,
         end_date,
         reason,
+        leave_type: normalizedType,
         status: "pending",
       })
       .select()
@@ -212,7 +214,7 @@ export async function POST(req) {
 
     await sendNotification({
       title: "New Leave Request",
-      message: `${userData.full_name || user.email} requested leave from ${start_date} to ${end_date}.`,
+      message: `${userData.full_name || user.email} requested ${normalizedType} leave from ${start_date} to ${end_date}.`,
       senderId: user.id,
       recipientRole: "admin",
     });
@@ -299,16 +301,24 @@ export async function PATCH(req) {
       throw error;
     }
 
-    // Notify teacher about the status change
+    const { data: requester } = await supabase
+      .from("users")
+      .select("role")
+      .eq("id", data.teacher_id)
+      .maybeSingle();
+
     await sendNotification({
-      title: status === "approved" ? "Leave Request Approved" : "Leave Request Rejected",
-      message: `Your leave request (${new Date(data.start_date).toLocaleDateString()} - ${new Date(
+      title:
+        status === "approved" ? "Leave Request Approved" : "Leave Request Rejected",
+      message: `Your leave request (${new Date(
+        data.start_date
+      ).toLocaleDateString()} - ${new Date(
         data.end_date
       ).toLocaleDateString()}) has been ${status}${
         admin_notes ? `. Notes: ${admin_notes}` : ""
       }.`,
       senderId: user.id,
-      recipientRole: "teacher",
+      recipientRole: requester?.role || "teacher",
       recipientUserId: data.teacher_id,
     });
 
