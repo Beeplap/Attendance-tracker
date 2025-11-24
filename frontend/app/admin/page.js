@@ -36,6 +36,7 @@ import { Dialog, Menu, Transition } from "@headlessui/react";
 import AddClass from "../../components/ui/addClass";
 import AdminSidebar from "../../components/ui/adminSidebar";
 import AddUser from "../../components/ui/addUser";
+import AddSubject from "../../components/ui/addSubject";
 import UsersTable from "../../components/ui/usersTable";
 import TeacherStats from "../../components/ui/teacherStats";
 import TeacherDetails from "../../components/ui/teacherDetails";
@@ -83,6 +84,13 @@ export default function AdminPage() {
   const [studentSearch, setStudentSearch] = useState("");
   const [studentClassFilter, setStudentClassFilter] = useState("");
   const [studentSectionFilter, setStudentSectionFilter] = useState("");
+
+  // Subjects view state
+  const [subjects, setSubjects] = useState([]);
+  const [subjectsLoading, setSubjectsLoading] = useState(false);
+  const [showAddSubject, setShowAddSubject] = useState(false);
+  const [subjectSearch, setSubjectSearch] = useState("");
+  const [subjectSemesterFilter, setSubjectSemesterFilter] = useState("all");
 
   // Notification panel state
   const [showNotificationPanel, setShowNotificationPanel] = useState(false);
@@ -268,6 +276,36 @@ export default function AdminPage() {
     }
   };
 
+  const fetchSubjects = async () => {
+    setSubjectsLoading(true);
+    try {
+      const res = await fetch("/api/subjects");
+      const json = await res.json();
+      if (!res.ok) throw new Error(json?.error || "Failed to fetch subjects");
+      setSubjects(json.subjects || []);
+    } catch (error) {
+      console.error("Error fetching subjects:", error);
+    } finally {
+      setSubjectsLoading(false);
+    }
+  };
+
+  const deleteSubject = async (id) => {
+    if (!confirm("Are you sure you want to delete this subject?")) return;
+    try {
+      const res = await fetch("/api/subjects", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json?.error || "Failed to delete subject");
+      await fetchSubjects();
+    } catch (error) {
+      alert(error.message || "Failed to delete subject");
+    }
+  };
+
   // Fetch data when view changes
   useEffect(() => {
     if (currentView === "teachers") {
@@ -279,6 +317,8 @@ export default function AdminPage() {
       fetchStudents();
     } else if (currentView === "statistics/teachers") {
       fetchTeacherStats();
+    } else if (currentView === "subjects") {
+      fetchSubjects();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentView]);

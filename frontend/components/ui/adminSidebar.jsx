@@ -136,6 +136,15 @@ export default function AdminSidebar({
           {!collapsed && <span className="flex-1 text-left">Students</span>}
         </button>
 
+        {/* View Subjects */}
+        <button
+          onClick={() => onViewChange && onViewChange("subjects")}
+          className={navItemClass(currentView === "subjects")}
+        >
+          <BookOpen className="w-5 h-5 shrink-0" />
+          {!collapsed && <span className="flex-1 text-left">Subjects</span>}
+        </button>
+
         {/* Statistics with submenu */}
         {!collapsed && (
           <>
