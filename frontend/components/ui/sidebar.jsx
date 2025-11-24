@@ -9,6 +9,9 @@ import {
   Menu,
   X,
   Calendar,
+  Lock,
+  FileText,
+  ArrowRightLeft,
 } from "lucide-react";
 import { supabase } from "../../lib/supabaseClient";
 import ConfirmDialog from "./ConfirmDialog";
@@ -18,6 +21,9 @@ export default function Sidebar({
   onOpenChange,
   collapsed = false,
   onToggleCollapsed,
+  onChangePassword,
+  onRequestLeave,
+  onSwitchClass,
 }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -28,15 +34,21 @@ export default function Sidebar({
     router.replace("/login");
   };
 
-  const navItemClass = (active) =>
+  const navItemClass = (active, isAction = false) =>
     `group w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 text-sm font-medium ${
       active
         ? "bg-gradient-to-r from-purple-600 to-violet-600 text-white shadow-md"
+        : isAction
+        ? "bg-white border border-purple-200 text-purple-700 hover:bg-purple-50 hover:border-purple-300 hover:shadow-sm"
         : "text-gray-700 hover:bg-gray-50 hover:text-purple-600"
     }`;
 
   const Content = (
-    <div className="bg-white border-r border-gray-200 h-full flex flex-col shadow-sm">
+    <div
+      className={`bg-white border-r border-gray-200 ${
+        collapsed ? "p-2" : "p-4"
+      } h-full flex flex-col shadow-sm`}
+    >
       {/* Top: Teacher title + toggle */}
       <div className="flex items-center justify-between mb-6">
         {!collapsed && (
@@ -107,6 +119,49 @@ export default function Sidebar({
           <Users className="w-5 h-5 shrink-0" />
           {!collapsed && <span className="flex-1 text-left">Students</span>}
         </a>
+
+        {/* Divider */}
+        {!collapsed && (
+          <div className="my-4">
+            <div className="h-px bg-gray-200"></div>
+          </div>
+        )}
+
+        {/* Actions Section */}
+        {!collapsed && (
+          <div className="mb-4">
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider px-3 mb-2">
+              Actions
+            </p>
+          </div>
+        )}
+
+        {/* Change Password */}
+        <button
+          onClick={onChangePassword}
+          className={navItemClass(false, true)}
+        >
+          <Lock className="w-5 h-5 shrink-0" />
+          {!collapsed && <span className="flex-1 text-left">Change Password</span>}
+        </button>
+
+        {/* Request Leave */}
+        <button
+          onClick={onRequestLeave}
+          className={navItemClass(false, true)}
+        >
+          <FileText className="w-5 h-5 shrink-0" />
+          {!collapsed && <span className="flex-1 text-left">Request Leave</span>}
+        </button>
+
+        {/* Switch Class */}
+        <button
+          onClick={onSwitchClass}
+          className={navItemClass(false, true)}
+        >
+          <ArrowRightLeft className="w-5 h-5 shrink-0" />
+          {!collapsed && <span className="flex-1 text-left">Switch Class</span>}
+        </button>
       </nav>
 
       {/* Sign out at bottom */}
@@ -149,13 +204,12 @@ export default function Sidebar({
       {open && (
         <div className="fixed inset-0 z-50 sm:hidden">
           <div
-            className="fixed inset-0 bg-black/30"
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
             onClick={() => onOpenChange && onOpenChange(false)}
-            aria-hidden="true"
           />
-          <aside className="fixed left-0 top-0 bottom-0 w-64 bg-white border-r border-gray-200 shadow-xl z-50">
+          <div className="absolute inset-y-0 left-0 w-72 bg-white shadow-xl animate-[slideIn_.3s_ease-out]">
             {Content}
-          </aside>
+          </div>
         </div>
       )}
     </>

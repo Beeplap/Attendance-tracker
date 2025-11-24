@@ -11,6 +11,9 @@ import {
 import { supabase } from "../../lib/supabaseClient";
 import ConfirmDialog from "../../components/ui/ConfirmDialog";
 import NotificationBell from "../../components/ui/notificationBell";
+import ChangePassword from "../../components/ui/changePassword";
+import LeaveRequest from "../../components/ui/leaveRequest";
+import ClassSwitch from "../../components/ui/classSwitch";
 import {
   Bell,
   Users,
@@ -20,6 +23,7 @@ import {
   XCircle,
   Calendar,
   TrendingUp,
+  ArrowRightLeft,
 } from "lucide-react";
 import Sidebar from "../../components/ui/sidebar";
 
@@ -50,6 +54,13 @@ export default function TeacherDashboardPage() {
       year: 0,
     },
   });
+  
+  // New feature modals
+  const [showChangePassword, setShowChangePassword] = useState(false);
+  const [showLeaveRequest, setShowLeaveRequest] = useState(false);
+  const [showClassSwitch, setShowClassSwitch] = useState(false);
+  const [pendingSwitches, setPendingSwitches] = useState([]);
+  const [leaveRequests, setLeaveRequests] = useState([]);
 
   // Nepal time with seconds (UTC+5:45)
   useEffect(() => {
@@ -113,6 +124,8 @@ export default function TeacherDashboardPage() {
 
         setAssignedClasses(classes || []);
         await fetchAttendanceStats(authUser.id, classes || []);
+        await fetchPendingSwitches(authUser.id);
+        await fetchLeaveRequests(authUser.id);
       } catch (error) {
         console.error("Error fetching user:", error);
         router.replace("/login");
@@ -124,6 +137,60 @@ export default function TeacherDashboardPage() {
 
     fetchUser();
   }, [router]);
+
+  const fetchPendingSwitches = async (teacherId) => {
+    try {
+      const res = await fetch("/api/class-switches");
+      const data = await res.json();
+      if (res.ok && data.classSwitches) {
+        // Filter switches where current teacher is the target and status is pending
+        const pending = data.classSwitches.filter(
+          (s) => s.target_teacher_id === teacherId && s.status === "pending"
+        );
+        setPendingSwitches(pending);
+      }
+    } catch (error) {
+      console.error("Error fetching pending switches:", error);
+    }
+  };
+
+  const fetchLeaveRequests = async (teacherId) => {
+    try {
+      const res = await fetch("/api/leave-requests");
+      const data = await res.json();
+      if (res.ok && data.leaveRequests) {
+        setLeaveRequests(data.leaveRequests);
+      }
+    } catch (error) {
+      console.error("Error fetching leave requests:", error);
+    }
+  };
+
+  const handleSwitchAction = async (switchId, action) => {
+    try {
+      const res = await fetch("/api/class-switches", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: switchId, action }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.error || "Failed to update switch request");
+        return;
+      }
+
+      alert(data.message || `Switch ${action}ed successfully`);
+      await fetchPendingSwitches(userId);
+      if (onSwitchCreated) {
+        onSwitchCreated();
+      }
+    } catch (error) {
+      console.error("Error handling switch action:", error);
+      alert("Failed to update switch request");
+    }
+  };
 
   const fetchAttendanceStats = async (teacherId, classes) => {
     try {
@@ -227,6 +294,9 @@ export default function TeacherDashboardPage() {
           onOpenChange={setSidebarOpen}
           collapsed={sidebarCollapsed}
           onToggleCollapsed={() => setSidebarCollapsed((v) => !v)}
+          onChangePassword={() => setShowChangePassword(true)}
+          onRequestLeave={() => setShowLeaveRequest(true)}
+          onSwitchClass={() => setShowClassSwitch(true)}
         />
         <main className="flex-1 space-y-8">
           {/* Header */}
@@ -442,6 +512,69 @@ export default function TeacherDashboardPage() {
             </CardContent>
           </Card>
 
+          {/* Pending Switch Requests */}
+          {pendingSwitches.length > 0 && (
+            <Card className="shadow-md border border-yellow-200 bg-yellow-50">
+              <CardHeader>
+                <CardTitle className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                  <ArrowRightLeft className="w-5 h-5 text-yellow-600" />
+                  Pending Switch Requests ({pendingSwitches.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {pendingSwitches.map((switchReq) => (
+                    <div
+                      key={switchReq.id}
+                      className="p-4 bg-white rounded-lg border border-yellow-200"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <p className="font-medium text-gray-900">
+                            {switchReq.requester_teacher?.full_name || "Teacher"} wants to switch
+                          </p>
+                          <p className="text-sm text-gray-600 mt-1">
+                            <span className="font-medium">Their Class:</span>{" "}
+                            {switchReq.requester_class?.subject} ({switchReq.requester_class?.course} - {switchReq.requester_class?.semester})
+                          </p>
+                          <p className="text-sm text-gray-600">
+                            <span className="font-medium">Your Class:</span>{" "}
+                            {switchReq.target_class?.subject} ({switchReq.target_class?.course} - {switchReq.target_class?.semester})
+                          </p>
+                          <p className="text-sm text-gray-500 mt-1">
+                            <span className="font-medium">Date:</span> {new Date(switchReq.switch_date).toLocaleDateString()}
+                          </p>
+                          {switchReq.reason && (
+                            <p className="text-sm text-gray-500 mt-1">
+                              <span className="font-medium">Reason:</span> {switchReq.reason}
+                            </p>
+                          )}
+                        </div>
+                        <div className="flex gap-2 ml-4">
+                          <Button
+                            size="sm"
+                            onClick={() => handleSwitchAction(switchReq.id, "accept")}
+                            className="bg-green-600 hover:bg-green-700 text-white"
+                          >
+                            Accept
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleSwitchAction(switchReq.id, "reject")}
+                            className="border-red-300 text-red-700 hover:bg-red-50"
+                          >
+                            Reject
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Assigned Classes */}
           <Card className="shadow-md border border-gray-200">
             <CardHeader>
@@ -526,6 +659,26 @@ export default function TeacherDashboardPage() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Modals */}
+          <ChangePassword
+            open={showChangePassword}
+            onClose={() => setShowChangePassword(false)}
+          />
+          <LeaveRequest
+            open={showLeaveRequest}
+            onClose={() => setShowLeaveRequest(false)}
+            onRequestCreated={() => {
+              fetchLeaveRequests(userId);
+            }}
+          />
+          <ClassSwitch
+            open={showClassSwitch}
+            onClose={() => setShowClassSwitch(false)}
+            onSwitchCreated={() => {
+              fetchPendingSwitches(userId);
+            }}
+          />
         </main>
       </div>
     </div>
