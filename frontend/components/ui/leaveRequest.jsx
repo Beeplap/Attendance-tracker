@@ -10,6 +10,7 @@ import {
   CardFooter,
 } from "./card";
 import { Calendar } from "lucide-react";
+import { supabase } from "../../lib/supabaseClient";
 
 export default function LeaveRequest({ open, onClose, onRequestCreated }) {
   const [startDate, setStartDate] = useState("");
@@ -59,9 +60,16 @@ export default function LeaveRequest({ open, onClose, onRequestCreated }) {
     setLoading(true);
 
     try {
+      // Get session token from Supabase
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+
       const res = await fetch("/api/leave-requests", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          ...(token && { Authorization: `Bearer ${token}` })
+        },
         body: JSON.stringify({
           start_date: startDate,
           end_date: endDate,

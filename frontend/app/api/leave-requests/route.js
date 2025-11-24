@@ -16,7 +16,15 @@ export async function GET(req) {
       );
     }
 
-    const supabase = createClient(supabaseUrl, supabaseAnonKey);
+    // Get auth token from Authorization header
+    const authHeader = req.headers.get("authorization");
+    const token = authHeader?.replace("Bearer ", "");
+
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      },
+    });
 
     // Get current user
     const {
@@ -106,7 +114,15 @@ export async function POST(req) {
       );
     }
 
-    const supabase = createClient(supabaseUrl, supabaseAnonKey);
+    // Get auth token from Authorization header
+    const authHeader = req.headers.get("authorization");
+    const token = authHeader?.replace("Bearer ", "");
+
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      },
+    });
 
     // Get current user
     const {
@@ -223,7 +239,15 @@ export async function PATCH(req) {
       );
     }
 
-    const supabase = createClient(supabaseUrl, supabaseAnonKey);
+    // Get auth token from Authorization header
+    const authHeader = req.headers.get("authorization");
+    const token = authHeader?.replace("Bearer ", "");
+
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      },
+    });
 
     // Get current user
     const {

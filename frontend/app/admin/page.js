@@ -282,7 +282,15 @@ export default function AdminPage() {
   const fetchLeaveRequests = async () => {
     setLeaveRequestsLoading(true);
     try {
-      const res = await fetch("/api/leave-requests");
+      // Get session token from Supabase
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+
+      const res = await fetch("/api/leave-requests", {
+        headers: {
+          ...(token && { Authorization: `Bearer ${token}` })
+        }
+      });
       const data = await res.json();
       if (res.ok && data.leaveRequests) {
         setLeaveRequests(data.leaveRequests);
@@ -311,9 +319,16 @@ export default function AdminPage() {
 
   const handleLeaveRequestAction = async (id, status, adminNotes = "") => {
     try {
+      // Get session token from Supabase
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+
       const res = await fetch("/api/leave-requests", {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          ...(token && { Authorization: `Bearer ${token}` })
+        },
         body: JSON.stringify({ id, status, admin_notes: adminNotes }),
       });
 

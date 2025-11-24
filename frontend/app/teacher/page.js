@@ -156,7 +156,15 @@ export default function TeacherDashboardPage() {
 
   const fetchLeaveRequests = async (teacherId) => {
     try {
-      const res = await fetch("/api/leave-requests");
+      // Get session token from Supabase
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+
+      const res = await fetch("/api/leave-requests", {
+        headers: {
+          ...(token && { Authorization: `Bearer ${token}` })
+        }
+      });
       const data = await res.json();
       if (res.ok && data.leaveRequests) {
         setLeaveRequests(data.leaveRequests);
