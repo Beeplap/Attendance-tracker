@@ -4,13 +4,41 @@ export const runtime = "nodejs";
 
 export async function POST(req) {
   try {
-    const { email, password, full_name, role } = await req.json();
+    const { 
+      email, 
+      password, 
+      full_name, 
+      role,
+      // Student-specific fields
+      batch_year,
+      gender,
+      course,
+      semester,
+      subjects,
+      phone_number
+    } = await req.json();
 
     if (!email || !password || !full_name || !role) {
       return NextResponse.json(
         { error: "All fields are required" },
         { status: 400 }
       );
+    }
+
+    // Validate student-specific fields
+    if (role === "student") {
+      if (!batch_year || !gender || !course || !semester || !phone_number) {
+        return NextResponse.json(
+          { error: "All student fields are required (batch year, gender, course, semester, phone number)" },
+          { status: 400 }
+        );
+      }
+      if (!subjects || !Array.isArray(subjects) || subjects.length === 0) {
+        return NextResponse.json(
+          { error: "At least one subject is required" },
+          { status: 400 }
+        );
+      }
     }
     // temp debug
 
@@ -67,30 +95,42 @@ export async function POST(req) {
 
     // If creating a student, also create a record in students table
     if (role === "student") {
-      // Generate sequential roll number (STU-001, STU-002, etc.)
-      const generateRollNumber = async () => {
+      // Generate student ID in format: COURSEBATCHYEAR + sequential number
+      // Example: BCA20800001, BCA20800002
+      const generateStudentId = async () => {
         try {
-          // Get all existing students to find the highest roll number
+          const courseCode = course.toUpperCase().trim();
+          const batchYearStr = String(batch_year).trim();
+          
+          // Create prefix: COURSE + BATCHYEAR (e.g., BCA2080)
+          const prefix = `${courseCode}${batchYearStr}`;
+          
+          // Get all existing students with the same course and batch year
           const { data: existingStudents, error: fetchError } =
-            await adminClient.from("students").select("roll");
+            await adminClient
+              .from("students")
+              .select("roll, course, batch_year")
+              .eq("course", courseCode)
+              .eq("batch_year", batchYearStr);
 
           if (fetchError) {
             console.error("Error fetching existing students:", fetchError);
-            // If error, start from STU-001
-            return "STU-001";
+            // If error, start from 00001
+            return `${prefix}00001`;
           }
 
           if (!existingStudents || existingStudents.length === 0) {
-            // No students exist, start with STU-001
-            return "STU-001";
+            // No students exist with this course and batch, start with 00001
+            return `${prefix}00001`;
           }
 
-          // Find the highest roll number by extracting numbers from all roll numbers
+          // Find the highest student ID number for this course and batch
           let maxNumber = 0;
           for (const student of existingStudents) {
             const roll = student?.roll || "";
-            // Try to match STU-XXX format
-            const match = roll.match(/STU-(\d+)/i);
+            // Try to match the format: COURSEBATCHYEAR + number
+            // Extract the number part (last 5 digits)
+            const match = roll.match(new RegExp(`^${prefix}(\\d{5})$`));
             if (match) {
               const num = parseInt(match[1], 10);
               if (num > maxNumber) {
@@ -99,29 +139,61 @@ export async function POST(req) {
             }
           }
 
-          // Increment and format with leading zeros
+          // Increment and format with leading zeros (5 digits)
           const nextNumber = maxNumber + 1;
-          return `STU-${String(nextNumber).padStart(3, "0")}`;
+          return `${prefix}${String(nextNumber).padStart(5, "0")}`;
         } catch (error) {
-          console.error("Error generating roll number:", error);
-          // Default to STU-001 on any error
-          return "STU-001";
+          console.error("Error generating student ID:", error);
+          // Default format on any error
+          const courseCode = course.toUpperCase().trim();
+          const batchYearStr = String(batch_year).trim();
+          return `${courseCode}${batchYearStr}00001`;
         }
       };
 
-      const rollNumber = await generateRollNumber();
+      const studentId = await generateStudentId();
+
+      // Store subjects as JSON array or comma-separated string
+      const subjectsData = Array.isArray(subjects) 
+        ? subjects.filter(s => s && s.trim() !== "")
+        : [];
 
       const { error: studentError } = await adminClient
         .from("students")
         .insert({
           id: user.id,
           full_name,
-          roll: rollNumber,
+          roll: studentId, // Using roll field to store student ID
+          email: email,
+          phone_number: phone_number,
+          gender: gender,
+          course: course.toUpperCase().trim(),
+          batch_year: String(batch_year).trim(),
+          semester: semester,
+          subjects: subjectsData, // Store as array or JSON
+          class: course.toUpperCase().trim(), // For backward compatibility
         });
 
       if (studentError) {
         console.error("Error creating student record:", studentError);
-        // Don't fail the whole operation, just log it
+        // If it's a column error, try without the problematic columns
+        if (studentError.message?.includes("column") || studentError.message?.includes("does not exist")) {
+          // Try with minimal fields
+          const { error: minimalError } = await adminClient
+            .from("students")
+            .insert({
+              id: user.id,
+              full_name,
+              roll: studentId,
+            });
+          
+          if (minimalError) {
+            console.error("Error creating student record (minimal):", minimalError);
+            throw new Error(`Failed to create student record: ${minimalError.message}`);
+          }
+        } else {
+          throw new Error(`Failed to create student record: ${studentError.message}`);
+        }
       }
     }
 
