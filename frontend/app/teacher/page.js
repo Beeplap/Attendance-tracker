@@ -156,14 +156,15 @@ export default function TeacherDashboardPage() {
 
   const fetchLeaveRequests = async (teacherId) => {
     try {
-      // Get session token from Supabase
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       const token = session?.access_token;
 
       const res = await fetch("/api/leave-requests", {
         headers: {
-          ...(token && { Authorization: `Bearer ${token}` })
-        }
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
       });
       const data = await res.json();
       if (res.ok && data.leaveRequests) {
@@ -582,6 +583,68 @@ export default function TeacherDashboardPage() {
               </CardContent>
             </Card>
           )}
+
+          {/* Leave Requests History */}
+          <Card className="shadow-md border border-gray-200">
+            <CardHeader>
+              <CardTitle className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                <Calendar className="w-5 h-5 text-purple-600" />
+                Leave Request History
+              </CardTitle>
+              <p className="text-sm text-gray-600">
+                Track your submitted leave requests and their status
+              </p>
+            </CardHeader>
+            <CardContent>
+              {leaveRequests.length === 0 ? (
+                <div className="text-center py-10 text-gray-600">
+                  No leave requests submitted yet.
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {leaveRequests.map((request) => (
+                    <div
+                      key={request.id}
+                      className="border rounded-lg p-4 bg-white"
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                          <p className="text-sm text-gray-600">
+                            <span className="font-medium text-gray-900">
+                              {new Date(request.start_date).toLocaleDateString()}{" "}
+                              - {new Date(request.end_date).toLocaleDateString()}
+                            </span>
+                          </p>
+                          <p className="text-sm text-gray-600 mt-1">
+                            Reason: {request.reason}
+                          </p>
+                        </div>
+                        <span
+                          className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                            request.status === "approved"
+                              ? "bg-green-100 text-green-700"
+                              : request.status === "rejected"
+                              ? "bg-red-100 text-red-700"
+                              : "bg-yellow-100 text-yellow-700"
+                          }`}
+                        >
+                          {request.status?.toUpperCase()}
+                        </span>
+                      </div>
+                      {request.admin_notes && (
+                        <p className="text-xs text-gray-500 mt-2">
+                          Admin Notes: {request.admin_notes}
+                        </p>
+                      )}
+                      <p className="text-xs text-gray-400 mt-1">
+                        Submitted: {new Date(request.created_at).toLocaleString()}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
           {/* Assigned Classes */}
           <Card className="shadow-md border border-gray-200">

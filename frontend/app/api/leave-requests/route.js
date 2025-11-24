@@ -42,7 +42,7 @@ export async function GET(req) {
     // Get user role
     const { data: userData } = await supabase
       .from("users")
-      .select("role")
+      .select("role, full_name")
       .eq("id", user.id)
       .single();
 
@@ -140,7 +140,7 @@ export async function POST(req) {
     // Verify user is a teacher
     const { data: userData } = await supabase
       .from("users")
-      .select("role")
+      .select("role, full_name")
       .eq("id", user.id)
       .single();
 
@@ -195,6 +195,24 @@ export async function POST(req) {
         );
       }
       throw error;
+    }
+
+    // Notify admins once a leave request is created
+    try {
+      const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+      if (serviceRoleKey) {
+        const adminClient = createClient(supabaseUrl, serviceRoleKey);
+        await adminClient.from("notifications").insert({
+          title: "New Leave Request",
+          message: `${userData.full_name || user.email} requested leave from ${start_date} to ${end_date}.`,
+          sender_id: user.id,
+          recipient_role: "admin",
+        });
+      } else {
+        console.warn("SUPABASE_SERVICE_ROLE_KEY is missing; cannot notify admin.");
+      }
+    } catch (notifyError) {
+      console.error("Error sending leave request notification:", notifyError);
     }
 
     return NextResponse.json(
