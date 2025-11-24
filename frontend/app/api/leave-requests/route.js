@@ -3,28 +3,55 @@ import { createClient } from "@supabase/supabase-js";
 
 export const runtime = "nodejs";
 
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+function getSupabaseClientWithToken(token) {
+  if (!supabaseUrl || !supabaseAnonKey) {
+    throw new Error("Supabase configuration missing");
+  }
+
+  return createClient(supabaseUrl, supabaseAnonKey, {
+    global: {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    },
+  });
+}
+
+async function sendNotification({
+  title,
+  message,
+  senderId,
+  recipientRole = "teacher",
+  recipientUserId = null,
+}) {
+  if (!supabaseUrl || !serviceRoleKey) {
+    console.warn("Missing Supabase env vars for notifications");
+    return;
+  }
+
+  try {
+    const adminClient = createClient(supabaseUrl, serviceRoleKey);
+    await adminClient.from("notifications").insert({
+      title,
+      message,
+      sender_id: senderId,
+      recipient_role: recipientRole,
+      recipient_user_id: recipientUserId,
+    });
+  } catch (error) {
+    console.error("Error sending notification:", error);
+  }
+}
 // GET: Fetch leave requests
 export async function GET(req) {
   try {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-    if (!supabaseUrl || !supabaseAnonKey) {
-      return NextResponse.json(
-        { error: "Supabase configuration missing" },
-        { status: 500 }
-      );
-    }
-
     // Get auth token from Authorization header
     const authHeader = req.headers.get("authorization");
     const token = authHeader?.replace("Bearer ", "");
 
-    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-      global: {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      },
-    });
+    const supabase = getSupabaseClientWithToken(token);
 
     // Get current user
     const {
@@ -104,25 +131,11 @@ export async function POST(req) {
       );
     }
 
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-    if (!supabaseUrl || !supabaseAnonKey) {
-      return NextResponse.json(
-        { error: "Supabase configuration missing" },
-        { status: 500 }
-      );
-    }
-
     // Get auth token from Authorization header
     const authHeader = req.headers.get("authorization");
     const token = authHeader?.replace("Bearer ", "");
 
-    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-      global: {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      },
-    });
+    const supabase = getSupabaseClientWithToken(token);
 
     // Get current user
     const {
@@ -197,23 +210,12 @@ export async function POST(req) {
       throw error;
     }
 
-    // Notify admins once a leave request is created
-    try {
-      const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-      if (serviceRoleKey) {
-        const adminClient = createClient(supabaseUrl, serviceRoleKey);
-        await adminClient.from("notifications").insert({
-          title: "New Leave Request",
-          message: `${userData.full_name || user.email} requested leave from ${start_date} to ${end_date}.`,
-          sender_id: user.id,
-          recipient_role: "admin",
-        });
-      } else {
-        console.warn("SUPABASE_SERVICE_ROLE_KEY is missing; cannot notify admin.");
-      }
-    } catch (notifyError) {
-      console.error("Error sending leave request notification:", notifyError);
-    }
+    await sendNotification({
+      title: "New Leave Request",
+      message: `${userData.full_name || user.email} requested leave from ${start_date} to ${end_date}.`,
+      senderId: user.id,
+      recipientRole: "admin",
+    });
 
     return NextResponse.json(
       { message: "Leave request created successfully", leaveRequest: data },
@@ -247,25 +249,11 @@ export async function PATCH(req) {
       );
     }
 
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-    if (!supabaseUrl || !supabaseAnonKey) {
-      return NextResponse.json(
-        { error: "Supabase configuration missing" },
-        { status: 500 }
-      );
-    }
-
     // Get auth token from Authorization header
     const authHeader = req.headers.get("authorization");
     const token = authHeader?.replace("Bearer ", "");
 
-    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-      global: {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      },
-    });
+    const supabase = getSupabaseClientWithToken(token);
 
     // Get current user
     const {
@@ -310,6 +298,19 @@ export async function PATCH(req) {
     if (error) {
       throw error;
     }
+
+    // Notify teacher about the status change
+    await sendNotification({
+      title: status === "approved" ? "Leave Request Approved" : "Leave Request Rejected",
+      message: `Your leave request (${new Date(data.start_date).toLocaleDateString()} - ${new Date(
+        data.end_date
+      ).toLocaleDateString()}) has been ${status}${
+        admin_notes ? `. Notes: ${admin_notes}` : ""
+      }.`,
+      senderId: user.id,
+      recipientRole: "teacher",
+      recipientUserId: data.teacher_id,
+    });
 
     return NextResponse.json(
       { message: "Leave request updated successfully", leaveRequest: data },

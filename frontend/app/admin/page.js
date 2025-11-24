@@ -305,7 +305,16 @@ export default function AdminPage() {
   const fetchClassSwitches = async () => {
     setClassSwitchesLoading(true);
     try {
-      const res = await fetch("/api/class-switches");
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const token = session?.access_token;
+
+      const res = await fetch("/api/class-switches", {
+        headers: {
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
+      });
       const data = await res.json();
       if (res.ok && data.classSwitches) {
         setClassSwitches(data.classSwitches);

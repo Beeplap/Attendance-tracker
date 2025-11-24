@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
 
 export const runtime = "nodejs";
 
 export async function POST(req) {
   try {
-    // Parse request body once
-    const requestBody = await req.json();
-    const { title, message, recipient_role = "teacher", sender_id } = requestBody;
+    const { title, message, recipient_role = "teacher", recipient_user_id = null } =
+      await req.json();
 
     if (!title || !message) {
       return NextResponse.json(
@@ -23,13 +23,15 @@ export async function POST(req) {
       );
     }
 
-    // ✅ Use Supabase Admin API (service role key required)
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-    if (!supabaseUrl || !serviceRoleKey) {
+    if (!supabaseUrl || !supabaseAnonKey || !serviceRoleKey) {
       const missing = [
         !supabaseUrl ? "NEXT_PUBLIC_SUPABASE_URL" : null,
+        !supabaseAnonKey ? "NEXT_PUBLIC_SUPABASE_ANON_KEY" : null,
         !serviceRoleKey ? "SUPABASE_SERVICE_ROLE_KEY" : null,
       ].filter(Boolean);
       return NextResponse.json(
@@ -38,32 +40,47 @@ export async function POST(req) {
       );
     }
 
-    const adminClient = require("@supabase/supabase-js").createClient(
-      supabaseUrl,
-      serviceRoleKey
-    );
+    // Get auth token from Authorization header
+    const authHeader = req.headers.get("authorization");
+    const token = authHeader?.replace("Bearer ", "");
 
-    // Get the sender (admin) from the request body
-    const senderId = sender_id;
-
-    if (!senderId) {
+    if (!token) {
       return NextResponse.json(
-        { error: "Sender ID is required. Please ensure you are authenticated as an admin." },
+        { error: "Missing auth token. Please sign in again." },
+        { status: 401 }
+      );
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: {
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    });
+
+    // Get current user
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      return NextResponse.json(
+        { error: "User not authenticated" },
         { status: 401 }
       );
     }
 
     // Verify sender is admin
-    const { data: userData, error: userError } = await adminClient
+    const { data: userData, error: userFetchError } = await supabase
       .from("users")
-      .select("role")
-      .eq("id", senderId)
+      .select("role, full_name")
+      .eq("id", user.id)
       .single();
 
-    if (userError || !userData) {
+    if (userFetchError || !userData) {
       return NextResponse.json(
-        { error: "User not found" },
-        { status: 404 }
+        { error: "Unable to verify user" },
+        { status: 403 }
       );
     }
 
@@ -74,14 +91,20 @@ export async function POST(req) {
       );
     }
 
+    const adminClient = require("@supabase/supabase-js").createClient(
+      supabaseUrl,
+      serviceRoleKey
+    );
+
     // Insert notification
     const { data: notification, error: insertError } = await adminClient
       .from("notifications")
       .insert({
         title,
         message,
-        sender_id: senderId,
+        sender_id: user.id,
         recipient_role,
+        recipient_user_id,
       })
       .select()
       .single();

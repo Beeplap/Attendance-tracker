@@ -140,10 +140,18 @@ export default function TeacherDashboardPage() {
 
   const fetchPendingSwitches = async (teacherId) => {
     try {
-      const res = await fetch("/api/class-switches");
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const token = session?.access_token;
+
+      const res = await fetch("/api/class-switches", {
+        headers: {
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
+      });
       const data = await res.json();
       if (res.ok && data.classSwitches) {
-        // Filter switches where current teacher is the target and status is pending
         const pending = data.classSwitches.filter(
           (s) => s.target_teacher_id === teacherId && s.status === "pending"
         );
@@ -177,9 +185,17 @@ export default function TeacherDashboardPage() {
 
   const handleSwitchAction = async (switchId, action) => {
     try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const token = session?.access_token;
+
       const res = await fetch("/api/class-switches", {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
         body: JSON.stringify({ id: switchId, action }),
       });
 
@@ -192,9 +208,6 @@ export default function TeacherDashboardPage() {
 
       alert(data.message || `Switch ${action}ed successfully`);
       await fetchPendingSwitches(userId);
-      if (onSwitchCreated) {
-        onSwitchCreated();
-      }
     } catch (error) {
       console.error("Error handling switch action:", error);
       alert("Failed to update switch request");

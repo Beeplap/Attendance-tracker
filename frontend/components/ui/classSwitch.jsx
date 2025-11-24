@@ -130,9 +130,17 @@ export default function ClassSwitch({ open, onClose, onSwitchCreated }) {
     setLoading(true);
 
     try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const token = session?.access_token;
+
       const res = await fetch("/api/class-switches", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
         body: JSON.stringify({
           requester_class_id: requesterClassId,
           target_teacher_id: targetTeacherId,

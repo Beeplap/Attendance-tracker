@@ -3,12 +3,51 @@ import { createClient } from "@supabase/supabase-js";
 
 export const runtime = "nodejs";
 
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+function createAuthedClient(token) {
+  if (!supabaseUrl || !supabaseAnonKey) {
+    throw new Error("Supabase configuration missing");
+  }
+
+  return createClient(supabaseUrl, supabaseAnonKey, {
+    global: {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    },
+  });
+}
+
+async function sendNotification({
+  title,
+  message,
+  senderId,
+  recipientRole = "teacher",
+  recipientUserId = null,
+}) {
+  if (!supabaseUrl || !serviceRoleKey) {
+    console.warn("Missing Supabase env vars for notifications");
+    return;
+  }
+
+  try {
+    const adminClient = createClient(supabaseUrl, serviceRoleKey);
+    await adminClient.from("notifications").insert({
+      title,
+      message,
+      sender_id: senderId,
+      recipient_role: recipientRole,
+      recipient_user_id: recipientUserId,
+    });
+  } catch (error) {
+    console.error("Error sending class switch notification:", error);
+  }
+}
+
 // GET: Fetch class switches
 export async function GET(req) {
   try {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
     if (!supabaseUrl || !supabaseAnonKey) {
       return NextResponse.json(
         { error: "Supabase configuration missing" },
@@ -16,7 +55,10 @@ export async function GET(req) {
       );
     }
 
-    const supabase = createClient(supabaseUrl, supabaseAnonKey);
+    const authHeader = req.headers.get("authorization");
+    const token = authHeader?.replace("Bearer ", "");
+
+    const supabase = createAuthedClient(token);
 
     // Get current user
     const {
@@ -99,17 +141,10 @@ export async function POST(req) {
       );
     }
 
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    const authHeader = req.headers.get("authorization");
+    const token = authHeader?.replace("Bearer ", "");
 
-    if (!supabaseUrl || !supabaseAnonKey) {
-      return NextResponse.json(
-        { error: "Supabase configuration missing" },
-        { status: 500 }
-      );
-    }
-
-    const supabase = createClient(supabaseUrl, supabaseAnonKey);
+    const supabase = createAuthedClient(token);
 
     // Get current user
     const {
@@ -127,7 +162,7 @@ export async function POST(req) {
     // Verify user is a teacher
     const { data: userData } = await supabase
       .from("users")
-      .select("role")
+      .select("role, full_name")
       .eq("id", user.id)
       .single();
 
@@ -225,6 +260,17 @@ export async function POST(req) {
       throw error;
     }
 
+    // Notify target teacher
+    await sendNotification({
+      title: "New Class Switch Request",
+      message: `${userData.full_name || "A teacher"} requested to swap classes on ${new Date(
+        switch_date
+      ).toLocaleDateString()}.`,
+      senderId: user.id,
+      recipientRole: "teacher",
+      recipientUserId: target_teacher_id,
+    });
+
     return NextResponse.json(
       { message: "Switch request created successfully", classSwitch: data },
       { status: 200 }
@@ -257,28 +303,22 @@ export async function PATCH(req) {
       );
     }
 
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-    if (!supabaseUrl || !serviceRoleKey) {
+    if (!supabaseUrl || !supabaseAnonKey || !serviceRoleKey) {
       return NextResponse.json(
-        { error: "Server configuration missing" },
+        { error: "Supabase configuration missing" },
         { status: 500 }
       );
     }
 
-    const adminClient = createClient(supabaseUrl, serviceRoleKey);
+    const authHeader = req.headers.get("authorization");
+    const token = authHeader?.replace("Bearer ", "");
 
-    // Get current user
-    const supabaseAnon = createClient(
-      supabaseUrl,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-    );
+    const supabase = createAuthedClient(token);
 
     const {
       data: { user },
       error: userError,
-    } = await supabaseAnon.auth.getUser();
+    } = await supabase.auth.getUser();
 
     if (userError || !user) {
       return NextResponse.json(
@@ -288,6 +328,8 @@ export async function PATCH(req) {
     }
 
     // Get the switch request
+    const adminClient = createClient(supabaseUrl, serviceRoleKey);
+
     const { data: switchRequest, error: fetchError } = await adminClient
       .from("class_switches")
       .select("*")
@@ -331,38 +373,39 @@ export async function PATCH(req) {
       // For now, we'll just mark it as completed and notify admin
 
       // Notify admin (create notification)
-      const { data: adminUsers } = await adminClient
+      const { data: requesterTeacher } = await adminClient
         .from("users")
-        .select("id")
-        .eq("role", "admin")
-        .limit(1);
+        .select("full_name")
+        .eq("id", switchRequest.requester_teacher_id)
+        .single();
 
-      if (adminUsers && adminUsers.length > 0) {
-        const adminId = adminUsers[0].id;
-        
-        // Get teacher names
-        const { data: requesterTeacher } = await adminClient
-          .from("users")
-          .select("full_name")
-          .eq("id", switchRequest.requester_teacher_id)
-          .single();
+      const { data: targetTeacher } = await adminClient
+        .from("users")
+        .select("full_name")
+        .eq("id", switchRequest.target_teacher_id)
+        .single();
 
-        const { data: targetTeacher } = await adminClient
-          .from("users")
-          .select("full_name")
-          .eq("id", switchRequest.target_teacher_id)
-          .single();
+      // Notify requester teacher
+      await sendNotification({
+        title: "Class Switch Accepted",
+        message: `${targetTeacher?.full_name || "The other teacher"} accepted your class switch request for ${new Date(
+          updatedSwitch.switch_date
+        ).toLocaleDateString()}.`,
+        senderId: user.id,
+        recipientRole: "teacher",
+        recipientUserId: switchRequest.requester_teacher_id,
+      });
 
-        // Create notification for admin
-        await adminClient.from("notifications").insert({
-          title: "Class Switch Completed",
-          message: `${requesterTeacher?.full_name || "Teacher"} and ${targetTeacher?.full_name || "Teacher"} have switched their classes on ${updatedSwitch.switch_date}.`,
-          sender_id: adminId,
-          recipient_role: "admin",
-        }).catch(err => console.error("Error creating notification:", err));
-      }
+      // Notify admin
+      await sendNotification({
+        title: "Class Switch Completed",
+        message: `${requesterTeacher?.full_name || "Teacher"} and ${
+          targetTeacher?.full_name || "Teacher"
+        } have switched their classes on ${new Date(updatedSwitch.switch_date).toLocaleDateString()}.`,
+        senderId: user.id,
+        recipientRole: "admin",
+      });
 
-      // Mark as completed and notify admin
       await adminClient
         .from("class_switches")
         .update({
@@ -390,6 +433,14 @@ export async function PATCH(req) {
       if (updateError) {
         throw updateError;
       }
+
+      await sendNotification({
+        title: "Class Switch Rejected",
+        message: `Your class switch request for ${new Date(switchRequest.switch_date).toLocaleDateString()} was rejected.`,
+        senderId: user.id,
+        recipientRole: "teacher",
+        recipientUserId: switchRequest.requester_teacher_id,
+      });
 
       return NextResponse.json(
         { message: "Switch rejected", classSwitch: updatedSwitch },

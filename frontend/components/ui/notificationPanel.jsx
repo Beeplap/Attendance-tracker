@@ -38,17 +38,22 @@ export default function NotificationPanel({ open, onClose, onNotificationSent })
         return;
       }
 
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const token = session?.access_token;
+
       const response = await fetch("/api/send-notification", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+          ...(token && { Authorization: `Bearer ${token}` }),
         },
         body: JSON.stringify({
           title: title.trim(),
           message: message.trim(),
           recipient_role: recipientRole,
-          sender_id: user.id,
+          recipient_user_id: null,
         }),
       });
 
