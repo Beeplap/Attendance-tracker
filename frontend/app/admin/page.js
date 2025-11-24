@@ -123,7 +123,7 @@ export default function AdminPage() {
   }, [router]);
 
   const [adminUserId, setAdminUserId] = useState("");
-  
+
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       if (data?.user) {
@@ -162,7 +162,7 @@ export default function AdminPage() {
   const toggleTeacherStatus = async (teacherId, currentStatus) => {
     const newStatus = !currentStatus;
     const action = newStatus ? "activate" : "deactivate";
-    
+
     if (!confirm(`Are you sure you want to ${action} this teacher account?`)) {
       return;
     }
@@ -181,13 +181,25 @@ export default function AdminPage() {
       if (!response.ok) {
         // Check if this is a migration error
         if (result.needsMigration && result.sql) {
-          const fullMessage = `${result.error}\n\n${result.instructions || "Please run this SQL in your Supabase SQL Editor:"}\n\n${result.sql}\n\nWould you like to copy this SQL to your clipboard?`;
+          const fullMessage = `${result.error}\n\n${
+            result.instructions ||
+            "Please run this SQL in your Supabase SQL Editor:"
+          }\n\n${
+            result.sql
+          }\n\nWould you like to copy this SQL to your clipboard?`;
           if (confirm(fullMessage)) {
-            navigator.clipboard.writeText(result.sql).then(() => {
-              alert("SQL copied to clipboard! Please:\n1. Go to Supabase Dashboard > SQL Editor\n2. Paste and run the SQL\n3. Try again.");
-            }).catch(() => {
-              alert(`Please run this SQL in your Supabase SQL Editor:\n\n${result.sql}`);
-            });
+            navigator.clipboard
+              .writeText(result.sql)
+              .then(() => {
+                alert(
+                  "SQL copied to clipboard! Please:\n1. Go to Supabase Dashboard > SQL Editor\n2. Paste and run the SQL\n3. Try again."
+                );
+              })
+              .catch(() => {
+                alert(
+                  `Please run this SQL in your Supabase SQL Editor:\n\n${result.sql}`
+                );
+              });
           }
         } else {
           alert(`Error: ${result.error || "Failed to update teacher status"}`);
@@ -213,7 +225,11 @@ export default function AdminPage() {
         )
       );
 
-      alert(`Teacher account ${newStatus ? "activated" : "deactivated"} successfully`);
+      alert(
+        `Teacher account ${
+          newStatus ? "activated" : "deactivated"
+        } successfully`
+      );
     } catch (error) {
       console.error("Error toggling teacher status:", error);
       alert(`Error: ${error.message || "Failed to update teacher status"}`);
@@ -569,7 +585,7 @@ export default function AdminPage() {
                         Welcome back, Admin! 👋
                       </h2>
                       <p className="text-gray-600">
-                        Here's what's happening with your system today
+                        Here&apos;s what&apos;s happening with your system today
                       </p>
                     </div>
                     <div className="hidden md:flex items-center gap-2 px-4 py-2 bg-white rounded-lg shadow-sm">
@@ -785,11 +801,15 @@ export default function AdminPage() {
                               </span>
                             </td>
                             <td className="px-4 py-3 text-sm text-gray-600">
-                              {new Date(teacher.created_at).toLocaleDateString()}
+                              {new Date(
+                                teacher.created_at
+                              ).toLocaleDateString()}
                             </td>
                             <td className="px-4 py-3">
                               <Button
-                                onClick={() => toggleTeacherStatus(teacher.id, isActive)}
+                                onClick={() =>
+                                  toggleTeacherStatus(teacher.id, isActive)
+                                }
                                 variant={isActive ? "outline" : "default"}
                                 size="sm"
                                 className={
@@ -823,87 +843,6 @@ export default function AdminPage() {
 
           {currentView === "statistics/users" && (
             <>
-              <Card className="shadow-md border border-gray-200">
-                <CardHeader>
-                  <CardTitle className="text-lg font-semibold text-gray-800">
-                    User Statistics
-                  </CardTitle>
-                  <p className="text-sm text-gray-600">
-                    Overview of all users in the system
-                  </p>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="p-4 bg-blue-50 rounded-lg">
-                      <p className="text-sm font-medium text-blue-700">
-                        Total Users
-                      </p>
-                      <p className="text-3xl font-bold text-blue-900 mt-2">
-                        {profiles.length}
-                      </p>
-                    </div>
-                    <div className="p-4 bg-purple-50 rounded-lg">
-                      <p className="text-sm font-medium text-purple-700">
-                        Active Teachers
-                      </p>
-                      <p className="text-3xl font-bold text-purple-900 mt-2">
-                        {profiles.filter((p) => p.role === "teacher").length}
-                      </p>
-                    </div>
-                    <div className="p-4 bg-green-50 rounded-lg">
-                      <p className="text-sm font-medium text-green-700">
-                        Active Students
-                      </p>
-                      <p className="text-3xl font-bold text-green-900 mt-2">
-                        {profiles.filter((p) => p.role === "student").length}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="mt-6">
-                    <h3 className="text-md font-semibold text-gray-800 mb-4">
-                      Users by Role
-                    </h3>
-                    <div className="space-y-2">
-                      {["admin", "teacher", "student"].map((role) => {
-                        const count = profiles.filter(
-                          (p) => p.role === role
-                        ).length;
-                        const percentage =
-                          profiles.length > 0
-                            ? ((count / profiles.length) * 100).toFixed(1)
-                            : 0;
-                        return (
-                          <div key={role} className="flex items-center gap-4">
-                            <div className="w-24 text-sm font-medium text-gray-700 capitalize">
-                              {role}
-                            </div>
-                            <div className="flex-1 bg-gray-200 rounded-full h-6 relative">
-                              <div
-                                className={`h-6 rounded-full flex items-center justify-end pr-2 ${
-                                  role === "admin"
-                                    ? "bg-red-500"
-                                    : role === "teacher"
-                                    ? "bg-purple-500"
-                                    : "bg-green-500"
-                                }`}
-                                style={{ width: `${percentage}%` }}
-                              >
-                                <span className="text-xs font-medium text-white">
-                                  {count}
-                                </span>
-                              </div>
-                            </div>
-                            <div className="w-16 text-sm text-gray-600 text-right">
-                              {percentage}%
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
               {/* Search + Filter */}
               <div className="flex flex-col sm:flex-row gap-3">
                 <div className="flex-1">
