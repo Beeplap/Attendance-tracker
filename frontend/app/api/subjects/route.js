@@ -1,26 +1,36 @@
-import { createServerClient } from "@supabase/ssr";
-import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
 
-// Create Supabase SSR client
-function createClient() {
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-    {
-      cookies: {
-        get: (name) => cookies().get(name)?.value ?? null,
-        set: (name, value, options) => cookies().set(name, value, options),
-        remove: (name, options) => cookies().delete(name, options),
-      },
-    }
-  );
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+function getSupabaseClient(token) {
+  if (!supabaseUrl || !supabaseAnonKey) {
+    throw new Error("Supabase configuration missing");
+  }
+
+  return createClient(supabaseUrl, supabaseAnonKey, {
+    global: {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    },
+  });
 }
 
 // 🟢 POST: Create a subject/course
 export async function POST(request) {
-  const supabase = createClient();
   try {
+    const authHeader = request.headers.get("authorization");
+    const token = authHeader?.replace("Bearer ", "");
+
+    if (!token) {
+      return NextResponse.json(
+        { error: "Missing auth token. Please sign in again." },
+        { status: 401 }
+      );
+    }
+
+    const supabase = getSupabaseClient(token);
+
     const { subject_name, course_code, semester, description, credits } =
       await request.json();
 
@@ -98,8 +108,8 @@ export async function POST(request) {
 
 // 🔵 GET: Fetch subjects
 export async function GET(request) {
-  const supabase = createClient();
   try {
+    const supabase = getSupabaseClient(null);
     const { searchParams } = new URL(request.url);
     const semester = searchParams.get("semester");
 
@@ -128,8 +138,19 @@ export async function GET(request) {
 
 // 🔴 DELETE: Remove a subject
 export async function DELETE(request) {
-  const supabase = createClient();
   try {
+    const authHeader = request.headers.get("authorization");
+    const token = authHeader?.replace("Bearer ", "");
+
+    if (!token) {
+      return NextResponse.json(
+        { error: "Missing auth token. Please sign in again." },
+        { status: 401 }
+      );
+    }
+
+    const supabase = getSupabaseClient(token);
+
     const { id } = await request.json();
 
     if (!id) {
