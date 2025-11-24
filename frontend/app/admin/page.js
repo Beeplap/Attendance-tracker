@@ -1020,6 +1020,214 @@ export default function AdminPage() {
             </Card>
           )}
 
+          {/* Subjects View */}
+          {currentView === "subjects" && (
+            <div className="space-y-6">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">
+                    Subjects & Courses
+                  </h2>
+                  <p className="text-gray-600 mt-1">
+                    Manage subjects and courses with semester information
+                  </p>
+                </div>
+                <Button
+                  onClick={() => setShowAddSubject(true)}
+                  className="bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-700 hover:to-violet-700 text-white shadow-md hover:shadow-lg"
+                >
+                  <BookOpen className="w-4 h-4 mr-2" />
+                  Add Subject
+                </Button>
+              </div>
+
+              {/* Search + Filter */}
+              <div className="flex flex-col sm:flex-row gap-3">
+                <div className="flex-1">
+                  <input
+                    type="text"
+                    value={subjectSearch}
+                    onChange={(e) => setSubjectSearch(e.target.value)}
+                    placeholder="Search by subject name or course code…"
+                    className="w-full border border-gray-300 rounded-md px-3 h-10 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  />
+                </div>
+                <div className="w-full sm:w-48">
+                  <select
+                    value={subjectSemesterFilter}
+                    onChange={(e) => setSubjectSemesterFilter(e.target.value)}
+                    className="w-full border border-gray-300 rounded-md px-3 h-10 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  >
+                    <option value="all">All Semesters</option>
+                    {[1, 2, 3, 4, 5, 6, 7, 8].map((sem) => (
+                      <option key={sem} value={sem}>
+                        Semester {sem}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Subjects Table */}
+              {subjectsLoading ? (
+                <div className="text-center py-12">
+                  <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+                  <p className="mt-4 text-gray-600">Loading subjects...</p>
+                </div>
+              ) : (
+                <Card className="shadow-md border border-gray-200">
+                  <CardContent className="p-0">
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead className="border-b border-gray-200 bg-gray-50">
+                          <tr>
+                            <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase">
+                              Course Code
+                            </th>
+                            <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase">
+                              Subject Name
+                            </th>
+                            <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase">
+                              Semester
+                            </th>
+                            <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase">
+                              Credits
+                            </th>
+                            <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase">
+                              Description
+                            </th>
+                            <th className="py-3 px-4 text-right text-xs font-medium text-gray-500 uppercase">
+                              Actions
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {subjects
+                            .filter((subject) => {
+                              const matchesSearch =
+                                !subjectSearch ||
+                                subject.subject_name
+                                  ?.toLowerCase()
+                                  .includes(subjectSearch.toLowerCase()) ||
+                                subject.course_code
+                                  ?.toLowerCase()
+                                  .includes(subjectSearch.toLowerCase());
+                              const matchesSemester =
+                                subjectSemesterFilter === "all" ||
+                                subject.semester ===
+                                  parseInt(subjectSemesterFilter);
+                              return matchesSearch && matchesSemester;
+                            })
+                            .map((subject, idx) => (
+                              <tr
+                                key={subject.id}
+                                className={`border-b border-gray-100 last:border-0 ${
+                                  idx % 2 === 0 ? "bg-gray-50" : "bg-white"
+                                }`}
+                              >
+                                <td className="py-3 px-4">
+                                  <span className="font-medium text-gray-900">
+                                    {subject.course_code}
+                                  </span>
+                                </td>
+                                <td className="py-3 px-4 text-gray-900">
+                                  {subject.subject_name}
+                                </td>
+                                <td className="py-3 px-4">
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium text-white bg-purple-500">
+                                    Semester {subject.semester}
+                                  </span>
+                                </td>
+                                <td className="py-3 px-4 text-gray-700">
+                                  {subject.credits} Credit
+                                  {subject.credits > 1 ? "s" : ""}
+                                </td>
+                                <td className="py-3 px-4 text-gray-600 text-sm">
+                                  {subject.description || (
+                                    <span className="text-gray-400 italic">
+                                      No description
+                                    </span>
+                                  )}
+                                </td>
+                                <td className="py-3 px-4">
+                                  <div className="flex justify-end">
+                                    <Menu
+                                      as="div"
+                                      className="relative inline-block text-left"
+                                    >
+                                      <Menu.Button
+                                        as={Button}
+                                        variant="ghost"
+                                        size="sm"
+                                        className="p-1.5 sm:p-2"
+                                      >
+                                        <MoreHorizontal className="w-4 h-4" />
+                                      </Menu.Button>
+                                      <Transition
+                                        enter="transition ease-out duration-100"
+                                        enterFrom="transform opacity-0 scale-95"
+                                        enterTo="transform opacity-100 scale-100"
+                                        leave="transition ease-in duration-75"
+                                        leaveFrom="transform opacity-100 scale-100"
+                                        leaveTo="transform opacity-0 scale-95"
+                                      >
+                                        <Menu.Items className="absolute right-0 mt-2 w-40 origin-top-right rounded-md border border-gray-200 bg-white shadow-lg focus:outline-none z-50">
+                                          <div className="py-1">
+                                            <Menu.Item>
+                                              {({ active }) => (
+                                                <button
+                                                  onClick={() =>
+                                                    deleteSubject(subject.id)
+                                                  }
+                                                  className={`${
+                                                    active ? "bg-gray-100" : ""
+                                                  } flex w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-gray-50`}
+                                                >
+                                                  Delete
+                                                </button>
+                                              )}
+                                            </Menu.Item>
+                                          </div>
+                                        </Menu.Items>
+                                      </Transition>
+                                    </Menu>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                          {subjects.filter((subject) => {
+                            const matchesSearch =
+                              !subjectSearch ||
+                              subject.subject_name
+                                ?.toLowerCase()
+                                .includes(subjectSearch.toLowerCase()) ||
+                              subject.course_code
+                                ?.toLowerCase()
+                                .includes(subjectSearch.toLowerCase());
+                            const matchesSemester =
+                              subjectSemesterFilter === "all" ||
+                              subject.semester ===
+                                parseInt(subjectSemesterFilter);
+                            return matchesSearch && matchesSemester;
+                          }).length === 0 && (
+                            <tr>
+                              <td
+                                className="py-4 text-center text-gray-600"
+                                colSpan={6}
+                              >
+                                No subjects found
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          )}
+
           {/* Students View */}
           {currentView === "students" && (
             <>
@@ -1192,6 +1400,14 @@ export default function AdminPage() {
             onCreated={() => {
               fetchProfiles();
               fetchTeacherStats();
+            }}
+          />
+
+          <AddSubject
+            open={showAddSubject}
+            onClose={() => setShowAddSubject(false)}
+            onCreated={() => {
+              fetchSubjects();
             }}
           />
 
