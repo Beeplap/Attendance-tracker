@@ -123,9 +123,11 @@ export default function TeacherDashboardPage() {
           .order("created_at", { ascending: true });
 
         setAssignedClasses(classes || []);
-        await fetchAttendanceStats(authUser.id, classes || []);
-        await fetchPendingSwitches(authUser.id);
-        await fetchLeaveRequests(authUser.id);
+        await Promise.all([
+          fetchAttendanceStats(authUser.id, classes || []),
+          fetchPendingSwitches(authUser.id),
+          fetchLeaveRequests(authUser.id),
+        ]);
       } catch (error) {
         console.error("Error fetching user:", error);
         router.replace("/login");

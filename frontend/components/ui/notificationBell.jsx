@@ -13,14 +13,13 @@ export default function NotificationBell({ userRole, userId }) {
   const [unreadCount, setUnreadCount] = useState(0);
   const dropdownRef = useRef(null);
 
-  useEffect(() => {
+useEffect(() => {
     if (!userRole) return;
-    
+
     fetchNotifications();
-    
-    // Set up real-time subscription
+
     const channel = supabase
-      .channel(`notifications-${userRole}`)
+      .channel(`notifications-${userRole}-${userId || "all"}`)
       .on(
         "postgres_changes",
         {
@@ -32,8 +31,9 @@ export default function NotificationBell({ userRole, userId }) {
           // Check if notification is for this user's role
           const newNotification = payload.new;
           if (
+            newNotification.recipient_role === "all" ||
             newNotification.recipient_role === userRole ||
-            newNotification.recipient_role === "all"
+            (userId && newNotification.recipient_user_id === userId)
           ) {
             setNotifications((prev) => [newNotification, ...prev]);
             setUnreadCount((prev) => prev + 1);
@@ -55,17 +55,27 @@ export default function NotificationBell({ userRole, userId }) {
       supabase.removeChannel(channel);
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [userRole]);
+  }, [userRole, userId]);
 
   const fetchNotifications = async () => {
     if (!userRole) return;
-    
+
     try {
       setLoading(true);
+
+      const filters = [
+        `recipient_role.eq.${userRole}`,
+        "recipient_role.eq.all",
+      ];
+
+      if (userId) {
+        filters.push(`recipient_user_id.eq.${userId}`);
+      }
+
       const { data, error } = await supabase
         .from("notifications")
         .select("*")
-        .or(`recipient_role.eq.${userRole},recipient_role.eq.all`)
+        .or(filters.join(","))
         .order("created_at", { ascending: false })
         .limit(20);
 
@@ -110,6 +120,42 @@ export default function NotificationBell({ userRole, userId }) {
       hour: "2-digit",
       minute: "2-digit",
     });
+  };
+
+  const handleDeleteNotification = async (notificationId) => {
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const token = session?.access_token;
+
+      if (!token) {
+        alert("Please sign in again to delete notifications.");
+        return;
+      }
+
+      const res = await fetch(`/api/notifications/${notificationId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const result = await res.json();
+
+      if (!res.ok) {
+        alert(result.error || "Failed to delete notification");
+        return;
+      }
+
+      setNotifications((prev) =>
+        prev.filter((notification) => notification.id !== notificationId)
+      );
+      setUnreadCount((prev) => Math.max(0, prev - 1));
+    } catch (error) {
+      console.error("Error deleting notification:", error);
+      alert("Failed to delete notification");
+    }
   };
 
   return (
@@ -180,7 +226,7 @@ export default function NotificationBell({ userRole, userId }) {
                   {notifications.map((notification) => (
                     <div
                       key={notification.id}
-                      className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer"
+                      className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                     >
                       <div className="flex items-start gap-3">
                         <div className="flex-1">
@@ -205,6 +251,16 @@ export default function NotificationBell({ userRole, userId }) {
                             </span>
                           </div>
                         </div>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteNotification(notification.id);
+                          }}
+                          className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                          aria-label="Delete notification"
+                        >
+                          <X className="w-4 h-4 text-gray-500 dark:text-gray-300" />
+                        </button>
                       </div>
                     </div>
                   ))}
