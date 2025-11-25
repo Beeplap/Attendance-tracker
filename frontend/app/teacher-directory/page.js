@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "../../components/ui/button";
 import { supabase } from "../../lib/supabaseClient";
 
-export default function TeachersPage() {
+export default function TeacherDirectoryPage() {
   const router = useRouter();
   const [teachers, setTeachers] = useState([]);
   const [loading, setLoading] = useState(true);

@@ -95,8 +95,8 @@ export default function Sidebar({
 
         {/* Dashboard */}
         <a
-          href="/teacher"
-          className={navItemClass(pathname === "/teacher")}
+          href="/teacher-dashboard"
+          className={navItemClass(pathname === "/teacher-dashboard")}
         >
           <Home className="w-5 h-5 shrink-0" />
           {!collapsed && <span className="flex-1 text-left">Dashboard</span>}
@@ -113,8 +113,8 @@ export default function Sidebar({
 
         {/* Students */}
         <a
-          href="/students"
-          className={navItemClass(pathname === "/students")}
+          href="/student-directory"
+          className={navItemClass(pathname === "/student-directory")}
         >
           <Users className="w-5 h-5 shrink-0" />
           {!collapsed && <span className="flex-1 text-left">Students</span>}

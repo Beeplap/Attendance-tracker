@@ -44,7 +44,7 @@ export default function StudentDashboardPage() {
             if (userProfile?.role === "admin") {
               router.replace("/admin");
             } else if (userProfile?.role === "teacher") {
-              router.replace("/teacher");
+              router.replace("/teacher-dashboard");
             } else {
               router.replace("/dashboard");
             }
@@ -95,7 +95,7 @@ export default function StudentDashboardPage() {
         <h2 className="text-2xl font-bold mb-8">Student Portal</h2>
         <nav className="space-y-2">
           <Link
-            href="/student"
+            href="/student-dashboard"
             className="block px-4 py-2 bg-gray-800 rounded-md hover:bg-gray-700 transition-colors"
           >
             Dashboard

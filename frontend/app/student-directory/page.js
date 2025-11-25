@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "../../components/ui/button";
 import { supabase } from "../../lib/supabaseClient";
 
-export default function StudentsPage() {
+export default function StudentDirectoryPage() {
   const router = useRouter();
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
