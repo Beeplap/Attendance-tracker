@@ -84,6 +84,7 @@ export default function AdminPage() {
   const [studentSearch, setStudentSearch] = useState("");
   const [studentClassFilter, setStudentClassFilter] = useState("");
   const [studentSectionFilter, setStudentSectionFilter] = useState("");
+  const [studentCount, setStudentCount] = useState(0);
 
   // Subjects view state
   const [subjects, setSubjects] = useState([]);
@@ -135,6 +136,7 @@ export default function AdminPage() {
       setLoading(false);
       fetchProfiles();
       fetchTeacherStats();
+      fetchStudentCount();
     });
   }, [router]);
 
@@ -281,6 +283,18 @@ export default function AdminPage() {
       console.error("Error fetching students:", error);
     } finally {
       setStudentsLoading(false);
+    }
+  };
+
+  const fetchStudentCount = async () => {
+    try {
+      const { count, error } = await supabase
+        .from("students")
+        .select("*", { count: "exact", head: true });
+      if (error) throw error;
+      setStudentCount(count || 0);
+    } catch (error) {
+      console.error("Error fetching student count:", error);
     }
   };
 
@@ -587,6 +601,7 @@ export default function AdminPage() {
       } else if (currentView === "students") {
         fetchStudents();
       }
+      fetchStudentCount();
 
       alert("User deleted successfully from all tables");
     } catch (error) {
@@ -790,7 +805,7 @@ export default function AdminPage() {
                           Students
                         </p>
                         <p className="text-3xl font-bold text-gray-900 mt-2">
-                          {profiles.filter((p) => p.role === "student").length}
+                          {studentCount}
                         </p>
                         <p className="text-xs text-gray-500 mt-1">
                           Enrolled students
@@ -853,7 +868,7 @@ export default function AdminPage() {
                     <div className="text-center p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-lg">
                       <School className="w-8 h-8 text-green-600 mx-auto mb-2" />
                       <p className="text-2xl font-bold text-green-900">
-                        {profiles.filter((p) => p.role === "student").length}
+                        {studentCount}
                       </p>
                       <p className="text-sm text-green-700 mt-1">
                         Total Students
@@ -1672,6 +1687,7 @@ export default function AdminPage() {
             onUserAdded={() => {
               fetchProfiles();
               fetchTeacherStats();
+              fetchStudentCount();
               if (currentView === "teachers") fetchTeachers();
               if (currentView === "students") fetchStudents();
             }}
