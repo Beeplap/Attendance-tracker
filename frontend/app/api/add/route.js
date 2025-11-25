@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
 export async function POST(req) {
   try {
     const { 
@@ -27,6 +29,9 @@ export async function POST(req) {
 
     // Validate student-specific fields
     if (role === "student") {
+      const courseCode = course.toUpperCase().trim();
+      const batchYearStr = String(batch_year).trim();
+
       if (!batch_year || !gender || !course || !semester || !phone_number) {
         return NextResponse.json(
           { error: "All student fields are required (batch year, gender, course, semester, phone number)" },
@@ -99,86 +104,76 @@ export async function POST(req) {
       // Example: BCA20800001, BCA20800002
       const generateStudentId = async () => {
         try {
-          const courseCode = course.toUpperCase().trim();
-          const batchYearStr = String(batch_year).trim();
-          
-          // Create prefix: COURSE + BATCHYEAR (e.g., BCA2080)
           const prefix = `${courseCode}${batchYearStr}`;
-          
-          // Get all existing students with the same course and batch year
-          const { data: existingStudents, error: fetchError } =
-            await adminClient
-              .from("students")
-              .select("roll, course, batch_year")
-              .eq("course", courseCode)
-              .eq("batch_year", batchYearStr);
+
+          const { data: existingStudents, error: fetchError } = await adminClient
+            .from("students")
+            .select("roll")
+            .like("roll", `${prefix}%`)
+            .order("roll", { ascending: false })
+            .limit(1);
 
           if (fetchError) {
             console.error("Error fetching existing students:", fetchError);
-            // If error, start from 00001
             return `${prefix}00001`;
           }
 
           if (!existingStudents || existingStudents.length === 0) {
-            // No students exist with this course and batch, start with 00001
             return `${prefix}00001`;
           }
 
-          // Find the highest student ID number for this course and batch
-          let maxNumber = 0;
-          for (const student of existingStudents) {
-            const roll = student?.roll || "";
-            // Try to match the format: COURSEBATCHYEAR + number
-            // Extract the number part (last 5 digits)
-            const match = roll.match(new RegExp(`^${prefix}(\\d{5})$`));
-            if (match) {
-              const num = parseInt(match[1], 10);
-              if (num > maxNumber) {
-                maxNumber = num;
-              }
-            }
-          }
+          const latestRoll = existingStudents[0]?.roll || "";
+          const numericPart = latestRoll.replace(prefix, "");
+          const lastNumber = parseInt(numericPart, 10);
+          const nextNumber = Number.isFinite(lastNumber) ? lastNumber + 1 : 1;
 
-          // Increment and format with leading zeros (5 digits)
-          const nextNumber = maxNumber + 1;
           return `${prefix}${String(nextNumber).padStart(5, "0")}`;
         } catch (error) {
           console.error("Error generating student ID:", error);
-          // Default format on any error
-          const courseCode = course.toUpperCase().trim();
-          const batchYearStr = String(batch_year).trim();
           return `${courseCode}${batchYearStr}00001`;
         }
       };
 
-      const studentId = await generateStudentId();
-
-      // Store subjects as JSON array or comma-separated string
-      const subjectsData = Array.isArray(subjects) 
-        ? subjects.filter(s => s && s.trim() !== "")
+      const subjectsData = Array.isArray(subjects)
+        ? subjects.filter((s) => s && s.trim() !== "")
         : [];
 
-      const { error: studentError } = await adminClient
-        .from("students")
-        .insert({
-          id: user.id,
-          full_name,
-          roll: studentId, // Using roll field to store student ID
-          email: email,
-          phone_number: phone_number,
-          gender: gender,
-          course: course.toUpperCase().trim(),
-          batch_year: String(batch_year).trim(),
-          semester: semester,
-          subjects: subjectsData, // Store as array or JSON
-          class: course.toUpperCase().trim(), // For backward compatibility
-        });
+      const baseStudentPayload = {
+        id: user.id,
+        full_name,
+        email,
+        phone_number,
+        gender,
+        course: courseCode,
+        batch_year: batchYearStr,
+        semester,
+        subjects: subjectsData,
+        class: courseCode,
+      };
 
-      if (studentError) {
+      const MAX_STUDENT_INSERT_ATTEMPTS = 5;
+      let studentInserted = false;
+
+      for (let attempt = 0; attempt < MAX_STUDENT_INSERT_ATTEMPTS; attempt++) {
+        const studentId = await generateStudentId();
+
+        const insertPayload = {
+          ...baseStudentPayload,
+          roll: studentId,
+        };
+
+        const { error: studentError } = await adminClient
+          .from("students")
+          .insert(insertPayload);
+
+        if (!studentError) {
+          studentInserted = true;
+          break;
+        }
+
         console.error("Error creating student record:", studentError);
-        // If it's a column error, try without the problematic columns
+
         if (studentError.message?.includes("column") || studentError.message?.includes("does not exist")) {
-          // Try with minimal fields
           const { error: minimalError } = await adminClient
             .from("students")
             .insert({
@@ -186,14 +181,33 @@ export async function POST(req) {
               full_name,
               roll: studentId,
             });
-          
-          if (minimalError) {
-            console.error("Error creating student record (minimal):", minimalError);
-            throw new Error(`Failed to create student record: ${minimalError.message}`);
+
+          if (!minimalError) {
+            studentInserted = true;
+            break;
           }
-        } else {
-          throw new Error(`Failed to create student record: ${studentError.message}`);
+
+          if (minimalError.message?.includes("students_roll_key")) {
+            await sleep(100);
+            continue;
+          }
+
+          console.error("Error creating student record (minimal):", minimalError);
+          throw new Error(`Failed to create student record: ${minimalError.message}`);
         }
+
+        if (studentError.message?.includes("students_roll_key")) {
+          await sleep(100);
+          continue;
+        }
+
+        throw new Error(`Failed to create student record: ${studentError.message}`);
+      }
+
+      if (!studentInserted) {
+        throw new Error(
+          "Failed to create student record due to repeated roll number conflicts. Please try again."
+        );
       }
     }
 
