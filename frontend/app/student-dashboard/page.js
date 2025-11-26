@@ -309,7 +309,7 @@ export default function StudentDashboardPage() {
                     <div>
                       <p className="text-sm text-gray-600">Email</p>
                       <p className="text-lg font-medium text-gray-900">
-                        {studentData.email || profile?.email || user?.email}
+                        {profile?.email || user?.email || "N/A"}
                       </p>
                     </div>
                     <div>
@@ -334,6 +334,47 @@ export default function StudentDashboardPage() {
                       <p className="text-sm text-gray-600">Guardian</p>
                       <p className="text-lg font-medium text-gray-900">
                         {studentData.guardian_name || "N/A"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Phone Number</p>
+                      <p className="text-lg font-medium text-gray-900">
+                        {studentData.phone_number || "N/A"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Guardian Contact</p>
+                      <p className="text-lg font-medium text-gray-900">
+                        {studentData.guardian_phone ||
+                          studentData.guardian_contact ||
+                          studentData.emergency_contact ||
+                          "N/A"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Address</p>
+                      <p className="text-lg font-medium text-gray-900">
+                        {studentData.address || "N/A"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Date of Birth</p>
+                      <p className="text-lg font-medium text-gray-900">
+                        {studentData.date_of_birth || studentData.dob
+                          ? new Date(
+                              studentData.date_of_birth || studentData.dob
+                            ).toLocaleDateString()
+                          : "N/A"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Admission Date</p>
+                      <p className="text-lg font-medium text-gray-900">
+                        {studentData.admission_date
+                          ? new Date(
+                              studentData.admission_date
+                            ).toLocaleDateString()
+                          : "N/A"}
                       </p>
                     </div>
                   </div>
