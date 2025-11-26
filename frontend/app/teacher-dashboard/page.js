@@ -9,7 +9,6 @@ import {
   CardContent,
 } from "../../components/ui/card";
 import { supabase } from "../../lib/supabaseClient";
-import ConfirmDialog from "../../components/ui/ConfirmDialog";
 import NotificationBell from "../../components/ui/notificationBell";
 import ChangePassword from "../../components/ui/changePassword";
 import LeaveRequest from "../../components/ui/leaveRequest";
@@ -34,7 +33,6 @@ export default function TeacherDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
-  const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [userId, setUserId] = useState("");
@@ -298,11 +296,6 @@ export default function TeacherDashboardPage() {
     }
   };
 
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    router.replace("/login");
-  };
-
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -380,23 +373,6 @@ export default function TeacherDashboardPage() {
                   />
                 </svg>
               </Button>
-              <Button
-                onClick={() => setShowSignOutConfirm(true)}
-                className="bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-700 hover:to-violet-700 text-white px-4 py-2 rounded-lg shadow-md transition-all"
-              >
-                Sign out
-              </Button>
-
-              <ConfirmDialog
-                open={showSignOutConfirm}
-                onClose={() => setShowSignOutConfirm(false)}
-                onConfirm={handleSignOut}
-                title="Sign Out"
-                message="Are you sure you want to sign out?"
-                confirmText="Sign Out"
-                cancelText="Cancel"
-                variant="danger"
-              />
             </div>
           </div>
 
