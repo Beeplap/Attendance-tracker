@@ -101,19 +101,35 @@ export default function TeacherDashboardPage() {
         setEmail(authUser.email || "");
 
         // Fetch user profile from users table
-        const { data: userProfile, error } = await supabase
+        const { data: userProfile, error: userError } = await supabase
           .from("users")
           .select("*")
           .eq("id", authUser.id)
           .maybeSingle();
 
-        if (error) {
-          console.error("Error fetching profile:", error);
+        if (userError) {
+          console.error("Error fetching profile:", userError);
         } else {
           setProfile(userProfile);
-          if (userProfile?.full_name) {
-            setFullName(userProfile.full_name);
-          }
+        }
+
+        // Prefer teacher name from teachers table for display
+        const { data: teacherRecord, error: teacherError } = await supabase
+          .from("teachers")
+          .select("full_name")
+          .eq("id", authUser.id)
+          .maybeSingle();
+
+        if (teacherError) {
+          console.error("Error fetching teacher record:", teacherError);
+        }
+
+        const teacherName = teacherRecord?.full_name?.trim();
+        const userName = userProfile?.full_name?.trim();
+        if (teacherName) {
+          setFullName(teacherName);
+        } else if (userName) {
+          setFullName(userName);
         }
 
         // Fetch assigned classes
