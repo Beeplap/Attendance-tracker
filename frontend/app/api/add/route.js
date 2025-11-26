@@ -138,20 +138,11 @@ export async function POST(req) {
         }
       };
 
-      const subjectsData = Array.isArray(subjects)
-        ? subjects.filter((s) => s && s.trim() !== "")
-        : [];
-
       const baseStudentPayload = {
         id: user.id,
         full_name,
-        email,
         phone_number,
         gender,
-        course: courseCode,
-        batch_year: batchYearStr,
-        semester,
-        subjects: subjectsData,
         class: courseCode,
       };
 
