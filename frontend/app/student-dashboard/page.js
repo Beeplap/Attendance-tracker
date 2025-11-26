@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "../../lib/supabaseClient";
+import ConfirmDialog from "../../components/ui/ConfirmDialog";
 
 export default function StudentDashboardPage() {
   const router = useRouter();
@@ -132,19 +133,30 @@ export default function StudentDashboardPage() {
       {/* Main Content */}
       <div className="ml-64 p-6">
         <div className="max-w-7xl">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Student Dashboard</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            Student Dashboard
+          </h1>
           <p className="text-gray-600 mb-6">
-            Welcome, {studentData?.full_name || profile?.full_name || user?.email || "Student"}!
+            Welcome,{" "}
+            {studentData?.full_name ||
+              profile?.full_name ||
+              user?.email ||
+              "Student"}
+            !
           </p>
 
           {/* Student Info Card */}
           {studentData && (
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Student Information</h2>
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                Student Information
+              </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm text-gray-600">Roll Number</p>
-                  <p className="text-lg font-medium text-gray-900">{studentData.roll}</p>
+                  <p className="text-lg font-medium text-gray-900">
+                    {studentData.roll}
+                  </p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">Class</p>
@@ -173,7 +185,9 @@ export default function StudentDashboardPage() {
               href="/attendance"
               className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
             >
-              <h2 className="text-xl font-semibold text-gray-900 mb-2">View Attendance</h2>
+              <h2 className="text-xl font-semibold text-gray-900 mb-2">
+                View Attendance
+              </h2>
               <p className="text-gray-600">Check your attendance records</p>
             </Link>
           </div>
@@ -182,4 +196,3 @@ export default function StudentDashboardPage() {
     </div>
   );
 }
-
