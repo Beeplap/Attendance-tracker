@@ -1,5 +1,6 @@
 "use client";
 import React, { useState } from "react";
+import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   Home,
@@ -94,31 +95,31 @@ export default function Sidebar({
         )}
 
         {/* Dashboard */}
-        <a
+        <Link
           href="/teacher-dashboard"
           className={navItemClass(pathname === "/teacher-dashboard")}
         >
           <Home className="w-5 h-5 shrink-0" />
           {!collapsed && <span className="flex-1 text-left">Dashboard</span>}
-        </a>
+        </Link>
 
         {/* Attendance */}
-        <a
+        <Link
           href="/attendance"
           className={navItemClass(pathname === "/attendance")}
         >
           <Calendar className="w-5 h-5 shrink-0" />
           {!collapsed && <span className="flex-1 text-left">Attendance</span>}
-        </a>
+        </Link>
 
         {/* Students */}
-        <a
+        <Link
           href="/student-directory"
           className={navItemClass(pathname === "/student-directory")}
         >
           <Users className="w-5 h-5 shrink-0" />
           {!collapsed && <span className="flex-1 text-left">Students</span>}
-        </a>
+        </Link>
 
         {/* Divider */}
         {!collapsed && (
