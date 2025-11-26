@@ -1,7 +1,6 @@
 "use client";
 import React, { useState } from "react";
-import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import {
   Home,
   BookOpen,
@@ -25,8 +24,9 @@ export default function Sidebar({
   onChangePassword,
   onRequestLeave,
   onSwitchClass,
+  currentView = "dashboard",
+  onViewChange,
 }) {
-  const pathname = usePathname();
   const router = useRouter();
   const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
 
@@ -95,31 +95,34 @@ export default function Sidebar({
         )}
 
         {/* Dashboard */}
-        <Link
-          href="/teacher-dashboard"
-          className={navItemClass(pathname === "/teacher-dashboard")}
+        <button
+          type="button"
+          onClick={() => onViewChange && onViewChange("dashboard")}
+          className={navItemClass(currentView === "dashboard")}
         >
           <Home className="w-5 h-5 shrink-0" />
           {!collapsed && <span className="flex-1 text-left">Dashboard</span>}
-        </Link>
+        </button>
 
         {/* Attendance */}
-        <Link
-          href="/attendance"
-          className={navItemClass(pathname === "/attendance")}
+        <button
+          type="button"
+          onClick={() => onViewChange && onViewChange("attendance")}
+          className={navItemClass(currentView === "attendance")}
         >
           <Calendar className="w-5 h-5 shrink-0" />
           {!collapsed && <span className="flex-1 text-left">Attendance</span>}
-        </Link>
+        </button>
 
         {/* Students */}
-        <Link
-          href="/student-directory"
-          className={navItemClass(pathname === "/student-directory")}
+        <button
+          type="button"
+          onClick={() => onViewChange && onViewChange("students")}
+          className={navItemClass(currentView === "students")}
         >
           <Users className="w-5 h-5 shrink-0" />
           {!collapsed && <span className="flex-1 text-left">Students</span>}
-        </Link>
+        </button>
 
         {/* Divider */}
         {!collapsed && (
@@ -143,23 +146,21 @@ export default function Sidebar({
           className={navItemClass(false, true)}
         >
           <Lock className="w-5 h-5 shrink-0" />
-          {!collapsed && <span className="flex-1 text-left">Change Password</span>}
+          {!collapsed && (
+            <span className="flex-1 text-left">Change Password</span>
+          )}
         </button>
 
         {/* Request Leave */}
-        <button
-          onClick={onRequestLeave}
-          className={navItemClass(false, true)}
-        >
+        <button onClick={onRequestLeave} className={navItemClass(false, true)}>
           <FileText className="w-5 h-5 shrink-0" />
-          {!collapsed && <span className="flex-1 text-left">Request Leave</span>}
+          {!collapsed && (
+            <span className="flex-1 text-left">Request Leave</span>
+          )}
         </button>
 
         {/* Switch Class */}
-        <button
-          onClick={onSwitchClass}
-          className={navItemClass(false, true)}
-        >
+        <button onClick={onSwitchClass} className={navItemClass(false, true)}>
           <ArrowRightLeft className="w-5 h-5 shrink-0" />
           {!collapsed && <span className="flex-1 text-left">Switch Class</span>}
         </button>
@@ -216,4 +217,3 @@ export default function Sidebar({
     </>
   );
 }
-
