@@ -1,6 +1,6 @@
-# Attendance Tracking System
+# Student Management System
 
-A modern attendance tracking application with separate frontend and backend components.
+A modern student management and attendance tracking application with separate frontend and backend components.
 
 ## Project Structure
 

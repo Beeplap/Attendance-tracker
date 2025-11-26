@@ -6,10 +6,10 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export async function POST(req) {
   try {
-    const { 
-      email, 
-      password, 
-      full_name, 
+    const {
+      email,
+      password,
+      full_name,
       role,
       // Student-specific fields
       batch_year,
@@ -17,7 +17,7 @@ export async function POST(req) {
       course,
       semester,
       subjects,
-      phone_number
+      phone_number,
     } = await req.json();
 
     if (!email || !password || !full_name || !role) {
@@ -34,7 +34,10 @@ export async function POST(req) {
 
       if (!batch_year || !gender || !course || !semester || !phone_number) {
         return NextResponse.json(
-          { error: "All student fields are required (batch year, gender, course, semester, phone number)" },
+          {
+            error:
+              "All student fields are required (batch year, gender, course, semester, phone number)",
+          },
           { status: 400 }
         );
       }
@@ -106,12 +109,13 @@ export async function POST(req) {
         try {
           const prefix = `${courseCode}${batchYearStr}`;
 
-          const { data: existingStudents, error: fetchError } = await adminClient
-            .from("students")
-            .select("roll")
-            .like("roll", `${prefix}%`)
-            .order("roll", { ascending: false })
-            .limit(1);
+          const { data: existingStudents, error: fetchError } =
+            await adminClient
+              .from("students")
+              .select("roll")
+              .like("roll", `${prefix}%`)
+              .order("roll", { ascending: false })
+              .limit(1);
 
           if (fetchError) {
             console.error("Error fetching existing students:", fetchError);
@@ -173,7 +177,10 @@ export async function POST(req) {
 
         console.error("Error creating student record:", studentError);
 
-        if (studentError.message?.includes("column") || studentError.message?.includes("does not exist")) {
+        if (
+          studentError.message?.includes("column") ||
+          studentError.message?.includes("does not exist")
+        ) {
           const { error: minimalError } = await adminClient
             .from("students")
             .insert({
@@ -192,8 +199,13 @@ export async function POST(req) {
             continue;
           }
 
-          console.error("Error creating student record (minimal):", minimalError);
-          throw new Error(`Failed to create student record: ${minimalError.message}`);
+          console.error(
+            "Error creating student record (minimal):",
+            minimalError
+          );
+          throw new Error(
+            `Failed to create student record: ${minimalError.message}`
+          );
         }
 
         if (studentError.message?.includes("students_roll_key")) {
@@ -201,7 +213,9 @@ export async function POST(req) {
           continue;
         }
 
-        throw new Error(`Failed to create student record: ${studentError.message}`);
+        throw new Error(
+          `Failed to create student record: ${studentError.message}`
+        );
       }
 
       if (!studentInserted) {
