@@ -9,7 +9,6 @@ import {
   CardFooter,
 } from "./card";
 import { Dialog } from "@headlessui/react";
-import { X, Plus } from "lucide-react";
 
 export default function AddUser({ open, onClose, onUserAdded, defaultRole = "teacher" }) {
   const [addLoading, setAddLoading] = useState(false);
@@ -21,42 +20,34 @@ export default function AddUser({ open, onClose, onUserAdded, defaultRole = "tea
   const [newRole, setNewRole] = useState(defaultRole);
   
   // Student-specific fields
-  const [batchYear, setBatchYear] = useState("");
   const [gender, setGender] = useState("");
-  const [course, setCourse] = useState("");
-  const [semester, setSemester] = useState("");
-  const [subjects, setSubjects] = useState([""]);
+  const [studentClass, setStudentClass] = useState("");
+  const [section, setSection] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
+  const [guardianName, setGuardianName] = useState("");
+  const [guardianPhone, setGuardianPhone] = useState("");
+  const [guardianContact, setGuardianContact] = useState("");
+  const [address, setAddress] = useState("");
+  const [dateOfBirth, setDateOfBirth] = useState("");
+  const [admissionDate, setAdmissionDate] = useState("");
 
   // Update role when defaultRole prop changes
   useEffect(() => {
     if (open) {
       setNewRole(defaultRole);
       // Reset student-specific fields when opening
-      setBatchYear("");
       setGender("");
-      setCourse("");
-      setSemester("");
-      setSubjects([""]);
+      setStudentClass("");
+      setSection("");
       setPhoneNumber("");
+      setGuardianName("");
+      setGuardianPhone("");
+      setGuardianContact("");
+      setAddress("");
+      setDateOfBirth("");
+      setAdmissionDate("");
     }
   }, [defaultRole, open]);
-
-  const addSubject = () => {
-    setSubjects([...subjects, ""]);
-  };
-
-  const removeSubject = (index) => {
-    if (subjects.length > 1) {
-      setSubjects(subjects.filter((_, i) => i !== index));
-    }
-  };
-
-  const updateSubject = (index, value) => {
-    const newSubjects = [...subjects];
-    newSubjects[index] = value;
-    setSubjects(newSubjects);
-  };
 
   const handleAddUser = async () => {
     setAddLoading(true);
@@ -66,12 +57,8 @@ export default function AddUser({ open, onClose, onUserAdded, defaultRole = "tea
     try {
       // Validate student-specific fields if role is student
       if (newRole === "student") {
-        if (!batchYear || !gender || !course || !semester || !phoneNumber) {
+        if (!gender || !studentClass || !phoneNumber) {
           throw new Error("Please fill all required student fields");
-        }
-        const validSubjects = subjects.filter(s => s.trim() !== "");
-        if (validSubjects.length === 0) {
-          throw new Error("Please add at least one subject");
         }
       }
 
@@ -84,12 +71,16 @@ export default function AddUser({ open, onClose, onUserAdded, defaultRole = "tea
 
       // Add student-specific fields
       if (newRole === "student") {
-        requestBody.batch_year = batchYear;
         requestBody.gender = gender;
-        requestBody.course = course;
-        requestBody.semester = semester;
-        requestBody.subjects = subjects.filter(s => s.trim() !== "");
+        requestBody.class = studentClass;
+        requestBody.section = section;
         requestBody.phone_number = phoneNumber;
+        requestBody.guardian_name = guardianName;
+        requestBody.guardian_phone = guardianPhone;
+        requestBody.guardian_contact = guardianContact;
+        requestBody.address = address;
+        requestBody.date_of_birth = dateOfBirth || null;
+        requestBody.admission_date = admissionDate || null;
       }
 
       const res = await fetch("/api/add", {
@@ -109,12 +100,16 @@ export default function AddUser({ open, onClose, onUserAdded, defaultRole = "tea
       setNewPassword("");
       setNewFullName("");
       setNewRole("teacher");
-      setBatchYear("");
       setGender("");
-      setCourse("");
-      setSemester("");
-      setSubjects([""]);
+      setStudentClass("");
+      setSection("");
       setPhoneNumber("");
+      setGuardianName("");
+      setGuardianPhone("");
+      setGuardianContact("");
+      setAddress("");
+      setDateOfBirth("");
+      setAdmissionDate("");
       
       onUserAdded();
 
@@ -218,21 +213,6 @@ export default function AddUser({ open, onClose, onUserAdded, defaultRole = "tea
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium mb-1">
-                        Batch Year <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="number"
-                        value={batchYear}
-                        onChange={(e) => setBatchYear(e.target.value)}
-                        className="w-full border rounded-md px-3 py-2 bg-white/80 dark:bg-black/20"
-                        placeholder="2080"
-                        min="2000"
-                        max="2100"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium mb-1">
                         Gender <span className="text-red-500">*</span>
                       </label>
                       <select
@@ -249,27 +229,27 @@ export default function AddUser({ open, onClose, onUserAdded, defaultRole = "tea
 
                     <div>
                       <label className="block text-sm font-medium mb-1">
-                        Course <span className="text-red-500">*</span>
+                        Class <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="text"
-                        value={course}
-                        onChange={(e) => setCourse(e.target.value.toUpperCase())}
+                        value={studentClass}
+                        onChange={(e) => setStudentClass(e.target.value)}
                         className="w-full border rounded-md px-3 py-2 bg-white/80 dark:bg-black/20"
-                        placeholder="BCA, BSc, etc."
+                        placeholder="e.g., BCA, Grade 12"
                       />
                     </div>
 
                     <div>
                       <label className="block text-sm font-medium mb-1">
-                        Semester <span className="text-red-500">*</span>
+                        Section
                       </label>
                       <input
                         type="text"
-                        value={semester}
-                        onChange={(e) => setSemester(e.target.value)}
+                        value={section}
+                        onChange={(e) => setSection(e.target.value)}
                         className="w-full border rounded-md px-3 py-2 bg-white/80 dark:bg-black/20"
-                        placeholder="1st, 2nd, 3rd, etc."
+                        placeholder="e.g., A, B"
                       />
                     </div>
 
@@ -286,38 +266,80 @@ export default function AddUser({ open, onClose, onUserAdded, defaultRole = "tea
                       />
                     </div>
 
-                    <div className="sm:col-span-2">
+                    <div>
                       <label className="block text-sm font-medium mb-1">
-                        Subjects <span className="text-red-500">*</span>
+                        Guardian Name
                       </label>
-                      {subjects.map((subject, index) => (
-                        <div key={index} className="flex gap-2 mb-2">
-                          <input
-                            type="text"
-                            value={subject}
-                            onChange={(e) => updateSubject(index, e.target.value)}
-                            className="flex-1 border rounded-md px-3 py-2 bg-white/80 dark:bg-black/20"
-                            placeholder={`Subject ${index + 1}`}
-                          />
-                          {subjects.length > 1 && (
-                            <button
-                              type="button"
-                              onClick={() => removeSubject(index)}
-                              className="px-3 py-2 border border-red-300 text-red-600 rounded-md hover:bg-red-50 dark:hover:bg-red-900/20"
-                            >
-                              <X className="w-4 h-4" />
-                            </button>
-                          )}
-                        </div>
-                      ))}
-                      <button
-                        type="button"
-                        onClick={addSubject}
-                        className="mt-2 flex items-center gap-2 px-3 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800"
-                      >
-                        <Plus className="w-4 h-4" />
-                        Add Subject
-                      </button>
+                      <input
+                        type="text"
+                        value={guardianName}
+                        onChange={(e) => setGuardianName(e.target.value)}
+                        className="w-full border rounded-md px-3 py-2 bg-white/80 dark:bg-black/20"
+                        placeholder="Guardian full name"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium mb-1">
+                        Guardian Phone
+                      </label>
+                      <input
+                        type="tel"
+                        value={guardianPhone}
+                        onChange={(e) => setGuardianPhone(e.target.value)}
+                        className="w-full border rounded-md px-3 py-2 bg-white/80 dark:bg-black/20"
+                        placeholder="+977 98XXXXXXXX"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium mb-1">
+                        Guardian Contact (Alt.)
+                      </label>
+                      <input
+                        type="text"
+                        value={guardianContact}
+                        onChange={(e) => setGuardianContact(e.target.value)}
+                        className="w-full border rounded-md px-3 py-2 bg-white/80 dark:bg-black/20"
+                        placeholder="Email or secondary number"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium mb-1">
+                        Address
+                      </label>
+                      <input
+                        type="text"
+                        value={address}
+                        onChange={(e) => setAddress(e.target.value)}
+                        className="w-full border rounded-md px-3 py-2 bg-white/80 dark:bg-black/20"
+                        placeholder="City, Street"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium mb-1">
+                        Date of Birth
+                      </label>
+                      <input
+                        type="date"
+                        value={dateOfBirth}
+                        onChange={(e) => setDateOfBirth(e.target.value)}
+                        className="w-full border rounded-md px-3 py-2 bg-white/80 dark:bg-black/20"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium mb-1">
+                        Admission Date
+                      </label>
+                      <input
+                        type="date"
+                        value={admissionDate}
+                        onChange={(e) => setAdmissionDate(e.target.value)}
+                        className="w-full border rounded-md px-3 py-2 bg-white/80 dark:bg-black/20"
+                      />
                     </div>
                   </div>
                 </>
@@ -344,7 +366,8 @@ export default function AddUser({ open, onClose, onUserAdded, defaultRole = "tea
                   !newEmail || 
                   !newPassword || 
                   !newFullName ||
-                  (newRole === "student" && (!batchYear || !gender || !course || !semester || !phoneNumber || subjects.filter(s => s.trim() !== "").length === 0))
+                  (newRole === "student" &&
+                    (!gender || !studentClass || !phoneNumber))
                 }
                 className="bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-700 hover:to-violet-700 text-white"
               >

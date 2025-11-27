@@ -11,13 +11,17 @@ export async function POST(req) {
       password,
       full_name,
       role,
-      // Student-specific fields
-      batch_year,
+      // Student-specific fields (optional)
       gender,
-      course,
-      semester,
-      subjects,
+      class: studentClass,
+      section,
       phone_number,
+      guardian_name,
+      guardian_phone,
+      guardian_contact,
+      address,
+      date_of_birth,
+      admission_date,
     } = await req.json();
 
     if (!email || !password || !full_name || !role) {
@@ -29,21 +33,12 @@ export async function POST(req) {
 
     // Validate student-specific fields
     if (role === "student") {
-      const courseCode = course.toUpperCase().trim();
-      const batchYearStr = String(batch_year).trim();
-
-      if (!batch_year || !gender || !course || !semester || !phone_number) {
+      if (!gender || !studentClass || !phone_number) {
         return NextResponse.json(
           {
             error:
-              "All student fields are required (batch year, gender, course, semester, phone number)",
+              "Please provide gender, class, and phone number for student accounts.",
           },
-          { status: 400 }
-        );
-      }
-      if (!subjects || !Array.isArray(subjects) || subjects.length === 0) {
-        return NextResponse.json(
-          { error: "At least one subject is required" },
           { status: 400 }
         );
       }
@@ -103,47 +98,64 @@ export async function POST(req) {
 
     // If creating a student, also create a record in students table
     if (role === "student") {
-      // Generate student ID in format: COURSEBATCHYEAR + sequential number
-      // Example: BCA20800001, BCA20800002
+      const classCode =
+        (studentClass || "STD").toUpperCase().replace(/[^A-Z0-9]/g, "") ||
+        "STD";
+      const yearSuffix = new Date().getFullYear().toString().slice(-2);
+      const rollPrefix = `${classCode}${yearSuffix}`;
+      const normalizeDate = (value) =>
+        value && String(value).trim() !== "" ? value : null;
+
+      // Generate student ID with prefix + sequential number
       const generateStudentId = async () => {
         try {
-          const prefix = `${courseCode}${batchYearStr}`;
-
           const { data: existingStudents, error: fetchError } =
             await adminClient
               .from("students")
               .select("roll")
-              .like("roll", `${prefix}%`)
+              .like("roll", `${rollPrefix}%`)
               .order("roll", { ascending: false })
               .limit(1);
 
           if (fetchError) {
             console.error("Error fetching existing students:", fetchError);
-            return `${prefix}00001`;
+            return `${rollPrefix}00001`;
           }
 
           if (!existingStudents || existingStudents.length === 0) {
-            return `${prefix}00001`;
+            return `${rollPrefix}00001`;
           }
 
           const latestRoll = existingStudents[0]?.roll || "";
-          const numericPart = latestRoll.replace(prefix, "");
+          const numericPart = latestRoll.replace(rollPrefix, "");
           const lastNumber = parseInt(numericPart, 10);
           const nextNumber = Number.isFinite(lastNumber) ? lastNumber + 1 : 1;
 
-          return `${prefix}${String(nextNumber).padStart(5, "0")}`;
+          return `${rollPrefix}${String(nextNumber).padStart(5, "0")}`;
         } catch (error) {
           console.error("Error generating student ID:", error);
-          return `${courseCode}${batchYearStr}00001`;
+          return `${rollPrefix}00001`;
         }
       };
+
+      const guardianContactValue =
+        guardian_contact || guardian_phone || phone_number || null;
 
       const baseStudentPayload = {
         id: user.id,
         full_name,
-        phone_number,
+        class: studentClass,
+        section,
         gender,
-        class: courseCode,
+        phone_number,
+        guardian_name,
+        guardian_phone,
+        guardian_contact: guardianContactValue,
+        emergency_contact: guardianContactValue,
+        address,
+        date_of_birth: normalizeDate(date_of_birth),
+        dob: normalizeDate(date_of_birth),
+        admission_date: normalizeDate(admission_date),
       };
 
       const MAX_STUDENT_INSERT_ATTEMPTS = 5;
