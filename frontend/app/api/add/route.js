@@ -98,15 +98,27 @@ export async function POST(req) {
 
     // If creating a student, also create a record in students table
     if (role === "student") {
+      // Build class code from studentClass (e.g., "BCA" -> "BCA")
       const classCode =
         (studentClass || "STD").toUpperCase().replace(/[^A-Z0-9]/g, "") ||
         "STD";
-      const yearSuffix = new Date().getFullYear().toString().slice(-2);
+
+      // Extract 2-digit year from admission_date, fallback to current year
+      let yearSuffix;
+      if (admission_date) {
+        const admissionYear = new Date(admission_date).getFullYear();
+        yearSuffix = String(admissionYear).slice(-2); // e.g., 2024 -> "24"
+      } else {
+        yearSuffix = new Date().getFullYear().toString().slice(-2);
+      }
+
+      // Roll prefix: CLASS + 2-digit year (e.g., BCA24)
       const rollPrefix = `${classCode}${yearSuffix}`;
+
       const normalizeDate = (value) =>
         value && String(value).trim() !== "" ? value : null;
 
-      // Generate student ID with prefix + sequential number
+      // Generate student ID with prefix + sequential 4-digit number (e.g., BCA240001)
       const generateStudentId = async () => {
         try {
           const { data: existingStudents, error: fetchError } =
@@ -119,11 +131,11 @@ export async function POST(req) {
 
           if (fetchError) {
             console.error("Error fetching existing students:", fetchError);
-            return `${rollPrefix}00001`;
+            return `${rollPrefix}0001`;
           }
 
           if (!existingStudents || existingStudents.length === 0) {
-            return `${rollPrefix}00001`;
+            return `${rollPrefix}0001`;
           }
 
           const latestRoll = existingStudents[0]?.roll || "";
@@ -131,10 +143,11 @@ export async function POST(req) {
           const lastNumber = parseInt(numericPart, 10);
           const nextNumber = Number.isFinite(lastNumber) ? lastNumber + 1 : 1;
 
-          return `${rollPrefix}${String(nextNumber).padStart(5, "0")}`;
+          // 4-digit sequential number (0001 to 9999)
+          return `${rollPrefix}${String(nextNumber).padStart(4, "0")}`;
         } catch (error) {
           console.error("Error generating student ID:", error);
-          return `${rollPrefix}00001`;
+          return `${rollPrefix}0001`;
         }
       };
 
