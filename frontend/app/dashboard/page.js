@@ -78,7 +78,7 @@ export default function DashboardPage() {
     supabase.auth.getUser().then(async ({ data }) => {
       const user = data?.user;
       if (!user) {
-        router.replace("/");
+        router.replace("/login");
         return;
       }
       const role = await resolveUserRole(supabase, user);
@@ -211,7 +211,7 @@ export default function DashboardPage() {
 
   const signOut = async () => {
     await supabase.auth.signOut();
-    router.replace("/");
+    router.replace("/login");
   };
 
   if (loading)

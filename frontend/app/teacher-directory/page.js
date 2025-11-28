@@ -1,11 +1,10 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { Button } from "../../components/ui/button";
+import ProtectedRoute from "../../components/ProtectedRoute";
 import { supabase } from "../../lib/supabaseClient";
 
 export default function TeacherDirectoryPage() {
-  const router = useRouter();
   const [teachers, setTeachers] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -33,7 +32,8 @@ export default function TeacherDirectoryPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
+    <ProtectedRoute>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
       <div className="max-w-7xl mx-auto">
         <div className="mb-6">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">Teachers</h1>
@@ -98,7 +98,7 @@ export default function TeacherDirectoryPage() {
           )}
         </div>
       </div>
-    </div>
+    </ProtectedRoute>
   );
 }
 

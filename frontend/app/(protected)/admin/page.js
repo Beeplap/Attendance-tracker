@@ -104,11 +104,16 @@ export default function AdminPage() {
   const [classSwitches, setClassSwitches] = useState([]);
   const [classSwitchesLoading, setClassSwitchesLoading] = useState(false);
 
+  const redirectToLogin = async () => {
+    await supabase.auth.signOut();
+    router.replace("/login");
+  };
+
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data }) => {
       const user = data?.user;
       if (!user) {
-        router.replace("/");
+        router.replace("/login");
         return;
       }
 
@@ -121,13 +126,13 @@ export default function AdminPage() {
 
       if (userError || !userData) {
         console.error("Error fetching user role:", userError);
-        router.replace("/dashboard");
+        await redirectToLogin();
         return;
       }
 
       if (userData.role !== "admin") {
         console.log("User role is not admin:", userData.role);
-        router.replace("/dashboard");
+        await redirectToLogin();
         return;
       }
 
