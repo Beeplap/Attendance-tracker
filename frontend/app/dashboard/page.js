@@ -1,15 +1,15 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "../../components/ui/button";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardHeader,
   CardTitle,
   CardContent,
-} from "../../components/ui/card";
-import { supabase } from "../../lib/supabaseClient";
-import { resolveUserRole } from "../../lib/utils";
+} from "@/components/ui/card";
+import { supabase } from "@/lib/supabaseClient";
+import { resolveUserRole } from "@/lib/utils";
 import {
   Bell,
   Users,
@@ -21,9 +21,9 @@ import {
   TrendingUp,
   Activity,
 } from "lucide-react";
-import Sidebar from "../../components/ui/sidebar";
-import ConfirmDialog from "../../components/ui/ConfirmDialog";
-import NotificationBell from "../../components/ui/notificationBell";
+import Sidebar from "@/components/ui/sidebar";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
+import NotificationBell from "@/components/ui/notificationBell";
 
 export default function DashboardPage() {
   const router = useRouter();

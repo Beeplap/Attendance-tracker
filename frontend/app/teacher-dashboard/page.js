@@ -1,18 +1,18 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "../../components/ui/button";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardHeader,
   CardTitle,
   CardContent,
-} from "../../components/ui/card";
-import { supabase } from "../../lib/supabaseClient";
-import NotificationBell from "../../components/ui/notificationBell";
-import ChangePassword from "../../components/ui/changePassword";
-import LeaveRequest from "../../components/ui/leaveRequest";
-import ClassSwitch from "../../components/ui/classSwitch";
+} from "@/components/ui/card";
+import { supabase } from "@/lib/supabaseClient";
+import NotificationBell from "@/components/ui/notificationBell";
+import ChangePassword from "@/components/ui/changePassword";
+import LeaveRequest from "@/components/ui/leaveRequest";
+import ClassSwitch from "@/components/ui/classSwitch";
 import {
   Bell,
   Users,
@@ -24,7 +24,7 @@ import {
   TrendingUp,
   ArrowRightLeft,
 } from "lucide-react";
-import Sidebar from "../../components/ui/sidebar";
+import Sidebar from "@/components/ui/sidebar";
 import AttendancePage from "../attendance/page";
 import StudentDirectoryPage from "../student-directory/page";
 

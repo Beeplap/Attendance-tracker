@@ -2,15 +2,15 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { supabase } from "../../lib/supabaseClient";
+import { supabase } from "@/lib/supabaseClient";
 import {
   Card,
   CardHeader,
   CardTitle,
   CardContent,
-} from "../../components/ui/card";
-import { Button } from "../../components/ui/button";
-import StudentSidebar from "../../components/ui/studentSidebar";
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import StudentSidebar from "@/components/ui/studentSidebar";
 import { Calendar, BookOpen, User as UserIcon } from "lucide-react";
 
 export default function StudentDashboardPage() {

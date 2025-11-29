@@ -1,8 +1,8 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { Button } from "../../components/ui/button";
-import ProtectedRoute from "../../components/ProtectedRoute";
-import { supabase } from "../../lib/supabaseClient";
+import { Button } from "@/components/ui/button";
+import ProtectedRoute from "@/components/ProtectedRoute";
+import { supabase } from "@/lib/supabaseClient";
 
 export default function StudentDirectoryPage() {
   const [students, setStudents] = useState([]);
