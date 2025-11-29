@@ -98,6 +98,7 @@ export default function TeacherDirectoryPage() {
           )}
         </div>
       </div>
+      </div>
     </ProtectedRoute>
   );
 }

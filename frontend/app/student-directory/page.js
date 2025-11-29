@@ -255,6 +255,7 @@ export default function StudentDirectoryPage() {
           )}
         </div>
       </div>
+      </div>
     </ProtectedRoute>
   );
 }
