@@ -1,16 +1,16 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "../../components/ui/button";
+import { Button } from "../../../components/ui/button";
 import {
   Card,
   CardHeader,
   CardTitle,
   CardContent,
   CardFooter,
-} from "../../components/ui/card";
-import { supabase } from "../../lib/supabaseClient";
-import { resolveUserRole } from "../../lib/utils";
+} from "../../../components/ui/card";
+import { supabase } from "../../../lib/supabaseClient";
+import { resolveUserRole } from "../../../lib/utils";
 import {
   Moon,
   Sun,
@@ -33,15 +33,15 @@ import {
   Bell,
 } from "lucide-react";
 import { Dialog, Menu, Transition } from "@headlessui/react";
-import AddClass from "../../components/ui/addClass";
-import AdminSidebar from "../../components/ui/adminSidebar";
-import AddUser from "../../components/ui/addUser";
-import AddSubject from "../../components/ui/addSubject";
-import UsersTable from "../../components/ui/usersTable";
-import TeacherStats from "../../components/ui/teacherStats";
-import TeacherDetails from "../../components/ui/teacherDetails";
-import NotificationPanel from "../../components/ui/notificationPanel";
-import NotificationBell from "../../components/ui/notificationBell";
+import AddClass from "../../../components/ui/addClass";
+import AdminSidebar from "../../../components/ui/adminSidebar";
+import AddUser from "../../../components/ui/addUser";
+import AddSubject from "../../../components/ui/addSubject";
+import UsersTable from "../../../components/ui/usersTable";
+import TeacherStats from "../../../components/ui/teacherStats";
+import TeacherDetails from "../../../components/ui/teacherDetails";
+import NotificationPanel from "../../../components/ui/notificationPanel";
+import NotificationBell from "../../../components/ui/notificationBell";
 
 export default function AdminPage() {
   const router = useRouter();
@@ -358,13 +358,15 @@ export default function AdminPage() {
     setLeaveRequestsLoading(true);
     try {
       // Get session token from Supabase
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       const token = session?.access_token;
 
       const res = await fetch("/api/leave-requests", {
         headers: {
-          ...(token && { Authorization: `Bearer ${token}` })
-        }
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
       });
       const data = await res.json();
       if (res.ok && data.leaveRequests) {
@@ -404,14 +406,16 @@ export default function AdminPage() {
   const handleLeaveRequestAction = async (id, status, adminNotes = "") => {
     try {
       // Get session token from Supabase
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       const token = session?.access_token;
 
       const res = await fetch("/api/leave-requests", {
         method: "PATCH",
-        headers: { 
+        headers: {
           "Content-Type": "application/json",
-          ...(token && { Authorization: `Bearer ${token}` })
+          ...(token && { Authorization: `Bearer ${token}` }),
         },
         body: JSON.stringify({ id, status, admin_notes: adminNotes }),
       });
@@ -1049,7 +1053,9 @@ export default function AdminPage() {
                 {leaveRequestsLoading ? (
                   <div className="text-center py-12">
                     <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                    <p className="mt-4 text-gray-600">Loading leave requests...</p>
+                    <p className="mt-4 text-gray-600">
+                      Loading leave requests...
+                    </p>
                   </div>
                 ) : leaveRequests.length === 0 ? (
                   <div className="text-center py-12">
@@ -1072,7 +1078,8 @@ export default function AdminPage() {
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-2">
                               <p className="font-semibold text-gray-900">
-                                {request.teacher?.full_name || "Unknown Teacher"}
+                                {request.teacher?.full_name ||
+                                  "Unknown Teacher"}
                               </p>
                               <span
                                 className={`px-2 py-1 rounded text-xs font-medium ${
@@ -1088,19 +1095,27 @@ export default function AdminPage() {
                             </div>
                             <p className="text-sm text-gray-600">
                               <span className="font-medium">Period:</span>{" "}
-                              {new Date(request.start_date).toLocaleDateString()} -{" "}
+                              {new Date(
+                                request.start_date
+                              ).toLocaleDateString()}{" "}
+                              -{" "}
                               {new Date(request.end_date).toLocaleDateString()}
                             </p>
                             <p className="text-sm text-gray-600 mt-1">
-                              <span className="font-medium">Reason:</span> {request.reason}
+                              <span className="font-medium">Reason:</span>{" "}
+                              {request.reason}
                             </p>
                             {request.admin_notes && (
                               <p className="text-sm text-gray-600 mt-1">
-                                <span className="font-medium">Admin Notes:</span> {request.admin_notes}
+                                <span className="font-medium">
+                                  Admin Notes:
+                                </span>{" "}
+                                {request.admin_notes}
                               </p>
                             )}
                             <p className="text-xs text-gray-500 mt-2">
-                              Requested: {new Date(request.created_at).toLocaleString()}
+                              Requested:{" "}
+                              {new Date(request.created_at).toLocaleString()}
                             </p>
                           </div>
                           {request.status === "pending" && (
@@ -1109,7 +1124,11 @@ export default function AdminPage() {
                                 size="sm"
                                 onClick={() => {
                                   const notes = prompt("Add notes (optional):");
-                                  handleLeaveRequestAction(request.id, "approved", notes || "");
+                                  handleLeaveRequestAction(
+                                    request.id,
+                                    "approved",
+                                    notes || ""
+                                  );
                                 }}
                                 className="bg-green-600 hover:bg-green-700 text-white"
                               >
@@ -1119,8 +1138,14 @@ export default function AdminPage() {
                                 size="sm"
                                 variant="outline"
                                 onClick={() => {
-                                  const notes = prompt("Add rejection reason (optional):");
-                                  handleLeaveRequestAction(request.id, "rejected", notes || "");
+                                  const notes = prompt(
+                                    "Add rejection reason (optional):"
+                                  );
+                                  handleLeaveRequestAction(
+                                    request.id,
+                                    "rejected",
+                                    notes || ""
+                                  );
                                 }}
                                 className="border-red-300 text-red-700 hover:bg-red-50"
                               >
@@ -1152,7 +1177,9 @@ export default function AdminPage() {
                 {classSwitchesLoading ? (
                   <div className="text-center py-12">
                     <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                    <p className="mt-4 text-gray-600">Loading class switches...</p>
+                    <p className="mt-4 text-gray-600">
+                      Loading class switches...
+                    </p>
                   </div>
                 ) : classSwitches.length === 0 ? (
                   <div className="text-center py-12">
@@ -1187,26 +1214,34 @@ export default function AdminPage() {
                         {classSwitches.map((switchReq) => (
                           <tr key={switchReq.id} className="hover:bg-gray-50">
                             <td className="px-4 py-3 text-sm text-gray-900">
-                              {switchReq.requester_teacher?.full_name || "Unknown"}
+                              {switchReq.requester_teacher?.full_name ||
+                                "Unknown"}
                             </td>
                             <td className="px-4 py-3 text-sm text-gray-600">
-                              {switchReq.requester_class?.subject} ({switchReq.requester_class?.course} - {switchReq.requester_class?.semester})
+                              {switchReq.requester_class?.subject} (
+                              {switchReq.requester_class?.course} -{" "}
+                              {switchReq.requester_class?.semester})
                             </td>
                             <td className="px-4 py-3 text-sm text-gray-900">
                               {switchReq.target_teacher?.full_name || "Unknown"}
                             </td>
                             <td className="px-4 py-3 text-sm text-gray-600">
-                              {switchReq.target_class?.subject} ({switchReq.target_class?.course} - {switchReq.target_class?.semester})
+                              {switchReq.target_class?.subject} (
+                              {switchReq.target_class?.course} -{" "}
+                              {switchReq.target_class?.semester})
                             </td>
                             <td className="px-4 py-3 text-sm text-gray-600">
-                              {new Date(switchReq.switch_date).toLocaleDateString()}
+                              {new Date(
+                                switchReq.switch_date
+                              ).toLocaleDateString()}
                             </td>
                             <td className="px-4 py-3">
                               <span
                                 className={`px-2 py-1 rounded text-xs font-medium ${
                                   switchReq.status === "pending"
                                     ? "bg-yellow-200 text-yellow-800"
-                                    : switchReq.status === "accepted" || switchReq.status === "completed"
+                                    : switchReq.status === "accepted" ||
+                                      switchReq.status === "completed"
                                     ? "bg-green-200 text-green-800"
                                     : "bg-red-200 text-red-800"
                                 }`}
