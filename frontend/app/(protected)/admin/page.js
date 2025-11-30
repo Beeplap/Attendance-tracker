@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useSidebar } from "@/hooks/useSidebar";
 import { Button } from "../../../components/ui/button";
 import {
   Card,
@@ -64,8 +65,13 @@ export default function AdminPage() {
     subject: "",
     teacher_id: "",
   });
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const {
+    sidebarOpen,
+    setSidebarOpen,
+    sidebarCollapsed,
+    setSidebarCollapsed,
+    toggleCollapsed,
+  } = useSidebar();
 
   // New state for teacher statistics
   const [teacherStats, setTeacherStats] = useState([]);
@@ -644,7 +650,7 @@ export default function AdminPage() {
           open={sidebarOpen}
           onOpenChange={setSidebarOpen}
           collapsed={sidebarCollapsed}
-          onToggleCollapsed={() => setSidebarCollapsed((v) => !v)}
+          onToggleCollapsed={toggleCollapsed}
           onAddTeacher={() => {
             setAddUserRole("teacher");
             setShowAddUser(true);

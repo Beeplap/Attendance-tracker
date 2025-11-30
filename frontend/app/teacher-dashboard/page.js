@@ -1,6 +1,8 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useNepalTime } from "@/hooks/useNepalTime";
+import { useSidebar } from "@/hooks/useSidebar";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -38,9 +40,8 @@ export default function TeacherDashboardPage() {
   const [userId, setUserId] = useState("");
   const [assignedClasses, setAssignedClasses] = useState([]);
   const [classesLoading, setClassesLoading] = useState(true);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [nepalTime, setNepalTime] = useState("");
+  const { sidebarOpen, setSidebarOpen, sidebarCollapsed, setSidebarCollapsed, toggleCollapsed } = useSidebar();
+  const nepalTime = useNepalTime();
   const [attendanceStats, setAttendanceStats] = useState({
     todayTotal: 0,
     todaySuccessful: 0,
@@ -63,26 +64,6 @@ export default function TeacherDashboardPage() {
   const [pendingSwitches, setPendingSwitches] = useState([]);
   const [leaveRequests, setLeaveRequests] = useState([]);
 
-  // Nepal time with seconds (UTC+5:45)
-  useEffect(() => {
-    const updateNepalTime = () => {
-      const now = new Date();
-      // Nepal is UTC+5:45 = 5 hours 45 minutes = 345 minutes
-      const nepalOffsetMinutes = 5 * 60 + 45; // 345 minutes
-      const utc = now.getTime() + now.getTimezoneOffset() * 60 * 1000;
-      const nepalTime = new Date(utc + nepalOffsetMinutes * 60 * 1000);
-
-      const hours = String(nepalTime.getHours()).padStart(2, "0");
-      const minutes = String(nepalTime.getMinutes()).padStart(2, "0");
-      const seconds = String(nepalTime.getSeconds()).padStart(2, "0");
-
-      setNepalTime(`${hours}:${minutes}:${seconds}`);
-    };
-
-    updateNepalTime();
-    const interval = setInterval(updateNepalTime, 1000);
-    return () => clearInterval(interval);
-  }, []);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -332,7 +313,7 @@ export default function TeacherDashboardPage() {
           open={sidebarOpen}
           onOpenChange={setSidebarOpen}
           collapsed={sidebarCollapsed}
-          onToggleCollapsed={() => setSidebarCollapsed((v) => !v)}
+          onToggleCollapsed={toggleCollapsed}
           onChangePassword={() => setShowChangePassword(true)}
           onRequestLeave={() => setShowLeaveRequest(true)}
           onSwitchClass={() => setShowClassSwitch(true)}
