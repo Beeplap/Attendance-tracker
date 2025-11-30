@@ -21,7 +21,7 @@ import {
   TrendingUp,
   Activity,
 } from "lucide-react";
-import Sidebar from "@/components/ui/sidebar";
+import Sidebar from "@/components/ui/Sidebar";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import NotificationBell from "@/components/ui/notificationBell";
 
@@ -225,10 +225,13 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-violet-50 to-purple-100 p-6">
       <div className="w-full mx-auto flex flex-col lg:flex-row gap-6">
         <Sidebar
+          role={userRole || "teacher"}
           open={sidebarOpen}
           onOpenChange={setSidebarOpen}
           collapsed={sidebarCollapsed}
           onToggleCollapsed={() => setSidebarCollapsed((v) => !v)}
+          currentView="dashboard"
+          onViewChange={() => {}}
         />
         <main className="flex-1 space-y-8">
           {/* Header */}

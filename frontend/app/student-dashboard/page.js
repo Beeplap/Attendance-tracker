@@ -10,7 +10,7 @@ import {
   CardContent,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import StudentSidebar from "@/components/ui/studentSidebar";
+import Sidebar from "@/components/ui/Sidebar";
 import { Calendar, BookOpen, User as UserIcon } from "lucide-react";
 
 export default function StudentDashboardPage() {
@@ -103,7 +103,8 @@ export default function StudentDashboardPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-violet-50 to-purple-100 p-6">
       <div className="w-full mx-auto flex flex-col lg:flex-row gap-6">
-        <StudentSidebar
+        <Sidebar
+          role="student"
           open={sidebarOpen}
           onOpenChange={setSidebarOpen}
           collapsed={sidebarCollapsed}

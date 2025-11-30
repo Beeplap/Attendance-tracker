@@ -34,7 +34,7 @@ import {
 } from "lucide-react";
 import { Dialog, Menu, Transition } from "@headlessui/react";
 import AddClass from "../../../components/ui/addClass";
-import AdminSidebar from "../../../components/ui/adminSidebar";
+import Sidebar from "@/components/ui/Sidebar";
 import AddUser from "../../../components/ui/addUser";
 import AddSubject from "../../../components/ui/addSubject";
 import UsersTable from "../../../components/ui/usersTable";
@@ -639,7 +639,8 @@ export default function AdminPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-violet-50 to-purple-100 p-6">
       <div className="w-full mx-auto flex flex-col lg:flex-row gap-6">
-        <AdminSidebar
+        <Sidebar
+          role="admin"
           open={sidebarOpen}
           onOpenChange={setSidebarOpen}
           collapsed={sidebarCollapsed}

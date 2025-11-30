@@ -328,6 +328,7 @@ export default function TeacherDashboardPage() {
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-violet-50 to-purple-100 p-6">
       <div className="w-full mx-auto flex flex-col lg:flex-row gap-6">
         <Sidebar
+          role="teacher"
           open={sidebarOpen}
           onOpenChange={setSidebarOpen}
           collapsed={sidebarCollapsed}
