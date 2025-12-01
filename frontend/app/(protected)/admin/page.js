@@ -1481,9 +1481,15 @@ export default function AdminPage() {
                                   {subject.subject_name}
                                 </td>
                                 <td className="py-3 px-4">
-                                  <span className="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium text-white bg-purple-500">
-                                    Semester {subject.semester}
-                                  </span>
+                                  {subject.semester ? (
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium text-white bg-purple-500">
+                                      Semester {subject.semester}
+                                    </span>
+                                  ) : (
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium text-gray-500 bg-gray-200">
+                                      N/A
+                                    </span>
+                                  )}
                                 </td>
                                 <td className="py-3 px-4 text-gray-700">
                                   {subject.credits} Credit
