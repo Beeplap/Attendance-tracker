@@ -26,7 +26,7 @@ import {
   TrendingUp,
   ArrowRightLeft,
 } from "lucide-react";
-import Sidebar from "@/components/ui/sidebar";
+import Sidebar from "@/components/ui/Sidebar";
 import AttendancePage from "../attendance/page";
 import StudentDirectoryPage from "../student-directory/page";
 
