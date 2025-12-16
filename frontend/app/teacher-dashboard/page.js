@@ -1,7 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useNepalTime } from "@/hooks/useNepalTime";
 import { useSidebar } from "@/hooks/useSidebar";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,8 +12,6 @@ import {
 import { supabase } from "@/lib/supabaseClient";
 import NotificationBell from "@/components/ui/notificationBell";
 import ChangePassword from "@/components/ui/changePassword";
-import LeaveRequest from "@/components/ui/leaveRequest";
-import ClassSwitch from "@/components/ui/classSwitch";
 import {
   Bell,
   Users,
@@ -24,7 +21,6 @@ import {
   XCircle,
   Calendar,
   TrendingUp,
-  ArrowRightLeft,
 } from "lucide-react";
 import Sidebar from "@/components/ui/Sidebar";
 import AttendancePage from "../attendance/page";
@@ -41,7 +37,6 @@ export default function TeacherDashboardPage() {
   const [assignedClasses, setAssignedClasses] = useState([]);
   const [classesLoading, setClassesLoading] = useState(true);
   const { sidebarOpen, setSidebarOpen, sidebarCollapsed, setSidebarCollapsed, toggleCollapsed } = useSidebar();
-  const nepalTime = useNepalTime();
   const [attendanceStats, setAttendanceStats] = useState({
     todayTotal: 0,
     todaySuccessful: 0,
@@ -59,10 +54,6 @@ export default function TeacherDashboardPage() {
 
   // New feature modals
   const [showChangePassword, setShowChangePassword] = useState(false);
-  const [showLeaveRequest, setShowLeaveRequest] = useState(false);
-  const [showClassSwitch, setShowClassSwitch] = useState(false);
-  const [pendingSwitches, setPendingSwitches] = useState([]);
-  const [leaveRequests, setLeaveRequests] = useState([]);
 
 
   useEffect(() => {
@@ -121,11 +112,7 @@ export default function TeacherDashboardPage() {
           .order("created_at", { ascending: true });
 
         setAssignedClasses(classes || []);
-        await Promise.all([
-          fetchAttendanceStats(authUser.id, classes || []),
-          fetchPendingSwitches(authUser.id),
-          fetchLeaveRequests(authUser.id),
-        ]);
+        await fetchAttendanceStats(authUser.id, classes || []);
       } catch (error) {
         console.error("Error fetching user:", error);
         router.replace("/login");
@@ -137,82 +124,6 @@ export default function TeacherDashboardPage() {
 
     fetchUser();
   }, [router]);
-
-  const fetchPendingSwitches = async (teacherId) => {
-    try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      const token = session?.access_token;
-
-      const res = await fetch("/api/class-switches", {
-        headers: {
-          ...(token && { Authorization: `Bearer ${token}` }),
-        },
-      });
-      const data = await res.json();
-      if (res.ok && data.classSwitches) {
-        const pending = data.classSwitches.filter(
-          (s) => s.target_teacher_id === teacherId && s.status === "pending"
-        );
-        setPendingSwitches(pending);
-      }
-    } catch (error) {
-      console.error("Error fetching pending switches:", error);
-    }
-  };
-
-  const fetchLeaveRequests = async (teacherId) => {
-    try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      const token = session?.access_token;
-
-      const res = await fetch("/api/leave-requests", {
-        headers: {
-          ...(token && { Authorization: `Bearer ${token}` }),
-        },
-      });
-      const data = await res.json();
-      if (res.ok && data.leaveRequests) {
-        setLeaveRequests(data.leaveRequests);
-      }
-    } catch (error) {
-      console.error("Error fetching leave requests:", error);
-    }
-  };
-
-  const handleSwitchAction = async (switchId, action) => {
-    try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      const token = session?.access_token;
-
-      const res = await fetch("/api/class-switches", {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token && { Authorization: `Bearer ${token}` }),
-        },
-        body: JSON.stringify({ id: switchId, action }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        alert(data.error || "Failed to update switch request");
-        return;
-      }
-
-      alert(data.message || `Switch ${action}ed successfully`);
-      await fetchPendingSwitches(userId);
-    } catch (error) {
-      console.error("Error handling switch action:", error);
-      alert("Failed to update switch request");
-    }
-  };
 
   const fetchAttendanceStats = async (teacherId, classes) => {
     try {
@@ -315,8 +226,7 @@ export default function TeacherDashboardPage() {
           collapsed={sidebarCollapsed}
           onToggleCollapsed={toggleCollapsed}
           onChangePassword={() => setShowChangePassword(true)}
-          onRequestLeave={() => setShowLeaveRequest(true)}
-          onSwitchClass={() => setShowClassSwitch(true)}
+          
           currentView={currentView}
           onViewChange={setCurrentView}
         />
@@ -344,7 +254,7 @@ export default function TeacherDashboardPage() {
                   Teacher Dashboard
                 </h1>
                 <p className="text-sm text-gray-700">
-                  Welcome, {displayName} • Nepal Time: {nepalTime}
+                  Welcome, {displayName}
                 </p>
               </div>
             </div>
@@ -529,152 +439,6 @@ export default function TeacherDashboardPage() {
                 </CardContent>
               </Card>
 
-              {/* Pending Switch Requests */}
-              {pendingSwitches.length > 0 && (
-                <Card className="shadow-md border border-yellow-200 bg-yellow-50">
-                  <CardHeader>
-                    <CardTitle className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-                      <ArrowRightLeft className="w-5 h-5 text-yellow-600" />
-                      Pending Switch Requests ({pendingSwitches.length})
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      {pendingSwitches.map((switchReq) => (
-                        <div
-                          key={switchReq.id}
-                          className="p-4 bg-white rounded-lg border border-yellow-200"
-                        >
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <p className="font-medium text-gray-900">
-                                {switchReq.requester_teacher?.full_name ||
-                                  "Teacher"}{" "}
-                                wants to switch
-                              </p>
-                              <p className="text-sm text-gray-600 mt-1">
-                                <span className="font-medium">
-                                  Their Class:
-                                </span>{" "}
-                                {switchReq.requester_class?.subject} (
-                                {switchReq.requester_class?.course} -{" "}
-                                {switchReq.requester_class?.semester})
-                              </p>
-                              <p className="text-sm text-gray-600">
-                                <span className="font-medium">Your Class:</span>{" "}
-                                {switchReq.target_class?.subject} (
-                                {switchReq.target_class?.course} -{" "}
-                                {switchReq.target_class?.semester})
-                              </p>
-                              <p className="text-sm text-gray-500 mt-1">
-                                <span className="font-medium">Date:</span>{" "}
-                                {new Date(
-                                  switchReq.switch_date
-                                ).toLocaleDateString()}
-                              </p>
-                              {switchReq.reason && (
-                                <p className="text-sm text-gray-500 mt-1">
-                                  <span className="font-medium">Reason:</span>{" "}
-                                  {switchReq.reason}
-                                </p>
-                              )}
-                            </div>
-                            <div className="flex gap-2 ml-4">
-                              <Button
-                                size="sm"
-                                onClick={() =>
-                                  handleSwitchAction(switchReq.id, "accept")
-                                }
-                                className="bg-green-600 hover:bg-green-700 text-white"
-                              >
-                                Accept
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() =>
-                                  handleSwitchAction(switchReq.id, "reject")
-                                }
-                                className="border-red-300 text-red-700 hover:bg-red-50"
-                              >
-                                Reject
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Leave Requests History */}
-              <Card className="shadow-md border border-gray-200">
-                <CardHeader>
-                  <CardTitle className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-                    <Calendar className="w-5 h-5 text-purple-600" />
-                    Leave Request History
-                  </CardTitle>
-                  <p className="text-sm text-gray-600">
-                    Track your submitted leave requests and their status
-                  </p>
-                </CardHeader>
-                <CardContent>
-                  {leaveRequests.length === 0 ? (
-                    <div className="text-center py-10 text-gray-600">
-                      No leave requests submitted yet.
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {leaveRequests.map((request) => (
-                        <div
-                          key={request.id}
-                          className="border rounded-lg p-4 bg-white"
-                        >
-                          <div className="flex flex-wrap items-center justify-between gap-3">
-                            <div>
-                              <p className="text-sm text-gray-600">
-                                <span className="font-medium text-gray-900">
-                                  {new Date(
-                                    request.start_date
-                                  ).toLocaleDateString()}{" "}
-                                  -{" "}
-                                  {new Date(
-                                    request.end_date
-                                  ).toLocaleDateString()}
-                                </span>
-                              </p>
-                              <p className="text-sm text-gray-600 mt-1">
-                                Reason: {request.reason}
-                              </p>
-                            </div>
-                            <span
-                              className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                                request.status === "approved"
-                                  ? "bg-green-100 text-green-700"
-                                  : request.status === "rejected"
-                                  ? "bg-red-100 text-red-700"
-                                  : "bg-yellow-100 text-yellow-700"
-                              }`}
-                            >
-                              {request.status?.toUpperCase()}
-                            </span>
-                          </div>
-                          {request.admin_notes && (
-                            <p className="text-xs text-gray-500 mt-2">
-                              Admin Notes: {request.admin_notes}
-                            </p>
-                          )}
-                          <p className="text-xs text-gray-400 mt-1">
-                            Submitted:{" "}
-                            {new Date(request.created_at).toLocaleString()}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
 
               {/* Assigned Classes */}
               <Card className="shadow-md border border-gray-200">
@@ -783,20 +547,7 @@ export default function TeacherDashboardPage() {
             open={showChangePassword}
             onClose={() => setShowChangePassword(false)}
           />
-          <LeaveRequest
-            open={showLeaveRequest}
-            onClose={() => setShowLeaveRequest(false)}
-            onRequestCreated={() => {
-              fetchLeaveRequests(userId);
-            }}
-          />
-          <ClassSwitch
-            open={showClassSwitch}
-            onClose={() => setShowClassSwitch(false)}
-            onSwitchCreated={() => {
-              fetchPendingSwitches(userId);
-            }}
-          />
+       
         </main>
       </div>
     </div>

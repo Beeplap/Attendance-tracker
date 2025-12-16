@@ -16,8 +16,6 @@ import {
   BarChart3,
   ChevronDown,
   ChevronRight,
-  FileText,
-  ArrowRightLeft,
   Calendar,
   Lock,
   User,
@@ -40,8 +38,6 @@ export default function Sidebar({
   onAssignClass,
   // Teacher-specific callbacks
   onChangePassword,
-  onRequestLeave,
-  onSwitchClass,
 }) {
   const router = useRouter();
   const [statsExpanded, setStatsExpanded] = useState(
@@ -81,8 +77,6 @@ export default function Sidebar({
         { id: "teachers", label: "Teachers", icon: UserCheck },
         { id: "students", label: "Students", icon: School },
         { id: "subjects", label: "Subjects", icon: BookOpen },
-        { id: "leave-requests", label: "Leave Requests", icon: FileText },
-        { id: "class-switches", label: "Class Switches", icon: ArrowRightLeft },
       ],
       hasStatistics: true,
       actions: [
@@ -122,18 +116,6 @@ export default function Sidebar({
           label: "Change Password",
           icon: Lock,
           onClick: onChangePassword,
-        },
-        {
-          id: "request-leave",
-          label: "Request Leave",
-          icon: FileText,
-          onClick: onRequestLeave,
-        },
-        {
-          id: "switch-class",
-          label: "Switch Class",
-          icon: ArrowRightLeft,
-          onClick: onSwitchClass,
         },
       ],
     },
