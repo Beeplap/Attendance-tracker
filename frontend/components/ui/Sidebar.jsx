@@ -106,6 +106,7 @@ export default function Sidebar({
       icon: BookOpen,
       mainNav: [
         { id: "dashboard", label: "Dashboard", icon: Home },
+        { id: "assignments", label: "Assignments", icon: BookOpen },
         { id: "attendance", label: "Attendance", icon: Calendar },
         { id: "students", label: "Students", icon: Users },
       ],
@@ -125,6 +126,7 @@ export default function Sidebar({
       icon: User,
       mainNav: [
         { id: "dashboard", label: "Overview", icon: LayoutDashboard },
+        { id: "assignments", label: "Assignments", icon: BookOpen },
         { id: "attendance", label: "My Attendance", icon: Calendar },
         { id: "profile", label: "Profile", icon: User },
       ],

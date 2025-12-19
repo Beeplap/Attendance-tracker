@@ -25,6 +25,7 @@ import {
 import Sidebar from "@/components/ui/Sidebar";
 import AttendancePage from "../attendance/page";
 import StudentDirectoryPage from "../student-directory/page";
+import AssignmentsTeacherView from "@/components/dashboard/AssignmentsTeacherView";
 
 export default function TeacherDashboardPage() {
   const router = useRouter();
@@ -526,6 +527,14 @@ export default function TeacherDashboardPage() {
                 </CardContent>
               </Card>
             </>
+          )}
+
+
+          {/* Assignments View */}
+          {currentView === "assignments" && (
+            <div className="space-y-6">
+              <AssignmentsTeacherView teacherId={userId} />
+            </div>
           )}
 
           {/* Attendance View */}
