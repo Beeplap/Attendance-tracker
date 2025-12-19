@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import Sidebar from "@/components/ui/Sidebar";
 import { Calendar, BookOpen, User as UserIcon } from "lucide-react";
+import AssignmentsStudentView from "@/components/dashboard/AssignmentsStudentView";
 
 export default function StudentDashboardPage() {
   const router = useRouter();
@@ -262,6 +263,12 @@ export default function StudentDashboardPage() {
                 </CardContent>
               </Card>
             </>
+          )}
+
+
+          {/* Assignments View */}
+          {currentView === "assignments" && (
+            <AssignmentsStudentView studentData={studentData} />
           )}
 
           {/* Attendance View */}
